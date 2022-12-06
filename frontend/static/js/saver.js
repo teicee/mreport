@@ -130,7 +130,7 @@ saver = (function () {
     var _saveJsonReport = function (composition, theme) {
         //Work in progress
         var xxx = new Report();
-        //xxx.theme = theme || composer.activeModel().id;
+        xxx.theme = theme || composer.activeModel().id;
         //Loop on blocs
         var blocs = [];
         composition.querySelectorAll("#report-composition > .list-group-item").forEach(function (bloc_item, blocidx) {

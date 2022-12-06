@@ -314,6 +314,8 @@ composer = (function () {
             dataviz_components: dataviz_components
         };
         $("#selectedModelComposer").append('<option value="' + templateid + '">' + templateid + '</option>');
+	$('#selectedModelComposer option[value=""]').attr('disabled', 'disabled');
+	$('#selectedModelComposer').val( $('#selectedModelComposer option[value!=""]:first').val() ).trigger('change');
 
     };
 
@@ -402,9 +404,6 @@ composer = (function () {
         $(document).on('click', '#divide_modal_btn', _saveDivideConfig);
         $(document).on('click', 'span.empty_column', _deleteDvzFromComposer);
         $(document).on('click', 'span.delete_column', _deleteCellFromComposer);
-
-
-
 
     };
 
