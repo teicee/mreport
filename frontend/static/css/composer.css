@@ -1,26 +1,34 @@
-﻿.sidenav {
+.sidenav {
     height: 100%;
-    width: 250px;
+    width: 200px;
     position: fixed;
     z-index: 1;
-    top: 55px;
+    top:155px;
     left: 0;
-    background-color: #455461;
     overflow-x: hidden;
     overflow-y: auto;
-    padding-bottom: 60px;
+    padding-bottom: 155px;
+}
+
+.sidenav-content{
+  overflow-y:auto;
+  height:100%;
+}
+
+.sidenav-content select{
+  margin-top:0;
 }
 
 .sidenav a {
   padding: 6px 8px 6px 16px;
   text-decoration: none;
   font-size: 25px;
-  color: #818181;
+  /*color: #818181;*/
   display: block;
 }
 
 .sidenav h6 {
-    color: #fff;
+    color: black;
     padding:0 10px;
 }
 
@@ -29,9 +37,10 @@
 }
 
 .main {
-  margin-left: 230px; /* Same as the width of the sidenav */
+  margin-left: 200px; /* Same as the width of the sidenav */
   font-size: 28px; /* Increased text to enable scrolling */
   padding: 0px 10px;
+  margin-top:90px;
 }
 
 @media screen and (max-height: 450px) {
@@ -61,7 +70,7 @@
 .builder.edit .composition {
     font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin-left: 0px;
-    margin-top: 50px;
+    margin-top: 15px;
     padding: 20px;
     border: 1px solid #DDDDDD;
     border-radius: 4px;
@@ -71,7 +80,7 @@
 }
 
 .builder.edit .composition .remove {
-    background: #E91E63;
+    /*background: #E91E63;*/
     font-size: 13px;
     padding: 6px;
     position: absolute;
@@ -134,7 +143,7 @@
 }*/
 
 .builder.edit .composition .remove {
-    background: #E91E63;
+    /*background: #E91E63;*/
     font-size: 13px;
     padding: 6px;
     position: absolute;
@@ -179,7 +188,7 @@
     right: 5px;*/
     cursor: grab;
     padding: 6px;
-    font-size: 20px;
+    font-size: 15px;
 }
 
 .sidenav #drag-tag{
@@ -187,8 +196,8 @@
 }
 
 #report-composition .drag{
-    background: #3095b4;
-    color: white;
+    /*background: #3095b4;*/
+    /*color: white;*/
     position: absolute;
 }
 
@@ -254,8 +263,16 @@
 }
 
 #structure-models, #dataviz-items {
-    padding: 10px;
+  padding: 10px;
   margin-bottom:1rem;
+}
+
+#structure-models .drag{
+  background-color:white!important;
+}
+
+.dataviz-container li .drag.badge{
+  display:none;
 }
 
 .composition {
@@ -287,31 +304,35 @@ span.structure-description {
 }
 
 #report-composition {
-    outline: dashed;
+    outline: 2px dashed;
     outline-color: grey;
     min-height:200px;
 }
 
 #report-composition:empty:after {
-    content: "Déposer ici des blocs structurants après avoir sélectionné un rapport et un modèle";
+    content: "Séléctionner un rapport et un modèle. Puis déposer ici des blocs structrants et des dataviz.";
     text-align: center;
-    top: 30%;
+    top: 50%;
+    left:50%;
+    transform:translate(-50%,-50%);
     position: absolute;
     padding-left: 20px;
     padding-right: 20px;
-    color:grey;
+    color:#006878;
+    font-size:20px;
+    font-weight:700;
 }
 
 .composition .report-bloc .dataviz-container {
-    border: #007bff;
-    border-style: ridge;
+    /*border: #007bff;*/
+    border: 1px solid #bbb;
     min-height: 200px;
     width: 100%;
 }
 
-.composition .report-bloc-title  .dataviz-container {
-    height: 100px
-}
+/* .composition .report-bloc-title .dataviz-container {
+    height: 135px
+} */
 .composition .bloc-content>.dataviz-container {
     min-height: 150px;
 }
@@ -320,7 +341,7 @@ span.structure-description {
   margin:15px;
 }
 
-span.text-edit.badge.badge-warning {
+span.text-edit.badge.mreport-secondary-color-2-bg{
     margin-left: 10px;
     cursor: pointer;
     font-size: 13px;
@@ -340,7 +361,7 @@ span.text-edit.badge.badge-warning {
 }
 
 .tool.configured::after {
-    color: mediumvioletred;
+    /*color: mediumvioletred;*/
     content: "  \0040";
 }
 
@@ -352,12 +373,16 @@ span.text-edit.badge.badge-warning {
     cursor: auto;
 }
 
+#report-composition .btn{
+padding:5px 10px;
+}
+
 #dataviz-items code.dataviz-definition {
     display: none;
 }
 
 .map-marker-circle-1 {
-  background-color:#E91E63;
+  /*background-color:#E91E63;*/
   border-radius: 18px;
   border: 4px solid #eaebf0;
   opacity: 0.50;
@@ -366,7 +391,7 @@ span.text-edit.badge.badge-warning {
 .map-marker-circle-2 {
   background-color:#eaebf0;
   border-radius: 18px;
-  border: 4px solid #E91E63;
+  /*border: 4px solid #E91E63;*/
   opacity: 0.50;
 }
 
@@ -399,6 +424,7 @@ span.text-edit.badge.badge-warning {
   margin-right:5px;
 }
 .divide_column,
+.empty_column,
 .delete_column{
     cursor: pointer;
     font-size: 15px;
@@ -407,10 +433,7 @@ span.text-edit.badge.badge-warning {
     transition: 0.2s;
 }
 #report-composition .dataviz-container{
-    padding-left : 20px;
-    padding-right : 20px;
-    padding-top:5px;
-    padding-bottom:5px;
+    padding:35px;
 }
 #report-composition .customBaseColumn {
     padding: 0;
@@ -425,8 +448,10 @@ span.text-edit.badge.badge-warning {
 .drag_column{
     position: unset !important;
 }
-.composition .row{
+.composition .row,
+.composition .view{
     height: 100%;
+    line-height:0.75rem;
 }
 .dataviz-container{
     display: flex;
@@ -439,7 +464,7 @@ span.text-edit.badge.badge-warning {
 }
 
 #element-models{
-    margin: 10px;
+    /* margin: 10px; */
 }
 #element-models .titleBloc {
   line-height:1.5rem;
@@ -547,7 +572,7 @@ span.text-edit.badge.badge-warning {
 }
 
 .card.dataviz.used {
-    background-color: #dae0e5;
+    /*background-color: #dae0e5;*/
 }
 .card.dataviz:not(.used) .card-footer {
     display: none;
@@ -558,13 +583,13 @@ span.text-edit.badge.badge-warning {
 }
 
 span.designed-dataviz {
-    right: 30px;
-    position: absolute;
+    /*right: 30px;*/
+    /*position: absolute;*/
     font-family: "Font Awesome 5 Free";
-    font-size: 25px;
+    font-size: 20px;
     font-weight: 700;
-    color: #218838;
-    margin-top: -10px;
+    /*color: #218838;*/
+    /*margin-top: -10px;*/
 }
 
 span.designed-dataviz:before {
@@ -572,13 +597,14 @@ span.designed-dataviz:before {
 }
 
 span.certified-dataviz {
-    right: 70px;
-    position: absolute;
+    /* right: 70px; */
+    /* position: absolute; */
     font-family: "Font Awesome 5 Free";
     font-size: 20px;
     font-weight: 700;
-    color:#8cb871;
-    margin-top: -10px;
+    margin-left:15px;
+    /*color:#8cb871;*/
+    /* margin-top: -10px; */
 }
 
 span.certified-dataviz:before {
@@ -598,10 +624,58 @@ span.designed-dataviz.disabled {
 
 #report-composition .dataviz-container:empty:after {
     content: "Glisser-déposer une donnée ici";
-    color: #818181;
+    /*color: #818181;*/
+    line-height:2rem;
 }
 
 #report-composition .report-bloc-title .dataviz-container {
-    border: #007bff;
+    /*border: #007bff;*/
     border-style: ridge;
+}
+
+.custom-control-input:checked~.custom-control-label::before{
+  background-color:#006878;
+  border-color: #006878;
+}
+
+.sidenav a.composerVersions{
+  font-size:12px;
+  color:white;
+}
+
+.sidenav a.composerVersions:hover{
+  cursor:pointer
+}
+
+#btn_save_report{
+  margin-top:35px;
+}
+
+#ComposerOptionsSelectRow{
+  /*box-shadow: 0 5px 10px rgb(0 0 0 / 20%);*/
+  position: fixed;
+  width:100%;
+  z-index: 99;
+  top:56px;
+}
+
+#ComposerOptionsSelectRow .form-group{
+  margin-top: .5rem;
+  margin-bottom: .75rem;
+}
+
+#ComposerOptionsSelectRow .form-group label{
+  font-size:12px;
+font-weight:700;
+}
+
+.report-bloc .dataviz-container {
+    display: flex;
+    height: 100%;
+    justify-content: center;
+}
+
+.bloc-sources {
+    margin-top:10px;
+    font-size: 12px;
 }

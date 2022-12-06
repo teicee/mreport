@@ -10,8 +10,12 @@ Outre l'aspect reporting, mreport dispose d'une **API** permettant de réutilise
 
 * Présentation [PRESENTATION.md](docs/PRESENTATION.md)
 * Installation [INSTALL.md](docs/INSTALL.md)
-* Guide de démarrage [START.md](docs/QUICKSTART.md)
-* Admin [ADMIN.md](docs/ADMIN.md)
+* Structuration des données [DATA.md](docs/DATA.md)
+* Interface d'administration [ADMIN.md](docs/ADMIN.md)
+* Principes [PRINCIPES.md](docs/PRINCIPES.md)
+* Production [PRODUCTION.md](docs/PRODUCTION.md)
+* Multiples instances [INSTANCES.md](docs/INSTANCES.md)
+* Docker [DOCKER.md](docs/DOCKER.md)
 
 
 ## Capture

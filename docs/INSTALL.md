@@ -2,7 +2,7 @@
 
 ## Prerequis
 
-You need to have a running instance of postgres installed
+You need to have a running instance of postgres installed and this process is for Linux systems.
 
 
 ## 1 - Create and configure database
@@ -20,24 +20,24 @@ Become postgres user
 ##### Set DATABASE VARIABLES
 
  ```
- DATABASE_HOST=localhost
- DATABASE_PORT=5432
- DATABASE_NAME=dataviz
- DATABASE_USER=mreport_user
- DATABASE_SCHEMA=data
+ MREPORT_DATABASE_HOST=localhost
+ MREPORT_DATABASE_HOST_PORT=5432
+ MREPORT_DATABASE_NAME=dataviz
+ MREPORT_DATABASE_USER=mreport_user
+ MREPORT_DATABASE_SCHEMA=data
  ```
 
 Create database user with password (Enter it to times at prompt).
 
- ``createuser -p $DATABASE_PORT -P -S -D -R -e $DATABASE_USER``
+ ``createuser -p $MREPORT_DATABASE_HOST_PORT -P -S -D -R -e $MREPORT_DATABASE_USER``
 
 Create database
 
- ``createdb -O $DATABASE_USER $DATABASE_NAME -T template0 -E 'UTF8'``
+ ``createdb -p $MREPORT_DATABASE_HOST_PORT -O $MREPORT_DATABASE_USER $MREPORT_DATABASE_NAME -T template0 -E 'UTF8'``
 
 Create database schema and populate it with demo data
 
- ``psql -p $DATABASE_PORT -d $DATABASE_NAME -f /tmp/demo.sql --set "user=$DATABASE_USER" --set "schema=$DATABASE_SCHEMA"``
+ ``psql -p $MREPORT_DATABASE_HOST_PORT -d $MREPORT_DATABASE_NAME -f /tmp/demo.sql --set "user=$MREPORT_DATABASE_USER" --set "schema=$MREPORT_DATABASE_SCHEMA"``
 
  Logout postgres user
 
@@ -82,18 +82,22 @@ Install Flask and dependencies
 
 ``pip install -r requirements.txt``
 
-*To install requirements, you need to be disconnected from any proxy*
+*To install wheel and requirements, you need to be disconnected from any proxy*
 
 
 ### Configure application
 
-Edit config.py and set and be sure that DATABASE_VARIABLES are correctly set in the next variable
+Edit config.py and set and be sure that MREPORT_DATABASE_VARIABLES are correctly set in the next variable
 
-* ```SQLALCHEMY_DATABASE_URI = 'postgresql://[DATABASE_USER]:[DATABASE_PASSWORD]@[DATABASE_HOST]:[DATABASE_PORT]/[DATABASE_NAME]'```
+```
+* DB_USER = getenv('MREPORT_DATABASE_USER', 'mreport_user')
+* DB_PWD = getenv('MREPORT_DATABASE_PWD', 'yoursecretpassword')
+* DB_HOST = getenv('MREPORT_DATABASE_HOST', 'localhost')
+* DB_PORT = getenv('MREPORT_DATABASE_HOST_PORT', '5432')
+* DB_NAME = getenv('MREPORT_DATABASE_NAME', 'dataviz')
+* SCHEMA = getenv('MREPORT_DATABASE_SCHEMA', 'data')
+```
 
-Example :
-
-* ```SQLALCHEMY_DATABASE_URI = 'postgresql://mreport_user:abcdef@localhost:5432/dataviz'```
 
 Use the same parameters as used in the [database section !](#set-database-variables)
 
@@ -111,7 +115,7 @@ Use the same parameters as used in the [database section !](#set-database-variab
 
 ### Launch application in dev or test mode
 
-mreport backend and frontend can be served by flask at same time with tje following command
+mreport backend and frontend can be served by flask at same time with the following command
 
 with **mreport** user in ~/mreport folder with **venv** activated
 

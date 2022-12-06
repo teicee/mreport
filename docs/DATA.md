@@ -4,15 +4,20 @@
 ## 1 - La base de données
 
 
-La base de données de l'application est constituée de 5 tables.
+La base de données de l'application est constituée de 7 tables.
 
-* Les 2 tables **dataviz** et **rawdata** contiennent les données qui servant à réaliser les dataviz utilisé dans la génération de reports.
-* La table **dataid** liste tous les identités disponibles (Communes, EPCI, gares, ...).
-* Les tables **report** et **report_composition** sont des tables de configuration propres à l'application (Qui sont respectivement les noms des rapports et la source des données).
+* La table **dataid** liste tous les identités des réferentiels disponibles (exemple: Codes des EPCIs, Codes des écluses, Codes RNE pour les lycées, ...etc).
+* La table **level_type** liste tous les enitités des réferentiels (exemple: Communes, EPCI, gares, ...etc).
+* Les 2 tables **dataviz** et **rawdata** contiennent les données qui servant à réaliser les dataviz utilisé dans la génération de reports. **dataviz** contient les metadonnées, c'est le catalog qui est affiché dans l'application.
+* La table **report**continent tous les rapports créés avec leur id et leur titre, qui est alimenté par l'application Mreport.
+* La table **report_composition**  est une tables d'association qui lié les rapports au dataviz. elle permet de savoir quelle rapport utilise quelle donnée et quelle données est présent dans quel rapport.
+* La table **report_definition** sera utiliser pour la fonctionnalité de versionnement des rapports. Pour l'instant elle n'est pas utilisé. Elle stockera des JSONs utilisés pour reconstruire un rapport et sera alimenté par un nouveau système d'enregistrement des rapports (CF issue 113)
 
 Ci-dessous le MCD de la base de donnée. Les relations '1,1' de rawdata avec dataviz et dataid montre que rawdata a besoin d'utiliser les données des deux autres tables. Il y a un ordre d'alimentation des tables à respecter selon les cardinalités.
 
 L'association '0,n' entre dataviz et report fait la table d'association report_composition. Cela permet de lier un report et un dataviz.
+
+Entre level_type, dataviz et dataid il y a une contrainte de simultaneité. Un élement level_type qui existe dans dataviz va forcement exister dans dataid et inversement.
 
 ![MCD](img/mcd.png "MCD")
 
@@ -67,7 +72,8 @@ ecl_2 | figure_1 | 1 | 1 | Nombre total de passage de bâteaux | 218
 ## 3 - Exemples
 
 
-**Exemple de titre** 
+Exemple de titre
+------------------
 
 *dataset*, *data* & *order* ne sont pas utilisés pour ce cas de figure.
 
@@ -76,7 +82,8 @@ dataid | dataviz | dataset | order | label | data
 ECLUSE_1 | title | 1 | 1 |ECLUSE N°1 |
 
 
-**Exemple de texte**
+Exemple de texte
+------------------
 
 *dataset* & *order* ne sont pas utilisés pour ce cas de figure.
 
@@ -85,7 +92,8 @@ dataid | dataviz | dataset | order | label | data
 ECLUSE_1 | text_1 | 1 | 1 | Descriptif 1 | Lorem ipsum dolor sit amet. consectetur adipiscing elit. Ut id urna faucibus. blandit tellus a. aliquet massa. Vivamus non mollis arcu. Phasellus nec sem eget massa fa...
 
 
-**Exemple de graphique** 
+Exemple de graphique
+------------------
 
 Ici on comprends à quoi sert *order*, notamment lorsqu'il y a des notions de temps et ordre à respecter.
 
@@ -110,7 +118,8 @@ Son rendu sour forme de chart:
 ![chart_1](img/chart_1.png?raw=true  "chart_1")
 
 
-**Exemple de tableau** 
+Exemple de tableau
+------------------
 
 *dataset* sert lorsqu'il y a deux données parallèles sur le même *order*
 
@@ -118,18 +127,20 @@ Exemple de données dans rawdata:
 
 dataid | dataviz | dataset | order | label | data
 -------|---------|---------|------|--------|-----
-ECLUSE_1 | table_1 | 1 | 1 | Mois | Janvier |
-ECLUSE_1 | table_1 | 2 | 1 | Passage | 12 |
-ECLUSE_1 | table_1 | 1 | 2 | Mois | Février |
-ECLUSE_1 | table_1 | 2 | 2 | Passage | 22 |
-ECLUSE_1 | table_1 | 1 | 3 | Mois | Mars |
-ECLUSE_1 | table_1 | 2 | 3 | Passage | 222
+ECLUSE_1 | table_1 | 01_mois | 1 | Mois | Janvier |
+ECLUSE_1 | table_1 | 02_passage | 1 | Passage | 12 |
+ECLUSE_1 | table_1 | 01_mois | 2 | Mois | Février |
+ECLUSE_1 | table_1 | 02_passage | 2 | Passage | 22 |
+ECLUSE_1 | table_1 | 01_mois | 3 | Mois | Mars |
+ECLUSE_1 | table_1 | 02_passage | 3 | Passage | 222
 
 Son rendu sous forme de table:
 
 ![table_1](img/table_1.png?raw=true  "table_1")
 
-**Exemple de chiffre clé**
+
+Exemple de chiffre clé
+------------------
 
 *dataset* & *order* ne sont pas utilisés pour ce cas de figure.
 
@@ -138,7 +149,8 @@ dataid | dataviz | dataset | order | label | data
 ECLUSE_1 | figure_1 | 1 | 1 | Nombre total de passage de bâteaux | 483
 
 
-**Exemple de carte** 
+Exemple de carte
+------------------
 
 Un marquer par type de *dataset*. 
 
@@ -155,7 +167,9 @@ Son rendu sous forme de carte:
 
 ![map_1](img/map_1.png?raw=true  "map_1")
 
-**Exemple d'image** 
+
+Exemple d'image
+------------------
 
 *dataset* & *order* ne sont pas utilisés pour ce cas de figure.
 
@@ -166,7 +180,8 @@ dataid | dataviz | dataset | order | label | data
 ECLUSE_1 | image_1 | 1 | 1 | Image 1 | http://kartenn.region-bretagne.fr/img/vn/ecluse/ECL_IR33.jpg
 
 
-**Exemple d'iframe** 
+Exemple d'iframe
+------------------
 
 *dataset* & *order* ne sont pas utilisés pour ce cas de figure.
 

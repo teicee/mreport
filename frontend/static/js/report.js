@@ -390,12 +390,12 @@ report = (function () {
                     _config.share = false;
                 } else {
                     $("body").append(html);
+                    _printDate();
+                    _print();
                 }
                 //append _config
                 _merge_config();
                 _getData();
-                _printDate();
-                _print();
             },
             error: function (xhr, status, err) {
                 _alert("Erreur avec le fichier report.html de " + APIRequest.base_url + " " + err, "danger", true);
@@ -691,18 +691,16 @@ report = (function () {
                 };
             }
             if (el.dataset.begin0 && el.dataset.begin0 === "true") {
-                var opt = {
-                    "yAxes": [{
-                        "ticks": {
-                            "beginAtZero": true
-                        }
-                    }]
-                };
-                if (commonOptions.scales && commonOptions.scales.yAxes) {
-                    commonOptions.scales.yAxes.push(opt.yAxes[0]);
+                var axe = "yAxes"
+                if (chart.type === "horizontalBar") {
+                    axe = "xAxes"
+                }
+                var opt = `{ "${axe}": [{ "ticks": { "beginAtZero": true } }]}`;
+                if (commonOptions.scales && commonOptions.scales[axe]) {
+                    commonOptions.scales[axe].push(JSON.parse(opt[axe][0]));
 
                 } else {
-                    commonOptions.scales = opt;
+                    commonOptions.scales = JSON.parse(opt);
                 }
             }
 
@@ -798,6 +796,7 @@ report = (function () {
         if (el && data[chiffrecle.id]) {
             var figure_cc = el.getElementsByClassName("report-figure-chiffre")[0];
             figure_cc.textContent = _format(data[chiffrecle.id].data[0]) + unit;
+            figure_cc.dataset.value = figure_cc.textContent;
             if (el.getElementsByClassName("report-figure-caption").length > 0) {
                 var figure = el.getElementsByClassName("report-figure-caption")[0];
                 figure.textContent = data[chiffrecle.id].label[0];

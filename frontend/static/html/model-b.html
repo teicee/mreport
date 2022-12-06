@@ -29,7 +29,7 @@
                         <div class="dataviz-container card list-group-item"><!--dataviz component is injected here --></div>
                     </div>
                     <div class="col-md-4 customBaseColumn">
-                        <div class="lyrow verticalDivision h-50">
+                        <div class="lyrow h-50 verticalDivision">
                             <div class="view">
                                 <div class="row">
                                     <div class="col-md-12 dividedcolumn customBaseColumn">
@@ -38,7 +38,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="lyrow verticalDivision h-50">
+                        <div class="lyrow h-50 verticalDivision ">
                             <div class="view">
                                 <div class="row">
                                     <div class="col-md-12 dividedcolumn customBaseColumn">
@@ -53,10 +53,10 @@
             <!-- REQUERY bloc-sources -->
             <div class="bloc-sources">
                 <div class="col">
-                    <p><i class="editable-text">SOURCE: xxx
-                            <!-- this text is editable in composer -->
-                        </i>
-                    </p>
+                    <div class="text-edit-content">
+                        <p class="text-htm html">SOURCE: INSEE <strong>publication 2020</strong></p>
+                        <i class="editable-text"></i>
+                      </div>
                 </div>
             </div>
         </div><!-- fin du bloc -->
@@ -84,12 +84,10 @@
             </div>
             <div class="bloc-sources">
                 <div class="col">
-                    <p>
-                        <i class="editable-text">
-                            SOURCE: xxx
-                            <!-- this text is editable in composer -->
-                        </i>
-                    </p>
+                    <div class="text-edit-content">
+                        <p class="text-htm html">SOURCE: INSEE <strong>publication 2020</strong></p>
+                        <i class="editable-text"></i>
+                      </div>
                 </div>
             </div>
         </div>
@@ -111,12 +109,10 @@
             </div>
             <div class="bloc-sources">
                 <div class="col">
-                    <p>
-                        <i class="editable-text">
-                            SOURCE: xxx
-                            <!-- this text is editable in composer -->
-                        </i>
-                    </p>
+                    <div class="text-edit-content">
+                        <p class="text-htm html">SOURCE: INSEE <strong>publication 2020</strong></p>
+                        <i class="editable-text"></i>
+                      </div>
                 </div>
             </div>
         </div>
@@ -141,12 +137,10 @@
             </div>
             <div class="bloc-sources">
                 <div class="col">
-                    <p>
-                        <i class="editable-text">
-                            SOURCE: xxx
-                            <!-- this text is editable in composer -->
-                        </i>
-                    </p>
+                    <div class="text-edit-content">
+                        <p class="text-htm html">SOURCE: INSEE <strong>publication 2020</strong></p>
+                        <i class="editable-text"></i>
+                      </div>
                 </div>
             </div>
         </div>
@@ -244,6 +238,7 @@
 }
 /* sources des blocs */
 .bloc-sources {
+    margin-top:10px;
     font-size: 12px;
 }
 .bloc-sources p {
@@ -311,7 +306,11 @@
 }
 .view,
 .lyrow{
-    height: 100%;
+    /* max-height:300px; */
+    height:100%;
+}
+.bloc-content .customBaseColumn .view{
+  height:100%;
 }
 .bloc-content .row {
     margin-left: 0;
@@ -381,7 +380,7 @@
 }
 /* used to test custom-icon in model-checker" */
 .icon-default {
-    background-image: url(lycee.svg);
+    background-image: url(/static/picto/default/icon-default.svg);
 }
 /* Icon & text used with empty dataviz */
 .model-b div.dataviz-container:empty {

@@ -121,6 +121,95 @@ composer = (function () {
 
     var _activeHTMLTemplate = "";
 
+    /*
+     * _blockTemplate - Array. This var is used to construct bloc elements and append it
+     * to dom with selected HTMLTemplate
+     */
+
+    var _blockTemplate = [
+        '<div class=" structure-bloc list-group-item">',
+        '<span class="drag badge mreport-primary-color-2-bg">',
+        '<i class="fas fa-arrows-alt"></i>',
+        '<p id="drag-tag">drag</p>',
+        '</span>',
+        '<span class="remove badge mreport-primary-color-2-bg">',
+        '<i class="fas fa-times"></i> remove',
+        '</span>',
+        '<span class="structure-description">',
+        '{{{DESCRIPTION}}}',
+        '</span>',
+        '<div class="structure-html">{{{HTML}}}</div>',
+        '</div>'
+    ].join("");
+
+    var _dynamicBootstrapBloc = [
+        '<div class=" structure-bloc list-group-item disable_dynamic">',
+        '<span class="remove badge ">',
+        '<i class="fas fa-times"></i> remove',
+        '</span>',
+        '<span class="drag badge">',
+        '<i class="fas fa-arrows-alt"></i>',
+        '<p id="drag-tag">drag</p>',
+        '</span>',
+        '<span class="structure-description">',
+         '<input id="bootstrap_columns" type="text" class="form-control col-8" placeholder="Ex : 6 6">',
+        '<p id="nb_columns" class="d-none"></p>',
+        '</span>',
+        '<div class="structure-html">',
+        '<div class="row  bloc-content">',
+        '</div>',
+        '</div>',
+        '</div>'
+    ].join("");
+
+    /*
+     * _extraElementTemplate - Array. This var is used to construct extra elements and append it
+     * to dom with selected HTMLTemplate
+     */
+
+    var _extraElementTemplate = [
+        [
+            '<div class="structure-bloc list-group-item titleBloc" draggable="false" style="">',
+            '<span class="drag badge ">',
+            '<i class="fas fa-arrows-alt"></i>',
+            '<p id="drag-tag"> drag</p>',
+            '</span>',
+            '<div class="text-edit-content dataviz-container">',
+                '<p class="text-htm text">Texte</strong></p>',
+                '<i class="editable-text"></i>',
+            '</div>',
+            '<span class="remove badge mreport-primary-color-2-bg structureElems">',
+            '<i class="fas fa-times"></i> remove',
+            '</span>',
+            '</div>'
+        ].join("")
+    ];
+
+
+
+
+
+    /*
+     * _datavizTemplate - Array. This var is used to construct dataviz items and append them to dom
+     * in #dataviz-items list
+     */
+
+    var _datavizTemplate = [
+        '<li data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}" class="dataviz list-group-item handle">',
+        '<span class="drag badge ">',
+        '<i class="{{icon}}"></i>',
+        '<p id="drag-tag"> drag</p>',
+        '</span>',
+        '<div class="tool">',
+        '<button class="btn btn-default" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel">',
+        '<i class="fas fa-cog"></i>',
+        '</button>',
+        '</div>',
+        '<span>{{dvz}}</span>',
+        '<code class="dataviz-definition"></code>',
+        '</li>'
+    ];
+
     var _selectedCustomColumn = false;
     /*
      * _selectTemplate. This method is used to update structure, style  and icons store derived
@@ -148,6 +237,28 @@ composer = (function () {
      */
 
     var _parseTemplate = function (templateid, html) {
+        //Extra html elements needed to edit report (editable text, divide blocs...)
+        var divide_element = [
+            '<div class="edit_columns">',
+                '<span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal"',
+                    'data-target="#divide_form">',
+                    '<i class="fas fa-columns"></i> <span>Diviser</span>',
+                '</span>',
+                '<span class="badge mreport-primary-color-3-bg empty_column">',
+                    '<i class="fas fa-undo"></i><span>Vider</span>',
+                '</span>',
+                '<span class="badge mreport-primary-color-3-bg delete_column">',
+                    '<i class="fas fa-trash"></i><span>Fusionner</span>',
+                '</span>',
+            '</div>'
+        ].join("");
+
+        var editable_element = [
+            '<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit btn mreport-primary-color-2-bg">',
+                '<i class="fas fa-edit"></i>edit',
+            '</span>'
+        ].join("");
+
         // get data- linked to the template
         var parameters = $(html).data(); /* eg data-colors... */
         if (parameters.colors) {
@@ -289,7 +400,8 @@ composer = (function () {
         $('#dimensions_division').on('change', _changeDivideColumns);
         $(document).on('show.bs.modal', '#divide_form', _displayDivideModal);
         $(document).on('click', '#divide_modal_btn', _saveDivideConfig);
-        $(document).on('click', 'span.delete_column', _deleteDvzFromComposer);
+        $(document).on('click', 'span.empty_column', _deleteDvzFromComposer);
+        $(document).on('click', 'span.delete_column', _deleteCellFromComposer);
 
 
 
@@ -398,21 +510,66 @@ composer = (function () {
      */
 
     var _onTextEdit = function (a) {
-        //Get selected text element
-        var source = a.relatedTarget.parentNode;
+        var source;
+        var content;
         var oldtext;
         var oldtype;
-        //store old text
-        //check html content
-        if (source.firstElementChild.nodeName === "DIV") {
-            //HTMLcontent
-            oldtext = source.firstChild.innerHTML;
-            oldtype = "html";
-        } else if (source.firstChild.nodeType === Node.TEXT_NODE){
-            //TEXT CONTENT
-            oldtext = source.firstChild.nodeValue.trim();
+        var cas = 0;
+
+
+        if (a.relatedTarget.parentNode.classList.contains("bloc-title")) {
+            //Cad 1 Titles
+            cas = 1;
+            source = a.relatedTarget.parentNode;
+            if (source.firstChild.nodeType === Node.TEXT_NODE) {
+                content = source.firstChild;
+            } else if  (source.firstChild.nodeType === Node.COMMENT_NODE) {
+                source.firstChild.remove();
+                if (source.firstChild.nodeType !== Node.TEXT_NODE) {
+                    var txt = document.createTextNode("Title");
+                    source.insertBefore(txt,source.firstElementChild);
+                }
+
+            }
+            content = source.firstChild;
+            try {
+                oldtext = content.nodeValue.trim();
+            } catch (error) {
+                console.log(error);
+            }
+            oldtype = "text";
+            //content = source.querySelector("p.text-htm");
+            //Désactivation html
+            document.querySelector("#text-edit input[value='html']").disabled = true;
+            document.querySelector("#text-edit input[value='text']").checked = true;
+
+        } else if (a.relatedTarget.parentNode.closest(".text-edit-content")) {
+            //Cas 2 sources nouveau template
+            cas = 2;
+            document.querySelector("#text-edit input[value='html']").disabled = false;
+            source = a.relatedTarget.parentNode.closest(".text-edit-content");
+            content = source.querySelector("p.text-htm");
+            if (content.classList.contains("html")) {
+                //HTMLcontent
+                oldtext = content.innerHTML;
+                oldtype = "html";
+
+            } else if (content.classList.contains("text")) {
+                //TEXT CONTENT
+                oldtext = content.firstChild.nodeValue.trim();
+                oldtype = "text";
+            }
+        } else {
+            //cas3 sources ancien template
+            cas = 3;
+            source = a.relatedTarget.parentNode;
+            document.querySelector("#text-edit input[value='html']").disabled = false;
+            oldtext = source.parentElement.textContent.trim().split("\n")[0];
             oldtype = "text";
         }
+
+        document.querySelector("#text-edit input[value='"+oldtype+"']").checked = true
+        $("#text-edit-value").val(oldtext);
 
         var getStyle = function () {
             let style = "undefined";
@@ -436,8 +593,8 @@ composer = (function () {
             }
 
         }
+        //Get selected text element
 
-        $("#text-edit-value").val(oldtext);
         //get style value or Set default style
         $("#text-edit-level").val(getStyle());
         //Get save button and remove existing handlers
@@ -451,26 +608,52 @@ composer = (function () {
             //get type content (text or html)
             var type = $('#text-edit input[name=typeedit]:checked').val();
             if (type === "text") {
-                //DElete old div node
-                if (oldtype === "html") {
-                    source.querySelector("div").remove();
+                if (cas === 2)  {
+                    content.classList.remove("html");
+                    content.classList.add("text");
+                    content.innerHTML = "";
+                    var txt = document.createTextNode(text.trim());
+                    content.appendChild(txt);
+                } else if (cas === 1){
+                    content.nodeValue = text.trim();
+                } else {
+                    //cas 3
+                    //destroy old structure
+                    source.parentElement.innerHTML = `
+                        <div class="text-edit-content">
+                            <p class="text-htm text">${text.trim()}</p>
+                            <i class="editable-text">
+                            <span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit badge badge-warning"><i class="fas fa-edit"></i>edit                        </span>
+                            </i>
+                        </div>`
                 }
-                source.firstChild.nodeValue = text.trim();
+
+
                 setStyle(newstyle);
             } else if (type === "html") {
-                //Check if div exists
-                if (oldtype === "html") {
-                    source.firstChild.innerHTML = text;
-                } else {
-                    //Create div element to store html
-                    let div = document.createElement("div");
-                    div.innerHTML = text;
-                    //delete old texte node
-                    source.firstChild.nodeValue = "";
-                    //Use insert before to keep span child
-                    source.insertBefore(div, source.firstChild);
+                if (cas === 2)  {
+                    content.classList.remove("text");
+                    content.classList.add("html");
+                    content.innerHTML = text;
+
+                } else if (cas === 3) {
+                    //destroy old structure
+                    if (source.parentElement.closest("div")) {
+                        source.parentElement.closest("div").innerHTML = `
+                        <div class="text-edit-content">
+                            <p class="text-htm html">${text.trim()}</p>
+                            <i class="editable-text">
+                            <span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit badge badge-warning"><i class="fas fa-edit"></i>edit                        </span>
+                            </i>
+                        </div>`
+                    content = source.querySelector("p");
+                    } else {
+                        console.log ("cas non géré")
+                        return;
+                    }
+
                 }
-                setStyle(newstyle);
+
             }
             //close modal
             $("#text-edit").modal("hide");
@@ -510,7 +693,7 @@ composer = (function () {
                             $(btn).find("i").get(0).className = "fas fa-heading";
                         } else if ($(evt.item).hasClass("structure-element") && $(evt.item).find(".editable-text:contains(edit)").length == 0) {
                             // add edit button near to editable text elements
-                            var btn = $(evt.item).find(".editable-text").append('<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit badge badge-warning"><i class="fas fa-edit"></i>edit</span>').find(".text-edit");
+                            var btn = $(evt.item).find(".editable-text").append('<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit btn mreport-primary-color-2-bg"><i class="fas fa-edit"></i>edit</span>').find(".text-edit");
                         }
                         /* TO DO FOR RESIZE */
                         // if(!evt.from.classList.contains("list-group")){
@@ -535,7 +718,7 @@ composer = (function () {
                 });
                 if ($(row).find(".editable-text:contains(edit)").length == 0) {
                     // add edit button near to editable text elements
-                    var btn = $(row).find(".editable-text").append('<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit badge badge-warning"><i class="fas fa-edit"></i>edit</span>').find(".text-edit");
+                    var btn = $(row).find(".editable-text").append('<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit btn mreport-primary-color-2-bg"><i class="fas fa-edit"></i>edit</span>').find(".text-edit");
                 }
             });
             $(row).find(".structureElems").click(function (e) {
@@ -546,7 +729,7 @@ composer = (function () {
                 let editText = item.getElementsByClassName("editable-text")[0];
                 if (editText) {
                     var span = document.createElement("span");
-                    span.classList.add("to-remove", "text-edit", "badge", "badge-warning");
+                    span.classList.add("to-remove", "text-edit", "badge", "mreport-grey1-bg");
                     span.dataset.target = "#text-edit";
                     span.dataset.toggle = "modal";
                     span.innerHTML = "edit";
@@ -579,7 +762,12 @@ composer = (function () {
      */
 
     var _exportHTML = function () {
+        if (!_HTMLTemplates[_activeHTMLTemplate]) {
+            alert("Veuillez sélectionner un template");
+            return;
+        }
         saver.saveJsonReport(document.getElementById("report-composition"));
+
         var html = [];
         // Get first title
         $("#report-composition .report-bloc-title").each(function (id, title) {
@@ -761,13 +949,16 @@ composer = (function () {
                 structure +=
                     '<div class="col-md-' + elem + ' dividedcolumn customBaseColumn">\
                     <div class="edit_columns">\
-                        <span class="badge badge-success divide_column" data-toggle="modal" data-target="#divide_form">\
+                        <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
                             <i class="fas fa-columns"></i>\
                             Diviser\
                         </span>\
-                        <span class="badge badge-danger delete_column">\
+                        <span class="badge mreport-primary-color-3-bg empty_column">\
                             <i class="fas fa-undo"></i>\
                         <span>Vider</span>\
+                        </span>\
+                        <span class="badge mreport-primary-color-3-bg delete_column">\
+                            <i class="fas fa-trash"></i><span>Fusionner</span>\
                         </span>\
                     </div>\
                     <div class="dataviz-container card list-group-item">\
@@ -876,13 +1067,17 @@ composer = (function () {
                     structure +=
                         '<div class="col-md-' + column.value + ' dividedcolumn customBaseColumn">\
                         <div class="edit_columns">\
-                            <span class="badge badge-success divide_column" data-toggle="modal" data-target="#divide_form">\
+                            <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
                                 <i class="fas fa-columns"></i>\
                                 Diviser\
                             </span>\
-                            <span class="badge badge-danger delete_column">\
+                            <span class="badge mreport-primary-color-3-bg empty_column">\
                                 <i class="fas fa-undo"></i>\
                                 <span>Vider</span>\
+                            </span>\
+                            <span class="badge mreport-primary-color-3-bg delete_column">\
+                                <i class="fas fa-trash"></i>\
+                                <span>Fusionner</span>\
                             </span>\
                         </div>\
                         <div class="dataviz-container card list-group-item">\
@@ -922,13 +1117,17 @@ composer = (function () {
                         <div class="row ">\
                         <div class="col-md-12 dividedcolumn customBaseColumn">\
                             <div class="edit_columns">\
-                                <span class="badge badge-success divide_column" data-toggle="modal" data-target="#divide_form">\
+                                <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
                                     <i class="fas fa-columns"></i>\
                                     Diviser\
                                 </span>\
-                                <span class="badge  badge-danger delete_column">\
+                                <span class="badge mreport-primary-color-3-bg empty_column">\
                                     <i class="fas fa-undo"></i>\
                                     <span>Vider</span>\
+                                </span>\
+                                <span class="badge mreport-primary-color-3-bg delete_column">\
+                                    <i class="fas fa-trash"></i>\
+                                    <span>Fusionner</span>\
                                 </span>\
                             </div>\
                             <div class="dataviz-container card list-group-item">\
@@ -955,6 +1154,15 @@ composer = (function () {
 
 
     }
+
+    var _deleteCellFromComposer = function (e) {
+        var parent = e.currentTarget.parentNode.nextElementSibling.parentNode.closest(".row");
+        var niv = parseInt(parent.firstElementChild.className.match(/\d/)[0]);
+        e.currentTarget.parentNode.nextElementSibling.parentNode.remove();
+        parent.closest(".row").firstElementChild.className = parent.closest(".row").firstElementChild.className.replace(niv, niv*2);
+
+    }
+
     var _deleteDvzFromComposer = function (e) {
         var deleteBtn = e.currentTarget;
         var linkedDvz = deleteBtn.parentNode.nextElementSibling.querySelectorAll(".dataviz");

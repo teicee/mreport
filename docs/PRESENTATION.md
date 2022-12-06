@@ -2,6 +2,8 @@
 
 mreport est un outil simple de **reporting web** qui permet de composer des rapports combinant **chiffres-clés**, **graphiques**, **images**, **textes** à partir de jeux de données intégrés dans la base de données de la solution. Un même rapport peut être valable pour un référentiel de localisation (Communes, EPCI,  gares...)
 
+![Home](img/home.png "Home")
+
 Les rapports générés restent "connectés"   aux données sources et sont affichables sur mobile, ordinateur et imprimables au format A4 pour un export pdf par exemple.
 
 Outre l'aspect reporting, mreport dispose d'une **API** permettant de réutiliser les dataviz disponibles dans un rapport et de les intégrer dans un autre outil web ou un CMS.
@@ -39,19 +41,37 @@ Outre l'aspect reporting, mreport dispose d'une **API** permettant de réutilise
 ![image](img/image.png "Image")
 
 *  ### Contenus embarqués :
+
+Ici un exemple avec une application mviewer
+
 ![Contenu embarqué (iframe)](img/iframe.png "Contenu embarqué")
 
 
 
 ## Données
 
-Pour pouvoir créer un représentation des données sous la forme de dataviz, les données doivent être intégrées dans la base de l'application avec le formalisme propre à **mreport**
+Pour pouvoir créer un représentation des données sous la forme de dataviz, les données doivent être intégrées dans la base de l'application avec le formalisme propre à **mreport**.
 
-Actuellement les données sont à intégrer avec un ETL. Une évolution en cours de développement permettra prochainement d'intégrer les données depuis l'interface d'administation.
+Les données peuvent être intégrés avec un ETL ou en utilisant la fonction d'import depuis l'interface d'admin (pour les représentations simples).
 
-[En savoir plus](DATA.md)
+[En savoir plus sur la structuration et l'import des données](DATA.md)
 
+
+## Interface d'administration
+
+L'interface d'aministation est l'interface web qui va nous permettre de créer nos rapports.
+
+[En savoir plus](ADMIN.md)
+
+
+## Installation
+
+Guide d'installation de mreport.
+
+[Installation](INSTALL.md)
 
 ## Principes de fonctionnement
 
 [Principes](PRINCIPES.md)
+
+
