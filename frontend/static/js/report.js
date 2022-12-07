@@ -15,7 +15,8 @@ report = (function () {
     var _appConf = {
         "location": "/mreport",
         "api": "/api",
-        "title": "MREPORT"
+        "title": "MREPORT",
+        "report_theme": [ "b" ]
     };
 
     var _rawReport = null;

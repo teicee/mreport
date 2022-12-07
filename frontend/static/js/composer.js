@@ -324,8 +324,8 @@ composer = (function () {
      */
 
     var _initComposer = function () {
-        //TODO use config file to load html templates instead of ["a","b"]
-        ["b"].forEach(function (m) {
+	// Load theme list from _appConf
+	report.getAppConfiguration().report_theme.forEach(function (m) {
             $.ajax({
                 url: "/static/html/model-" + m + ".html",
                 dataType: "text",
@@ -421,9 +421,10 @@ composer = (function () {
         var title = admin.getReportData(reportId).title;
         $("#composer-report-title").text(title);
         const dc = Date.parse(new Date());
+	// TODO: load template from JSON
         $.ajax({
             type: "GET",
-            url: ["/mreport", reportId, "report_composer.html?dc=" + dc].join("/"),
+            url: [report.getAppConfiguration().location, reportId, "report_composer.html?dc=" + dc].join("/"),
             success: function (html) {
                 if (html.length > 0) {
                     let reportCompo = document.getElementById("report-composition");
