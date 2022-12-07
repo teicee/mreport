@@ -510,7 +510,6 @@ backup_put = api.model('Backup_put', {
 
 @backup.route('/<report_id>',doc={'description':'Liste des versions d\'un rapport'})
 @backup.doc(params={'report_id': 'identifiant du rapport'})
-
 class GetReportDef(Resource):
     def get(self,report_id):
         result = db.session.query(Report_definition).filter(Report_definition.report == report_id).order_by(Report_definition.save_date.desc()).all()
@@ -542,6 +541,13 @@ class GetReportDef(Resource):
                 db.session.commit()
             return {"response": "success" , "data": data}
 
+@backup.route('/<report_id>/last',doc={'description':'Dernière version d\'un rapport'})
+@backup.doc(params={'report_id': 'identifiant du rapport'})class GetLastDataviz(Resource):
+class GetLastReportDef(Resource):
+        result = db.session.query(Report_definition).filter(Report_definition.save_date != None).order_by(desc(Report_definition.save_date)).limit(1).all()
+        data = {'response':'success','report backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
+        return jsonify(**data)
+
 @backup.route('/<report_id>/<report_definition_id>',doc={'description':'Recupère une version d\'un rapport'})
 @backup.doc(params={'report_id': 'identifiant du rapport', 'report_definition_id': 'identifiant de la version du rapport'})
 class GetReportDefId(Resource):
@@ -549,5 +555,7 @@ class GetReportDefId(Resource):
         result = db.session.query(Report_definition).filter(Report_definition.id == report_definition_id)
         data = {'response':'success','report backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
         return jsonify(**data)
+
+
 
 #    return app

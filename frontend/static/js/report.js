@@ -373,6 +373,7 @@ report = (function () {
 
     var _getDom = function () {
         const dc = Date.parse(new Date());
+	// TODO: load JSON report from API
         $.ajax({
             url: _getReportRessource("report.html?dc=" + dc),
             dataType: "text",
