@@ -508,15 +508,15 @@ backup_put = api.model('Backup_put', {
     'json': fields.String(max_length=5000,required=True)
 })
 
-@backup.route('/<report_id>',doc={'description':'Liste des versions d\'un rapport'})
+@backup.route('/<string:report_id>',doc={'description':'Liste des versions d\'un rapport'})
 @backup.doc(params={'report_id': 'identifiant du rapport'})
-class GetReportDef(Resource):
+class ManageReportDef(Resource):
     def get(self,report_id):
         result = db.session.query(Report_definition).filter(Report_definition.report == report_id).order_by(Report_definition.save_date.desc()).all()
         data = {'response':'success','report_backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
         return jsonify(**data)
 
-    @backup.expect(backup_put)
+    @backup.expect([backup_put])
     def put(self, report_id):
         data = request.get_json()
         if not data:
@@ -533,6 +533,7 @@ class GetReportDef(Resource):
                         if isinstance(obj, (date, datetime)):
                             return obj.isoformat()
                 data.update({'save_date':DateTimeEncoder().encode(ct)})
+                data.update({'id': ct.timestamp()})
                 try:
                     save = Report_definition(**data)
                 except TypeError as err:

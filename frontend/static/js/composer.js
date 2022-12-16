@@ -766,7 +766,6 @@ composer = (function () {
             alert("Veuillez sélectionner un template");
             return;
         }
-        saver.saveJsonReport(document.getElementById("report-composition"));
 
         var html = [];
         // Get first title
@@ -854,6 +853,9 @@ composer = (function () {
     var _saveReport = function () {
         var _report = $("#selectedReportComposer").val();
         var html_options = {tabString: '  '};
+
+        saver.saveJsonReport(_report, document.getElementById("report-composition"));
+
         var newDom = indent.html(_exportHTML(), html_options);
         var _css = ['<style>',
             composer.activeModel().style.match(/(?<=\<style\>)(.|\n)*?(?=\<\/style\>)/g)[0].trim(),

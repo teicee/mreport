@@ -127,7 +127,7 @@ saver = (function () {
     };
 
 
-    var _saveJsonReport = function (composition, theme) {
+    var _saveJsonReport = function (report_id, composition, theme) {
         //Work in progress
         var xxx = new Report();
         xxx.theme = theme || composer.activeModel().id;
@@ -238,7 +238,7 @@ saver = (function () {
 
 
         console.log('Objet Report créé à partir de la page composition : ', xxx);
-        let report = {
+        let report_definition = {
             dataviz_configuration: xxx.configuration,
             structure: {
                 blocs: xxx.structure.blocs.map(function(b) {
@@ -261,8 +261,40 @@ saver = (function () {
             },
             theme: xxx.theme
         }
+        console.log(report_definition);
 
-        console.log(report,JSON.stringify(report));
+
+        $.ajax({
+            dataType: "json",
+            contentType: "application/json",
+            type: "PUT",
+            url: [report.getAppConfiguration().api, "backup", report_id].join("/"),
+            data: JSON.stringify({json: JSON.stringify(report_definition)}),
+            success: function (data) {
+                if (data.response === "success") {
+                    console.log(data);
+                } else {
+                    var err = data.error || data.response;
+                    Swal.fire(
+                        'Une erreur s\'est produite',
+                        'La définition du rapport n\'a pas pu être enregistrée <br> (' + err + ')',
+                        'error'
+                    );
+                }
+            },
+            error: function (xhr, status, error) {
+                var err = _parseError(xhr.responseText);
+                Swal.fire(
+                    'Une erreur s\'est produite',
+                    'L\'API ne réponds pas <br> (' + err + ')',
+                    'error'
+                );
+            },
+            complete: function () {
+            },
+        });
+
+
         //test html reconstruction
         let structure = [];
         xxx.structure.blocs.forEach(function (bloc) {
@@ -293,7 +325,7 @@ saver = (function () {
                 _html.id = "report-composition";
                 _html.innerHTML = html;
                 console.log('Contenu récupéré à traiter : ', _html);
-                _saveJsonReport(_html);
+//              _saveJsonReport(_html);
             }
         });
     };
