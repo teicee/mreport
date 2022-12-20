@@ -420,8 +420,25 @@ composer = (function () {
         //get and show report title
         var title = admin.getReportData(reportId).title;
         $("#composer-report-title").text(title);
+
+        // Load template from JSON
+        $.ajax({
+            type: "GET",
+            url: [report.getAppConfiguration().api, "backup", reportId, "last"].join("/"),
+            dataType: "json",
+            error: function (xhr, status, error) {
+                var msg = "erreur : " + error;
+                _alert(msg, "danger", true);
+            },
+            success: function (data) {
+                console.log(data);
+                // TODO
+//              saver.loadJsonReport(reportId, data);
+            }
+        });
+
+        // Load template from HTML
         const dc = Date.parse(new Date());
-	// TODO: load template from JSON
         $.ajax({
             type: "GET",
             url: [report.getAppConfiguration().location, reportId, "report_composer.html?dc=" + dc].join("/"),
@@ -470,7 +487,6 @@ composer = (function () {
                 console.log(error);
             }
         });
-
     };
 
     var _getDatavizTypeIcon  = function (type) {
@@ -852,10 +868,12 @@ composer = (function () {
 
     var _saveReport = function () {
         var _report = $("#selectedReportComposer").val();
-        var html_options = {tabString: '  '};
 
+        // Save JSON report
         saver.saveJsonReport(_report, document.getElementById("report-composition"));
 
+        // Save HTML report
+        var html_options = {tabString: '  '};
         var newDom = indent.html(_exportHTML(), html_options);
         var _css = ['<style>',
             composer.activeModel().style.match(/(?<=\<style\>)(.|\n)*?(?=\<\/style\>)/g)[0].trim(),
@@ -900,7 +918,6 @@ composer = (function () {
                 console.log(a, b, c);
             }
         });
-
 
     };
     var checkHorizontalBootstrap = function (inputs) {

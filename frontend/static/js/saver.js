@@ -25,19 +25,11 @@ saver = (function () {
                             .row (1)
                                 .customBaseColumn (n)
                                     .dataviz-container (1)
-
-
-
-
-
-
     */
 
     /*
-
     pour tester l'encodage json, lancer dans la console : saver.composition2json("/mreport/epci_population/report_composer.html")
     pour tester la reconstruction html, lancer : saver.Report2composition()
-
     */
 
     class Bloc {
@@ -48,7 +40,6 @@ saver = (function () {
           this.title = {};
           this.type = "Bloc";
         }
-
       }
 
       class BlocElement {
@@ -57,7 +48,6 @@ saver = (function () {
           this.style = style;
           this.type = "BlocElement";
         }
-
       }
 
       class BlocTitle {
@@ -65,19 +55,16 @@ saver = (function () {
           this.title = datavizid;
           this.type = "BlocTitle";
         }
-
       }
 
 
-    class Report {
-        constructor() {
-          this.structure = {
+    class JsonReport {
+        this.structure = {
             title: "",
-            blocs:[]
+            blocs: []
         }
         this.configuration = {};
         this.theme =  "";
-        }
     }
 
     var _getDivisions = function (element) {
@@ -128,10 +115,25 @@ saver = (function () {
 
 
     var _saveJsonReport = function (report_id, composition, theme) {
-        //Work in progress
-        var xxx = new Report();
-        xxx.theme = theme || composer.activeModel().id;
-        //Loop on blocs
+        var jsonReport = new JsonReport();
+        jsonReport.theme = theme || composer.activeModel().id;
+
+        // Loop on dataviz definitions
+        composition.querySelectorAll("code.dataviz-definition").forEach(function (definition) {
+            let parser = new DOMParser();
+            let datavizid = definition.parentElement.dataset.dataviz;
+            if (datavizid) {
+                let properties = false;
+                if (definition.textContent) {
+                    let dvz_element = parser.parseFromString(definition.textContent, "text/html").querySelector(".dataviz");
+                    properties = dvz_element.dataset;
+                    properties.dataviz_class = dvz_element.className.match(/report-*(chart|figure|text|table|map|title|image|iframe)/)[1];
+                }
+                jsonReport.configuration[datavizid] = properties;
+            }
+        });
+
+        // Loop on blocs
         var blocs = [];
         composition.querySelectorAll("#report-composition > .list-group-item").forEach(function (bloc_item, blocidx) {
             let bloc_type = bloc_item.className.match(/structure-*(bloc|element)/)[1];
@@ -182,7 +184,6 @@ saver = (function () {
                         }
                         delete c.childrens;
                     });
-
                     _setBlocDefinition(_bloc);
                     blocs.push(_bloc);
                 } else {
@@ -193,13 +194,8 @@ saver = (function () {
                         if (dataviz && dataviz.dataset && dataviz.dataset.dataviz) {
                             blocs.push(new BlocTitle(dataviz.dataset.dataviz));
                         }
-
                     }
-
                 }
-
-
-
 
             } else {
                 if (bloc_item.classList.contains("titleBloc")) {
@@ -212,64 +208,26 @@ saver = (function () {
                         blocs.push(new BlocElement(t.firstChild.textContent.trim(), style));
                     }
                 }
-
             }
-
         })
 
-        xxx.structure.blocs = blocs;
-
-        composition.querySelectorAll("code.dataviz-definition").forEach(function (definition) {
-            let parser = new DOMParser();
-            let datavizid = definition.parentElement.dataset.dataviz;
-            if (datavizid) {
-                let properties = false;
-                if (definition.textContent) {
-                    let dvz_element = parser.parseFromString(definition.textContent, "text/html").querySelector(".dataviz");
-                    properties = dvz_element.dataset;
-                    properties.dataviz_class = dvz_element.className.match(/report-*(chart|figure|text|table|map|title|image|iframe)/)[1];
-                }
-                xxx.configuration[datavizid] = properties;
+        jsonReport.structure.blocs = blocs.map(function(b) {
+            switch (b.type) {
+                case "BlocElement": return { 'type': b.type, 'text': b.text, 'style': b.style };
+                case "BlocTitle":   return { 'type': b.type, 'title': b.title };
+                case "Bloc":        return { 'type': b.type, 'layout': b.definition, 'sources': b.sources, 'title': b.title };
             }
+            return { 'type': b.type }
+        })
 
-        });
-
-
-
-
-        console.log('Objet Report créé à partir de la page composition : ', xxx);
-        let report_definition = {
-            dataviz_configuration: xxx.configuration,
-            structure: {
-                blocs: xxx.structure.blocs.map(function(b) {
-                    let result = {};
-                    switch (b.type) {
-                        case "BlocElement":
-                            result = {text: b.text, style: b.style};
-                            break;
-                        case "BlocTitle":
-                            result = {title: b.title};
-                            break;
-                        case "Bloc":
-                            result = { layout: b.definition, sources: b.sources, title: b.title };
-                            break;
-                    }
-                    result.type = b.type;
-                    return result;
-
-                })
-            },
-            theme: xxx.theme
-        }
-        console.log(report_definition);
-
+        console.log('Objet Report créé à partir de la page composition : ', jsonReport);
 
         $.ajax({
             dataType: "json",
             contentType: "application/json",
             type: "PUT",
             url: [report.getAppConfiguration().api, "backup", report_id].join("/"),
-            data: JSON.stringify({json: JSON.stringify(report_definition)}),
+            data: JSON.stringify({json: JSON.stringify(jsonReport)}),
             success: function (data) {
                 if (data.response === "success") {
                     console.log(data);
@@ -289,29 +247,8 @@ saver = (function () {
                     'L\'API ne réponds pas <br> (' + err + ')',
                     'error'
                 );
-            },
-            complete: function () {
-            },
-        });
-
-
-        //test html reconstruction
-        let structure = [];
-        xxx.structure.blocs.forEach(function (bloc) {
-            if (bloc.type === "Bloc") {
-                structure.push(_createBlocStructure(bloc.definition));
-            } else if (bloc.type === "BlocElement") {
-                console.log("TODO");
             }
-
         });
-        console.log("Contenu html fabriqué à partir de l'objet Report : ", structure.map(e => e.innerHTML).join(""));
-
-
-
-        //console.log(composer.templates.blockTemplate);
-
-
     };
 
 

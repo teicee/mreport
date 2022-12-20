@@ -546,8 +546,8 @@ class ManageReportDef(Resource):
 @backup.doc(params={'report_id': 'identifiant du rapport'})
 class GetLastReportDef(Resource):
     def get(self,report_id):
-        result = db.session.query(Report_definition).filter(Report_definition.save_date != None).order_by(desc(Report_definition.save_date)).limit(1).all()
-        data = {'response':'success','report backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
+        result = db.session.query(Report_definition).filter(Report_definition.save_date != None).order_by(desc(Report_definition.save_date)).limit(1).first()
+        data = {'response':'success','report backups':  json.loads(result.json)}
         return jsonify(**data)
 
 @backup.route('/<report_id>/<report_definition_id>',doc={'description':'Recupère une version d\'un rapport'})
