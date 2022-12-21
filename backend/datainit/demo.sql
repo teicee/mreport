@@ -138,10 +138,10 @@ ALTER TABLE :schema.report_composition OWNER TO :user;
 --
 
 CREATE TABLE :schema.report_definition (
-    id integer NOT NULL,
+--  id integer NOT NULL,
     report character varying(50) NOT NULL,
     save_date timestamp without time zone NOT NULL,
-    json character varying(5000) NOT NULL
+    json character varying(50000) NOT NULL
 );
 
 
@@ -29900,7 +29900,7 @@ eclusetrafic	ecluse_title
 -- Data for Name: report_definition; Type: TABLE DATA; Schema: data; Owner: admin
 --
 
-COPY :schema.report_definition (id, report, save_date, json) FROM stdin;
+COPY :schema.report_definition (report, save_date, json) FROM stdin;
 \.
 
 
@@ -29933,11 +29933,11 @@ ALTER TABLE ONLY :schema.level_type
 
 --
 -- TOC entry 2793 (class 2606 OID 163914)
--- Name: report_definition pk_person; Type: CONSTRAINT; Schema: data; Owner: admin
+-- Name: report_definition report_definition_pkey; Type: CONSTRAINT; Schema: data; Owner: admin
 --
 
 ALTER TABLE ONLY :schema.report_definition
-    ADD CONSTRAINT pk_person PRIMARY KEY (report, id);
+    ADD CONSTRAINT report_definition_pkey PRIMARY KEY (report, save_date);
 
 
 --

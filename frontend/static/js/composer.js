@@ -428,14 +428,17 @@ composer = (function () {
             dataType: "json",
             error: function (xhr, status, error) {
                 var msg = "erreur : " + error;
-                _alert(msg, "danger", true);
+                console.error(msg);
             },
             success: function (data) {
                 console.log(data);
-                // TODO
-//              saver.loadJsonReport(reportId, data);
+                saver.loadJsonReport(reportId, data.report_backups);
             }
         });
+
+
+//		return; // disable load from HTML
+
 
         // Load template from HTML
         const dc = Date.parse(new Date());

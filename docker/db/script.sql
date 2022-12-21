@@ -138,10 +138,10 @@ ALTER TABLE $MREPORT_DATABASE_SCHEMA.report_composition OWNER TO $MREPORT_DATABA
 --
 
 CREATE TABLE $MREPORT_DATABASE_SCHEMA.report_definition (
-    id integer NOT NULL,
+--  id integer NOT NULL,
     report character varying(50) NOT NULL,
     save_date timestamp without time zone NOT NULL,
-    json character varying(5000) NOT NULL
+    json character varying(50000) NOT NULL
 );
 
 
@@ -29900,7 +29900,7 @@ eclusetrafic	ecluse_title
 -- Data for Name: report_definition; Type: TABLE DATA; Schema: data; Owner: $MREPORT_DATABASE_USER
 --
 
-COPY $MREPORT_DATABASE_SCHEMA.report_definition (id, report, save_date, json) FROM stdin;
+COPY $MREPORT_DATABASE_SCHEMA.report_definition (report, save_date, json) FROM stdin;
 \.
 
 
@@ -29933,11 +29933,11 @@ ALTER TABLE ONLY $MREPORT_DATABASE_SCHEMA.level_type
 
 --
 -- TOC entry 2793 (class 2606 OID 163914)
--- Name: report_definition pk_person; Type: CONSTRAINT; Schema: data; Owner: $MREPORT_DATABASE_USER
+-- Name: report_definition report_definition_pkey; Type: CONSTRAINT; Schema: data; Owner: $MREPORT_DATABASE_USER
 --
 
 ALTER TABLE ONLY $MREPORT_DATABASE_SCHEMA.report_definition
-    ADD CONSTRAINT pk_person PRIMARY KEY (report, id);
+    ADD CONSTRAINT report_definition_pkey PRIMARY KEY (report, save_date);
 
 
 --

@@ -1,3 +1,9 @@
+/**
+ *
+ * Commande de debug à lancer dans la console JS :
+ * - pour tester l'encodage en json       : saver.testHtml2Json("/mreport/epci_population/report_composer.html")
+ * - pour tester la reconstruction html   : saver.testJson2Html()
+ */
 saver = (function () {
     /*
      * Private
@@ -27,10 +33,6 @@ saver = (function () {
                                     .dataviz-container (1)
     */
 
-    /*
-    pour tester l'encodage json, lancer dans la console : saver.composition2json("/mreport/epci_population/report_composer.html")
-    pour tester la reconstruction html, lancer : saver.Report2composition()
-    */
 
     class Bloc {
         constructor() {
@@ -58,14 +60,17 @@ saver = (function () {
       }
 
 
-    class JsonReport {
-        this.structure = {
+      class JsonReport {
+        constructor() {
+          this.structure = {
             title: "",
             blocs: []
+          }
+          this.configuration = {};
+          this.theme =  "";
         }
-        this.configuration = {};
-        this.theme =  "";
-    }
+      }
+
 
     var _getDivisions = function (element) {
         let results = {
@@ -114,7 +119,7 @@ saver = (function () {
     };
 
 
-    var _saveJsonReport = function (report_id, composition, theme) {
+    var _composition2json = function (composition, theme) {
         var jsonReport = new JsonReport();
         jsonReport.theme = theme || composer.activeModel().id;
 
@@ -221,13 +226,36 @@ saver = (function () {
         })
 
         console.log('Objet Report créé à partir de la page composition : ', jsonReport);
+        return jsonReport
+    };
 
+
+    var _test_html2json = function (document_url) {
+        $.ajax({
+            url: document_url,
+            dataType: "text",
+            success: function (html) {
+                let _html = document.createElement("div");
+                _html.id = "report-composition";
+                _html.innerHTML = html;
+                console.log('Contenu récupéré à traiter : ', _html);
+                let _json = _composition2json(_html);
+                console.log('Données JSON générées : ', _json);
+            }
+        });
+    };
+
+
+    var _saveJsonReport = function (report_id, composition, theme) {
+        var jsonReport = _composition2json(composition, theme);
+        
         $.ajax({
             dataType: "json",
             contentType: "application/json",
             type: "PUT",
             url: [report.getAppConfiguration().api, "backup", report_id].join("/"),
-            data: JSON.stringify({json: JSON.stringify(jsonReport)}),
+            data: JSON.stringify(jsonReport),
+            dataType: 'json',
             success: function (data) {
                 if (data.response === "success") {
                     console.log(data);
@@ -247,22 +275,6 @@ saver = (function () {
                     'L\'API ne réponds pas <br> (' + err + ')',
                     'error'
                 );
-            }
-        });
-    };
-
-
-    var _composition2json = function (document_url) {
-
-        $.ajax({
-            url: document_url,
-            dataType: "text",
-            success: function (html) {
-                let _html = document.createElement("div");
-                _html.id = "report-composition";
-                _html.innerHTML = html;
-                console.log('Contenu récupéré à traiter : ', _html);
-//              _saveJsonReport(_html);
             }
         });
     };
@@ -361,22 +373,11 @@ saver = (function () {
     };
 
 
-    var _json2composition = function (report) {
-
-        let jsonReport = "";
-
-        if (!report) {
-            // config test
-            jsonReport = `{"configuration":{"epci_title":{"dataviz_class":"title"},"epci_pop_en_cours":{"model":"b","icon":"icon-blue-habitants","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_densite_en_cours":{"model":"b","unit":" hab/km²","icon":"icon-blue-densite2","iconposition":"custom-icon","title":"","description":"","dataviz_class":"figure"},"epci_pop_evolution":{"title":"Evolution nombre d'habitant·e·s dans l'EPCI","description":"","model":"b","type":"line","label":"Légende","colors":"#005a66","opacity":"0.2","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"true","showlabels":"false","dataviz_class":"chart"},"epci_pop_comparaison_pays_region":{"title":"Taux d'évolution de la population municipale comparée de 2012 à 2017","description":"","model":"b","type":"bar","label":"Légende","colors":"#0094ab,#005a66,#005a66","opacity":"1","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"true","showlabels":"false","dataviz_class":"chart"},"epci_pop_repartition_f_en_cours":{"model":"b","unit":" %","icon":"icon-blue-femme","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_repartition_h_en_cours":{"model":"b","unit":" %","icon":"icon-blue-homme","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_categorie_age_en_cours":{"title":"Répartition de la population selon la classe d'âge en 2017","description":"","model":"b","label":"EPCI,Région","colors":"#0094ab,#005a66","opacity":"1","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"false","showlabels":"false","dataviz_class":"chart"},"epci_pop_categorie_csp_en_cours":{"title":"Répartition de la population selon les catégories socio-professionnelles (CSP) en 2017","description":"<ul>Les catégories socio-professionnelles<li>CS1: Agriculteur·rice·s exploitants </li><li>CS2: Artisan·e·s, Commerçant·e·s, Chef·fe·s d'entreprise</li><li>CS3: Cadres, Professions intellectuelles supérieures </li><li>CS4: Professions intermédiaires</li><li>CS5: Employé·e·s </li><li>CS6: Ouvrier·ère·s </li><li>CS7: Retraité·e·s </li><li>CS8: Autres, Sans activité professionnelle</li></ul>","model":"b","label":"EPCI,Région","colors":"#0094ab,#005a66","opacity":"1","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"false","showlabels":"false","dataviz_class":"chart"},"epci_pop_menage_famillemono_en_cours":{"model":"b","unit":" %","icon":"icon-blue-menage_mono","iconposition":"custom-icon","dataviz_class":"figure"},"epci_revenu_median":{"model":"b","unit":" €","icon":"icon-blue-revenu","iconposition":"custom-icon","dataviz_class":"figure"},"epci_revenu_taux_pauvrete":{"model":"b","unit":" %","icon":"icon-blue-social_tx_pauvrete","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_formation_sans_diplome_en_cours":{"model":"b","unit":" %","icon":"icon-blue-social_diplome","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_logement_statut_en_cours":{"title":"Répartition des logements selon le statut en 2017","description":"","model":"b","type":"bar","label":"EPCI,Région","colors":"#0094ab,#005a66","opacity":"1","ratio":"3:2","stacked":"false","begin0":"true","hidelegend":"false","showlabels":"false","dataviz_class":"chart"},"epci_pop_logement_type_en_cours":{"title":"Répartition des logements selon le type en 2017","description":"","model":"b","type":"pie","label":"Légende","colors":"#0094ab,#005a66","opacity":"1","ratio":"3:2","stacked":"false","begin0":"false","hidelegend":"false","showlabels":"true","dataviz_class":"chart"},"epci_pop_logement_nb_personne_en_cours":{"model":"b","icon":"icon-yellow-house_person","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_logement_hlm_taux_en_cours":{"model":"b","unit":" %","icon":"icon-yellow-hlm_tx","iconposition":"custom-icon","dataviz_class":"figure"}},"structure":{"blocs":[{"title":"epci_title","type":"BlocTitle"},{"text":"La population du territoire","style":"titre-1","type":"BlocElement"},{"layout":{"0_0":{"w":"4","division_type":"H"},"0_1":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_en_cours"},"0_2":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_densite_en_cours"},"1_0":{"w":"4","division_type":"H","dataviz":"epci_pop_evolution"},"2_0":{"w":"4","division_type":"H","dataviz":"epci_pop_comparaison_pays_region"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Démographie","style":"titre-2"},"type":"Bloc"},{"layout":{"0_0":{"w":"6","division_type":"H"},"0_1":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_repartition_f_en_cours"},"0_2":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_repartition_h_en_cours"},"1_0":{"w":"6","division_type":"H","dataviz":"epci_pop_categorie_age_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{},"type":"Bloc"},{"layout":{"0_0":{"w":"6","division_type":"H","dataviz":"epci_pop_categorie_csp_en_cours"},"1_0":{"w":"6","division_type":"H","dataviz":"epci_pop_menage_famillemono_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{},"type":"Bloc"},{"layout":{"0_0":{"w":"6","division_type":"H","dataviz":"epci_revenu_median"},"1_0":{"w":"6","division_type":"H","dataviz":"epci_revenu_taux_pauvrete"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Revenus","style":"titre-2"},"type":"Bloc"},{"layout":{"0_0":{"w":"12","division_type":"H","dataviz":"epci_pop_formation_sans_diplome_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Education","style":"titre-2"},"type":"Bloc"},{"layout":{"0_0":{"w":"4","division_type":"H","dataviz":"epci_pop_logement_statut_en_cours"},"1_0":{"w":"4","division_type":"H","dataviz":"epci_pop_logement_type_en_cours"},"2_0":{"w":"4","division_type":"H"},"2_1":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_logement_nb_personne_en_cours"},"2_2":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_logement_hlm_taux_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Logement","style":"titre-2"},"type":"Bloc"}]},"theme":""}`;
-        } else {
-            jsonReport = report;
-        }
-        let config = {};
-        try {
-            config = JSON.parse(jsonReport);
-        } catch {
-            console.log('le rapport au format json est illisible');
-        }
+    var _json2composition = function (jsonReport) {
+        // config test
+        let jsonSample = JSON.parse(`{"configuration":{"epci_title":{"dataviz_class":"title"},"epci_pop_en_cours":{"model":"b","icon":"icon-blue-habitants","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_densite_en_cours":{"model":"b","unit":" hab/km²","icon":"icon-blue-densite2","iconposition":"custom-icon","title":"","description":"","dataviz_class":"figure"},"epci_pop_evolution":{"title":"Evolution nombre d'habitant·e·s dans l'EPCI","description":"","model":"b","type":"line","label":"Légende","colors":"#005a66","opacity":"0.2","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"true","showlabels":"false","dataviz_class":"chart"},"epci_pop_comparaison_pays_region":{"title":"Taux d'évolution de la population municipale comparée de 2012 à 2017","description":"","model":"b","type":"bar","label":"Légende","colors":"#0094ab,#005a66,#005a66","opacity":"1","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"true","showlabels":"false","dataviz_class":"chart"},"epci_pop_repartition_f_en_cours":{"model":"b","unit":" %","icon":"icon-blue-femme","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_repartition_h_en_cours":{"model":"b","unit":" %","icon":"icon-blue-homme","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_categorie_age_en_cours":{"title":"Répartition de la population selon la classe d'âge en 2017","description":"","model":"b","label":"EPCI,Région","colors":"#0094ab,#005a66","opacity":"1","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"false","showlabels":"false","dataviz_class":"chart"},"epci_pop_categorie_csp_en_cours":{"title":"Répartition de la population selon les catégories socio-professionnelles (CSP) en 2017","description":"<ul>Les catégories socio-professionnelles<li>CS1: Agriculteur·rice·s exploitants </li><li>CS2: Artisan·e·s, Commerçant·e·s, Chef·fe·s d'entreprise</li><li>CS3: Cadres, Professions intellectuelles supérieures </li><li>CS4: Professions intermédiaires</li><li>CS5: Employé·e·s </li><li>CS6: Ouvrier·ère·s </li><li>CS7: Retraité·e·s </li><li>CS8: Autres, Sans activité professionnelle</li></ul>","model":"b","label":"EPCI,Région","colors":"#0094ab,#005a66","opacity":"1","ratio":"2:1","stacked":"false","begin0":"true","hidelegend":"false","showlabels":"false","dataviz_class":"chart"},"epci_pop_menage_famillemono_en_cours":{"model":"b","unit":" %","icon":"icon-blue-menage_mono","iconposition":"custom-icon","dataviz_class":"figure"},"epci_revenu_median":{"model":"b","unit":" €","icon":"icon-blue-revenu","iconposition":"custom-icon","dataviz_class":"figure"},"epci_revenu_taux_pauvrete":{"model":"b","unit":" %","icon":"icon-blue-social_tx_pauvrete","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_formation_sans_diplome_en_cours":{"model":"b","unit":" %","icon":"icon-blue-social_diplome","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_logement_statut_en_cours":{"title":"Répartition des logements selon le statut en 2017","description":"","model":"b","type":"bar","label":"EPCI,Région","colors":"#0094ab,#005a66","opacity":"1","ratio":"3:2","stacked":"false","begin0":"true","hidelegend":"false","showlabels":"false","dataviz_class":"chart"},"epci_pop_logement_type_en_cours":{"title":"Répartition des logements selon le type en 2017","description":"","model":"b","type":"pie","label":"Légende","colors":"#0094ab,#005a66","opacity":"1","ratio":"3:2","stacked":"false","begin0":"false","hidelegend":"false","showlabels":"true","dataviz_class":"chart"},"epci_pop_logement_nb_personne_en_cours":{"model":"b","icon":"icon-yellow-house_person","iconposition":"custom-icon","dataviz_class":"figure"},"epci_pop_logement_hlm_taux_en_cours":{"model":"b","unit":" %","icon":"icon-yellow-hlm_tx","iconposition":"custom-icon","dataviz_class":"figure"}},"structure":{"blocs":[{"title":"epci_title","type":"BlocTitle"},{"text":"La population du territoire","style":"titre-1","type":"BlocElement"},{"layout":{"0_0":{"w":"4","division_type":"H"},"0_1":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_en_cours"},"0_2":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_densite_en_cours"},"1_0":{"w":"4","division_type":"H","dataviz":"epci_pop_evolution"},"2_0":{"w":"4","division_type":"H","dataviz":"epci_pop_comparaison_pays_region"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Démographie","style":"titre-2"},"type":"Bloc"},{"layout":{"0_0":{"w":"6","division_type":"H"},"0_1":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_repartition_f_en_cours"},"0_2":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_repartition_h_en_cours"},"1_0":{"w":"6","division_type":"H","dataviz":"epci_pop_categorie_age_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{},"type":"Bloc"},{"layout":{"0_0":{"w":"6","division_type":"H","dataviz":"epci_pop_categorie_csp_en_cours"},"1_0":{"w":"6","division_type":"H","dataviz":"epci_pop_menage_famillemono_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{},"type":"Bloc"},{"layout":{"0_0":{"w":"6","division_type":"H","dataviz":"epci_revenu_median"},"1_0":{"w":"6","division_type":"H","dataviz":"epci_revenu_taux_pauvrete"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Revenus","style":"titre-2"},"type":"Bloc"},{"layout":{"0_0":{"w":"12","division_type":"H","dataviz":"epci_pop_formation_sans_diplome_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Education","style":"titre-2"},"type":"Bloc"},{"layout":{"0_0":{"w":"4","division_type":"H","dataviz":"epci_pop_logement_statut_en_cours"},"1_0":{"w":"4","division_type":"H","dataviz":"epci_pop_logement_type_en_cours"},"2_0":{"w":"4","division_type":"H"},"2_1":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_logement_nb_personne_en_cours"},"2_2":{"w":"12","division_type":"V","h":"50","dataviz":"epci_pop_logement_hlm_taux_en_cours"}},"sources":"SOURCE: INSEE publication 2020","title":{"title":"Logement","style":"titre-2"},"type":"Bloc"}]},"theme":""}`);
+        console.log(jsonSample);
+        console.log(jsonReport);
 
         let parser = new DOMParser();
         let composition = document.createElement("div");
@@ -384,7 +385,7 @@ saver = (function () {
         let structure = [];
         let _composer_template = "";
         let model = "b";
-        config.structure.blocs.forEach(function(bloc) {
+        jsonReport.structure.blocs.forEach(function(bloc) {
             let _bloc = "";
             switch (bloc.type) {
                 case "BlocTitle":
@@ -394,7 +395,7 @@ saver = (function () {
                     _composer_template = composer.models()[model].elements[0];
                     //add dataviz template to container
                     //Same than composer.js
-                    let dvz = config.configuration[bloc.title];
+                    let dvz = jsonReport.configuration[bloc.title];
                     let dvztpl = composer.templates.datavizTemplate.join("");
                     dvztpl = dvztpl.replace(/{{dvz}}/g, bloc.title);
                     dvztpl = dvztpl.replace(/{{id}}/g, bloc.title);
@@ -433,16 +434,38 @@ saver = (function () {
         console.log(composition);
     };
 
+
+    var _loadJsonReport = function (report_id, jsonReport) {
+        var theme = jsonReport.theme; // composer.activeModel().id
+        var composition = _json2composition(jsonReport);
+        // TODO
+    }
+
+/*
+        //test html reconstruction
+        let structure = [];
+        jsonReport.structure.blocs.forEach(function (bloc) {
+            if (bloc.type === "Bloc") {
+                structure.push(_createBlocStructure(bloc.definition));
+            } else if (bloc.type === "BlocElement") {
+                console.log("TODO");
+            }
+        });
+        console.log("Contenu html fabriqué à partir de l'objet Report : ", structure.map(e => e.innerHTML).join(""));
+*/
+
+
     /*
      * Public
      */
 
     return {
+        testHtml2Json:  _test_html2json,
+
         saveJsonReport: _saveJsonReport,
-        composition2json: _composition2json,
-        report2composition: _json2composition
+        loadJsonReport: _loadJsonReport,
 
-
+//      report2composition: _json2composition
     }; // fin return
 
 })();

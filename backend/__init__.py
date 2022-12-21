@@ -115,14 +115,15 @@ class Report_composition(db.Model):
         return '<report_composition {}>'.format(self.report)
 
 class Report_definition(db.Model):
-    id = db.Column(db.Integer, autoincrement=True)
-    json = db.Column(db.Text, nullable=False)
+#   id = db.Column(db.Integer, autoincrement=True)
+    report = db.Column(db.String(50),db.ForeignKey(schema+'report.report'),nullable=False)
+    json = db.Column(db.Text(50000), nullable=False)
     save_date = db.Column(db.DateTime, 
                           default=datetime.utcnow, 
                           onupdate=datetime.utcnow)
-    report = db.Column(db.String(50),db.ForeignKey(schema+'report.report'),nullable=False)
     __table_args__ = (
-        db.PrimaryKeyConstraint('report', 'id'),
+#       db.PrimaryKeyConstraint('report', 'id'),
+        db.PrimaryKeyConstraint('report', 'save_date'),
         tableschema
     )
     def __repr__(self):
@@ -425,9 +426,11 @@ class GetReport(Resource):
         '''
         data = {'response':'success','data': json.loads(json.dumps([row2dict(r) for r in result]))}
         return jsonify(**data)
+
 report_composition_fields = api.model('Report_composition', {
     'dataviz': fields.String(max_length=50,required=True)
 })
+
 @report_composition.route('/<report_id>', doc={'description': 'Composition et Supression d\'un rapport'})
 @report_composition.doc(params={'report_id': 'identifiant du rapport'})
 class GetReportComposition(Resource):
@@ -504,9 +507,6 @@ class GetReportComposition(Resource):
                     data = {"response": "ERROR mauvais données associés"}
                     return data, 405
 
-backup_put = api.model('Backup_put', {
-    'json': fields.String(max_length=5000,required=True)
-})
 
 @backup.route('/<string:report_id>',doc={'description':'Liste des versions d\'un rapport'})
 @backup.doc(params={'report_id': 'identifiant du rapport'})
@@ -516,38 +516,45 @@ class ManageReportDef(Resource):
         data = {'response':'success','report_backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
         return jsonify(**data)
 
-    @backup.expect([backup_put])
     def put(self, report_id):
         data = request.get_json()
         if not data:
-            data = {"response": "ERROR no data supplied"}
-            return data, 405
+            return {"response": "ERROR no data supplied"}, 405
         else:
             if not Report.query.get(report_id):
                 return {"response": "rapport n'existe pas."}, 404
             else:
-                data.update({'report':report_id})
                 ct = datetime.now()
                 class DateTimeEncoder(JSONEncoder):
                     def default(self, obj):
                         if isinstance(obj, (date, datetime)):
                             return obj.isoformat()
-                data.update({'save_date':DateTimeEncoder().encode(ct)})
-                data.update({'id': ct.timestamp()})
                 try:
-                    save = Report_definition(**data)
+                    backup = {
+#                       'id':        ct.timestamp(),
+                        'report':    report_id,
+                        'save_date': DateTimeEncoder().encode(ct),
+                        'json':      json.dumps(data),
+                    };
+                    save = Report_definition(**backup)
                 except TypeError as err:
                     return {"response": str(err)}, 400
                 db.session.add(save)
                 db.session.commit()
-            return {"response": "success" , "data": data}
+            return {"response": "success" , "backup": backup}
 
 @backup.route('/<report_id>/last',doc={'description':'Dernière version d\'un rapport'})
 @backup.doc(params={'report_id': 'identifiant du rapport'})
 class GetLastReportDef(Resource):
     def get(self,report_id):
-        result = db.session.query(Report_definition).filter(Report_definition.save_date != None).order_by(desc(Report_definition.save_date)).limit(1).first()
-        data = {'response':'success','report backups':  json.loads(result.json)}
+        result = db.session.query(Report_definition) \
+                   .filter(Report_definition.save_date != None) \
+                   .filter(Report_definition.report == report_id) \
+                   .order_by(desc(Report_definition.save_date)) \
+                   .limit(1).first()
+        if result is None:
+            return {"response": "Aucune sauvegarde disponible pour ce rapport"}, 404
+        data = {'response':'success','report_backups':  json.loads(result.json)}
         return jsonify(**data)
 
 @backup.route('/<report_id>/<report_definition_id>',doc={'description':'Recupère une version d\'un rapport'})
@@ -555,7 +562,7 @@ class GetLastReportDef(Resource):
 class GetReportDefId(Resource):
     def get(self,report_id,report_definition_id):
         result = db.session.query(Report_definition).filter(Report_definition.id == report_definition_id)
-        data = {'response':'success','report backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
+        data = {'response':'success','report_backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
         return jsonify(**data)
 
 
