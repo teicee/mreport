@@ -2,7 +2,7 @@
  *
  * Commande de debug à lancer dans la console JS :
  * - pour tester l'encodage en json       : saver.testHtml2Json("/mreport/epci_population/report_composer.html")
- * - pour tester la reconstruction html   : saver.testJson2Html()
+ * - pour tester la reconstruction html   : saver.testJson2Html("/mreport/epci_population/report_composer.html")
  */
 saver = (function () {
     /*
@@ -230,22 +230,6 @@ saver = (function () {
     };
 
 
-    var _test_html2json = function (document_url) {
-        $.ajax({
-            url: document_url,
-            dataType: "text",
-            success: function (html) {
-                let _html = document.createElement("div");
-                _html.id = "report-composition";
-                _html.innerHTML = html;
-                console.log('Contenu récupéré à traiter : ', _html);
-                let _json = _composition2json(_html);
-                console.log('Données JSON générées : ', _json);
-            }
-        });
-    };
-
-
     var _saveJsonReport = function (report_id, composition, theme) {
         var jsonReport = _composition2json(composition, theme);
         
@@ -432,13 +416,33 @@ saver = (function () {
         });
 
         console.log(composition);
+        return composition;
     };
 
 
+    // TODO
     var _loadJsonReport = function (report_id, jsonReport) {
         var theme = jsonReport.theme; // composer.activeModel().id
-        var composition = _json2composition(jsonReport);
-        // TODO
+
+        var html = _json2composition(jsonReport);
+        if (html) {
+            let reportCompo = document.getElementById("report-composition");
+            reportCompo.replaceWith(html);
+/*
+            let alldvz = reportCompo.getElementsByClassName("dataviz");
+            for (elem of alldvz) {
+                wizard.getSampleData(elem.dataset.dataviz);
+            }
+                _configureNewBlock(reportCompo.querySelectorAll(".row"));
+                    $("#report-composition .structure-bloc").find(".remove").click(function (e) {
+                        $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
+                        $(e.currentTarget).closest(".structure-bloc").remove();
+                    });
+                    $("#report-composition .structure-element").find(".structureElems").click(function (e) {
+                        e.currentTarget.parentNode.remove();
+                    });
+*/
+        }
     }
 
 /*
@@ -454,18 +458,37 @@ saver = (function () {
         console.log("Contenu html fabriqué à partir de l'objet Report : ", structure.map(e => e.innerHTML).join(""));
 */
 
+    var _test_html2json = function (document_url) {
+        $.ajax({
+            url: document_url,
+            dataType: "text",
+            success: function (html) {
+                let _html = document.createElement("div");
+                _html.id = "report-composition";
+                _html.innerHTML = html;
+                console.log('Contenu récupéré à traiter : ', _html);
+                let _json = _composition2json(_html);
+                console.log('Données JSON générées : ', _json);
+            }
+        });
+    };
+
+    var _test_json2html = function (document_url) {
+        var jsonReport = _test_html2json(document_url);
+        var html = _json2composition(jsonReport);
+        console.log("Contenu html fabriqué à partir de l'objet Report : ", html);
+    };
+
 
     /*
      * Public
      */
 
     return {
-        testHtml2Json:  _test_html2json,
-
         saveJsonReport: _saveJsonReport,
         loadJsonReport: _loadJsonReport,
-
-//      report2composition: _json2composition
+        testHtml2Json:  _test_html2json,
+        testJson2Html:  _test_json2html,
     }; // fin return
 
 })();

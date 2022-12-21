@@ -437,7 +437,7 @@ composer = (function () {
         });
 
 
-//		return; // disable load from HTML
+		return; // disable load from HTML
 
 
         // Load template from HTML
