@@ -40,6 +40,7 @@ saver = (function () {
           this.definition = {};
           this.sources = "";
           this.title = {};
+          this.model = "-";
           this.type = "Bloc";
         }
       }
@@ -147,6 +148,10 @@ saver = (function () {
                 let bloc = bloc_item.querySelector(".report-bloc");
                 if (bloc) {
                     let _bloc = new Bloc();
+
+                    //get bloc-description (ref)
+                    _bloc.model = bloc.getAttribute("data-model-title").trim();
+
                     //get bloc-sources if present
                     let title = bloc.querySelector(".bloc-title.editable-text");
                     if (title && title.firstChild && title.firstChild.nodeType === 3 && title.firstChild.textContent) {
@@ -220,7 +225,7 @@ saver = (function () {
             switch (b.type) {
                 case "BlocElement": return { 'type': b.type, 'text': b.text, 'style': b.style };
                 case "BlocTitle":   return { 'type': b.type, 'title': b.title };
-                case "Bloc":        return { 'type': b.type, 'layout': b.definition, 'sources': b.sources, 'title': b.title };
+                case "Bloc":        return { 'type': b.type, 'model': b.model, 'layout': b.definition, 'sources': b.sources, 'title': b.title };
             }
             return { 'type': b.type }
         })
@@ -372,7 +377,7 @@ saver = (function () {
         jsonReport.structure.blocs.forEach(function(bloc) {
             let _bloc = "";
             switch (bloc.type) {
-                case "BlocTitle":
+                case "BlocTitle": // { 'type': b.type, 'title': b.title }
                     //create model container
                     // bad way. Need to update. Not sure that first element template is title
                     // Caution with composer.templates.blockTemplate
@@ -399,11 +404,11 @@ saver = (function () {
                     //stringify bloc element
                     _bloc = structure_bloc.outerHTML;
                     break;
-                case "Bloc":
+                case "Bloc": // { 'type': b.type, 'layout': b.definition, 'sources': b.sources, 'title': b.title }
                     _structure = _createBlocStructure(bloc.layout);
                     _bloc = composer.templates.blockTemplate.replace("{{{HTML}}}", _structure.outerHTML);
                     break;
-                case "BlocElement":
+                case "BlocElement": // { 'type': b.type, 'text': b.text, 'style': b.style }
                     _bloc = composer.templates.extraElementTemplate[0].replace("{{{TEXT}}}", bloc.text).replace("{{{CLASSE}}}", bloc.style);
                     break;
             }

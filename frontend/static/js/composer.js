@@ -432,12 +432,26 @@ composer = (function () {
             },
             success: function (data) {
                 console.log(data);
-                saver.loadJsonReport(reportId, data.report_backups);
+//              saver.loadJsonReport(reportId, data.report_backups);
+/*
+                    let alldvz = reportCompo.getElementsByClassName("dataviz");
+                    for (elem of alldvz) {
+                        wizard.getSampleData(elem.dataset.dataviz);
+                    }
+                    _configureNewBlock(reportCompo.querySelectorAll(".row"));
+                    $("#report-composition .structure-bloc").find(".remove").click(function (e) {
+                        $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
+                        $(e.currentTarget).closest(".structure-bloc").remove();
+                    });
+                    $("#report-composition .structure-element").find(".structureElems").click(function (e) {
+                        e.currentTarget.parentNode.remove();
+                    });
+*/
             }
         });
 
 
-		return; // disable load from HTML
+//		return; // disable load from HTML
 
 
         // Load template from HTML
