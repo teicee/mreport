@@ -36,26 +36,6 @@ composer = (function () {
             '</div>'
         ].join("")
         ,
-        dynamicBootstrapBloc: [
-            '<div class=" structure-bloc list-group-item disable_dynamic">',
-            '<span class="remove badge badge-danger">',
-            '<i class="fas fa-times"></i> remove',
-            '</span>',
-            '<span class="drag badge badge-default">',
-            '<i class="fas fa-arrows-alt"></i>',
-            '<p id="drag-tag">drag</p>',
-            '</span>',
-            '<span class="structure-description">',
-             '<input id="bootstrap_columns" type="text" class="form-control col-8" placeholder="Ex : 6 6">',
-            '<p id="nb_columns" class="d-none"></p>',
-            '</span>',
-            '<div class="structure-html">',
-            '<div class="row  bloc-content">',
-            '</div>',
-            '</div>',
-            '</div>'
-        ].join("")
-        ,
         /*
          * _extraElementTemplate - Array. This var is used to construct extra elements and append it
          * to dom with selected HTMLTemplate
@@ -97,7 +77,7 @@ composer = (function () {
         ,
         divide_element: [
             '<div class="edit_columns">',
-                '<span class="badge badge-success divide_column" data-toggle="modal"',
+                '<span id="divide-btn" class="badge badge-success divide_column" data-toggle="modal"',
                     'data-target="#divide_form">',
                     '<i class="fas fa-columns"></i> <span>Diviser</span>',
                 '</span>',
@@ -211,6 +191,9 @@ composer = (function () {
     ];
 
     var _selectedCustomColumn = false;
+    // Savoir si c'est déjà loadé, pour éviter de le reload à chaque fois qu'on change de modèle de rendu, anciennement le modèle admin.
+    // Comme aujourd'hui il n'y a plus de modèle custom, mais un seul modèle admin, on s'abstenir de recharger.
+    var isAlreadyLoaded = false;
     /*
      * _selectTemplate. This method is used to update structure, style  and icons store derived
      * from selected template
@@ -218,15 +201,18 @@ composer = (function () {
      */
 
     var _selectTemplate = function (e) {
-        var m = $(this).val();
-        _activeHTMLTemplate = m;
+        var m = report.getAppConfiguration().composerView
+        console.log(_HTMLTemplates[m])
         //Update structure elements choice in composer page
+        console.log("isAlreadyLoaded", isAlreadyLoaded)
+        if (isAlreadyLoaded) return
+        isAlreadyLoaded = true
         $("#structure-models .list-group-item").remove();
         $("#structure-models").append(_HTMLTemplates[m].elements);
         $("#element-models .list-group-item").remove();
         $("#element-models").append(_HTMLTemplates[m].extra_elements[0].replace("{{{TEXT}}}", "Texte").replace("{{{CLASSE}}}", ""));
         //update style in wizard modal
-        wizard.updateStyle(_HTMLTemplates[m]);
+        // wizard.updateStyle(_HTMLTemplates[m]); // Créer une erreur
         //update icon store in wizard modal
         wizard.updateIconList(_HTMLTemplates[m]);
     }
@@ -313,9 +299,14 @@ composer = (function () {
             extra_elements: extra_elements,
             dataviz_components: dataviz_components
         };
-        $("#selectedModelComposer").append('<option value="' + templateid + '">' + templateid + '</option>');
-	$('#selectedModelComposer option[value=""]').attr('disabled', 'disabled');
+        report.getAppConfiguration().report_theme.forEach((modeles) => {
+            $("#selectedModelComposer").append('<option value="' + modeles + '">' + modeles + '</option>');
+            $('#selectedModelComposer option[value=""]').attr('disabled', 'disabled');
+        })
 	$('#selectedModelComposer').val( $('#selectedModelComposer option[value!=""]:first').val() ).trigger('change');
+	$('#selectedModelComposer').val( $('#selectedModelComposer option[value!=""]:first').val() ).trigger('change');
+
+        $('#selectedModelComposer').val( $('#selectedModelComposer option[value!=""]:first').val() ).trigger('change');
 
     };
 
@@ -325,7 +316,12 @@ composer = (function () {
 
     var _initComposer = function () {
 	// Load theme list from _appConf
-	report.getAppConfiguration().report_theme.forEach(function (m) {
+    console.log(report)
+    console.log(report.getAppConfiguration())
+    console.log(report.getAppConfiguration().composerView)
+
+    // Chargement de la vue composer admin
+        let m = report.getAppConfiguration().composerView;
             $.ajax({
                 url: "/static/html/model-" + m + ".html",
                 dataType: "text",
@@ -338,7 +334,7 @@ composer = (function () {
                     _alert("Erreur avec le fichier html/model-" + m + ".html " + err, "danger", true);
                 }
             });
-        });
+            console.log("Loading model-" + m + ".html");
 
         // configure #report-composition to accept drag & drop from structure elements
         new Sortable(document.getElementById("report-composition"), {
@@ -398,9 +394,14 @@ composer = (function () {
         // check dynamic bloc validity
         $(document).on('keyup', '#bootstrap_columns', _handleStructureBlocs);
         $(document).on('keypress', '#bootstrap_columns', _onlyIntegerInput);
-        $('#separation_input').on('change', _changeOrientationInput);
+        // L'orientation est désormais automatique
+        // $('#separation_input').on('change', _changeOrientationInput);
+        // Afficher la taille des colonnes à diviser dans le modal, si c'est une row ça ne fait rien
+        // Permet de changer l'orientation le type du bloc enfant (col ou row) en fonction du bloc parent
+        $(document).on('click', '#divide-btn', _selectRowOrColumnChild);
         $('#dimensions_division').on('change', _changeDivideColumns);
         $(document).on('show.bs.modal', '#divide_form', _displayDivideModal);
+        // _saveDivideConfig() est à refaire de zéro !
         $(document).on('click', '#divide_modal_btn', _saveDivideConfig);
         $(document).on('click', 'span.empty_column', _deleteDvzFromComposer);
         $(document).on('click', 'span.delete_column', _deleteCellFromComposer);
@@ -1024,8 +1025,34 @@ composer = (function () {
             return false;
         return true;
     }
+
+    // Sert à connaître le parent du bloc sélectionné à diviser dans le composer
+    // Elle marche bien quand il s'agit du premier bloc à diviser
+    // Une fois que l'injection est faite pour réellement diviser les blocs c'est là où ça coince car l'injection n'est pas propre
+    // Il faut refaire proprement _saveDivideConfig() et normalement il n'y a pas de problème avec cette fonction
+    var _selectRowOrColumnChild = function (evt) {
+        let bloc = evt.target.parentNode;
+        console.log(bloc.className)
+        while(bloc.className.toString().includes("layout-cell") == false) {
+            bloc = bloc.parentNode;
+            console.log(bloc)
+        }
+        var separation = document.getElementById("separation_input");
+        console.log(bloc.parentNode)
+        console.log(bloc.parentNode.className.toString())
+        // Si le bloc parent est un col layout-rows mettre separation à 0 pour diviser verticalement
+        // sinon si c'est un row layout-columns mettre separation à 1 pour diviser horizontalement
+        if (bloc.parentNode.className.toString().includes("layout-rows")) {
+            separation.value = 0;
+        } else {
+            separation.value = 1;
+        }
+
+    }
+
     var _changeOrientationInput = function () {
         var dimensionsInputs = document.getElementById("columns-inputs")
+        console.log(dimensionsInputs)
         if ($(this).val() == 0) {
             var row = document.createElement('div');
             row.classList.add("row");
@@ -1086,6 +1113,10 @@ composer = (function () {
     var _displayDivideModal = function (evt) {
         _selectedCustomColumn = evt.relatedTarget.parentNode.nextElementSibling;
     }
+
+    // Cette fonction sert à confirmer et injecter le code html pour diviser des éléments du composer après la modal
+    // Tout n'est pas à jeter mais il faut vraiment la refaire en entier de zéro pour injecter le html "proprement" dans ce merveilleux code
+    // Ne pas hésiter à tout supprimer
     var _saveDivideConfig = function () {
         var columns_orientation = $("#separation_input").val().trim();
         if (columns_orientation == 0) {
@@ -1094,14 +1125,14 @@ composer = (function () {
             if (check.isValid) {
                 let parent = _selectedCustomColumn.parentNode;
                 parent.classList.remove("dividedcolumn");
-                _selectedCustomColumn.className = "lyrow";
+                _selectedCustomColumn.className = "lyrow ";
                 _selectedCustomColumn.previousElementSibling.remove();
                 let savedContent = _selectedCustomColumn.querySelectorAll("li, div.structure-element");
                 let saved = false;
-                var structure = "<div class='view'><div class='row '>";
+                var structure = "<div class='view'><div class='row layout-cols dividedcolumn'>";
                 check.str_array.forEach(function (column) {
                     structure +=
-                        '<div class="col-md-' + column.value + ' dividedcolumn customBaseColumn">\
+                        '<div class="col-md-' + column.value + ' layout-cell dividedcolumn customBaseColumn">\
                         <div class="edit_columns">\
                             <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
                                 <i class="fas fa-columns"></i>\
@@ -1130,10 +1161,11 @@ composer = (function () {
                 });
                 structure += '</div>\
                 </div>'
-                _selectedCustomColumn.innerHTML = structure;
+                _selectedCustomColumn.parentNode.parentNode.innerHTML = structure;
                 _selectedCustomColumn.replaceWith(_selectedCustomColumn.cloneNode(true));
                 _configureNewBlock(parent.querySelectorAll(".row"));
                 $('#divide_form').modal('hide')
+                console.log("injection colonne")
             }
         } else {
             var numberOfSplit = document.getElementById("dimensions_division").value;
@@ -1150,8 +1182,8 @@ composer = (function () {
                 structure +=
                     '<div class="lyrow h-' + height + ' verticalDivision">\
                         <div class="view">\
-                        <div class="row ">\
-                        <div class="col-md-12 dividedcolumn customBaseColumn">\
+                        <div class="row layout-rows">\
+                        <div class="col layout-cell dividedcolumn customBaseColumn">\
                             <div class="edit_columns">\
                                 <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
                                     <i class="fas fa-columns"></i>\
@@ -1184,7 +1216,7 @@ composer = (function () {
             parent.innerHTML = structure;
             _configureNewBlock(parent.querySelectorAll(".row,.test"));
             $('#divide_form').modal('hide')
-
+            console.log("injection ligne")
         }
 
 

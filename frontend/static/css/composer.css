@@ -310,7 +310,7 @@ span.structure-description {
 }
 
 #report-composition:empty:after {
-    content: "Séléctionner un rapport et un modèle. Puis déposer ici des blocs structrants et des dataviz.";
+    content: "Séléctionner le rapport à éditer. Puis déposer ici les blocs structurants et les dataviz.";
     text-align: center;
     top: 50%;
     left:50%;
