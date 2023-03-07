@@ -15,9 +15,7 @@ report = (function () {
     var _appConf = {
         "location": "/mreport",
         "api": "/api",
-        "title": "MREPORT",
-        "composerView": "composer",
-        "report_theme": [ "a", "b" ]
+        "title": "MREPORT"
     };
 
     var _rawReport = null;

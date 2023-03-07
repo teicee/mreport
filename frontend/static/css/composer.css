@@ -1,480 +1,367 @@
-.sidenav {
-    height: 100%;
-    width: 200px;
-    position: fixed;
-    z-index: 1;
-    top:155px;
-    left: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding-bottom: 155px;
+
+#composer,
+.builder.edit,
+.builder.edit .main,
+.builder.edit #report-composition {
+  min-height: 100%;
 }
 
-.sidenav-content{
-  overflow-y:auto;
-  height:100%;
+/*
+.builder.edit #report-composition .layout-rows {
+  background-color: #fcc;
+  border: 2px dotted #900;
+}
+.builder.edit #report-composition .layout-cols {
+  background-color: #cfc;
+  border: 2px dotted #090;
+}
+.builder.edit #report-composition .layout-cell {
+  background-color: #ccf;
+  border: 2px dotted #009;
+}
+*/
+
+/* --------------------------------------------------------- Barre supérieure */
+
+.builder {
+  padding-top: 100px;
 }
 
-.sidenav-content select{
-  margin-top:0;
+#ComposerOptionsSelectRow {
+  margin-top: -105px;
+  position: fixed;
+  z-index: 1000;
+  width: 100%;
+  left: 0;
+  padding: 15px;
 }
 
-.sidenav a {
-  padding: 6px 8px 6px 16px;
-  text-decoration: none;
-  font-size: 25px;
-  /*color: #818181;*/
-  display: block;
+#ComposerOptionsSelectRow .form-group {
+  margin: 0;
+}
+#ComposerOptionsSelectRow .form-group label {
+  font-size:12px;
+  font-weight:700;
 }
 
-.sidenav h6 {
-    color: black;
-    padding:0 10px;
+/* --------------------------------------------------------- Panneau latéral */
+
+.builder .sidenav {
+  height: 100%;
+  width: 200px;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  padding-bottom: 200px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.builder .sidenav-content {
+  overflow-y: auto;
+  height: 100%;
+  padding: 0 15px;
 }
 
-.sidenav a:hover {
-  color: #f1f1f1;
+.builder .sidenav fieldset {
+  margin: 0 0 0.5em 0;
+  padding: 0;
+}
+.builder .sidenav fieldset legend {
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-.main {
-  margin-left: 200px; /* Same as the width of the sidenav */
-  font-size: 28px; /* Increased text to enable scrolling */
-  padding: 0px 10px;
-  margin-top:90px;
+.builder .sidenav fieldset>.list-group {
+  margin-bottom: 0.5rem;
 }
-
-@media screen and (max-height: 450px) {
-  .sidenav a {font-size: 18px;}
-}
-
-
-.grid-square {
-    width: 100px;
-    height: 100px;
-    display: inline-block;
-    background-color: #fff;
-    border: solid 1px rgb(0,0,0,0.2);
-    padding: 10px;
-    margin: 12px;
-}
-
-.builder .structure-bloc {
-    position: relative;
-}
-
-.sidenav .list-group .list-group-item{
+.builder .sidenav .list-group-item {
   padding: 0.5rem;
 }
-
-
-.builder.edit .composition {
-    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    margin-left: 0px;
-    margin-top: 15px;
-    padding: 20px;
-    border: 1px solid #DDDDDD;
-    border-radius: 4px;
-    position: relative;
-    word-wrap: break-word;
-    width: 100%;
+.builder .sidenav .list-group-item:hover {
+  border: 1px solid #ccc;
+  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
 
-.builder.edit .composition .remove {
-    /*background: #E91E63;*/
-    font-size: 13px;
-    padding: 6px;
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    z-index: 10;
+.builder .sidenav .dataviz.list-group-item {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.builder .sidenav .structure-description {
+  font-size: small;
 }
 
-/*.builder .composition .row {
-    background-color: #F5F5F5;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-    -webkit-box-shadow: inset 0 1px 13px rgba(0, 0, 0, 0.1);
-    -moz-box-shadow: inset 0 1px 13px rgba(0, 0, 0, 0.1);
-    box-shadow: inset 0 1px 13px rgba(0, 0, 0, 0.1);
-    border: 1px solid #DDDDDD;
-    border-radius: 4px 4px 4px 4px;
-    margin: 15px 0;
-    position: relative;
-    padding: 25px 14px 0;
-}*/
-
-/*.builder .column {
-    background-color: #FFFFFF;
-    border: 1px solid #DDDDDD;
-    border-radius: 4px 4px 4px 4px;
-    margin: 15px 0;
-    padding: 39px 19px 24px;
-    position: relative;
-}*/
-
-/*.builder.edit .column:after {
-    background-color: #F5F5F5;
-    border: 1px solid #DDDDDD;
-    border-radius: 4px 0 4px 0;
-    color: #9DA0A4;
-    content: "Column";
-    font-size: 12px;
-    font-weight: bold;
-    left: -1px;
-    padding: 3px 7px;
-    position: absolute;
-    top: -1px;
-}*/
-
-/*.builder.edit .composition .row:before {
-    background-color: #F5F5F5;
-    border: 1px solid #DDDDDD;
-    border-radius: 4px 0 4px 0;
-    color: #9DA0A4;
-    content: "Row";
-    font-size: 12px;
-    font-weight: bold;
-    left: -1px;
-    line-height: 2;
-    padding: 3px 7px;
-    position: absolute;
-    top: -1px;
-}*/
-
-.builder.edit .composition .remove {
-    /*background: #E91E63;*/
-    font-size: 13px;
-    padding: 6px;
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    z-index: 10;
+.builder .sidenav .list-group-item .bloc-tools,
+.builder .sidenav .list-group-item .cell-tools,
+.builder .sidenav .list-group-item .data-tools,
+.builder .sidenav .list-group-item .text-edit,
+.builder .sidenav .list-group-item .structure-html,
+.builder .sidenav .list-group-item .dataviz-definition {
+  display: none;
 }
 
-.builder .composition .drag, .builder .composition .remove {
-    filter: alpha(opacity=40);
-    opacity: 0.4;
-    -webkit-transition: all 500ms ease;
-    -moz-transition: all 500ms ease;
-    -ms-transition: all 500ms ease;
-    -o-transition: all 500ms ease;
-    transition: all 500ms ease;
+.builder .sidenav .handle {
+  cursor: grab;
 }
 
-.builder.edit .composition .structure-bloc .drag,
-.builder.edit .composition .structure-element .drag {
-    font-size: 13px;
-    top: 5px;
-    right: 80px;
-    z-index: 10;
+.builder .sidenav .sortable-drag {
+  width: 400px;
+  background-color: #ffe;
 }
-
-
-.builder .composition .drag, .builder .composition .remove {
-    filter: alpha(opacity=40);
-    opacity: 0.4;
-    -webkit-transition: all 500ms ease;
-    -moz-transition: all 500ms ease;
-    -ms-transition: all 500ms ease;
-    -o-transition: all 500ms ease;
-    transition: all 500ms ease;
-}
-
-.builder.edit .drag {
-    /*background: #3095b4;
-    color: white;
-    position: absolute;
-    right: 5px;*/
-    cursor: grab;
-    padding: 6px;
-    font-size: 15px;
-}
-
-.sidenav #drag-tag{
-  display:none;
-}
-
-#report-composition .drag{
-    /*background: #3095b4;*/
-    /*color: white;*/
-    position: absolute;
-}
-
-#report-composition .drag #drag-tag{
-  display:inline-block;
-  margin-left:5px;
-  margin-bottom:0;
-}
-
-#report-composition .dataviz-container .dataviz .drag{
-  right:5px;
-}
-
-.builder.edit .list-group .structure-bloc:last-child .drag{
-  top:13px;
-}
-
-.structure-element .drag{
-    top: 5px;
-    right: 5px ;
-    transition: 0.2s;
-}
-.structure-element .drag:hover{
-    transition: 0.2s;
-    opacity: 1;
-}
-.structure-element .remove{
-    right: 80px ;
-    transition: 0.2s;
-}
-.structure-element .remove:hover{
-    transition: 0.2s;
-    opacity: 1;
-}
-.builder.edit .remove {
-    cursor: pointer;
-}
-.structure-element .editable-text{
-    font-size: 16px;
-}
-
-.builder .composition .structure-bloc:hover > .drag, .builder .composition .structure-bloc:hover > .configuration, .builder .composition .structure-bloc:hover > .remove, .builder .composition .box:hover .drag, .builder .composition .box:hover .configuration, .builder .composition .box:hover .remove {
-    filter: alpha(opacity=100);
-    opacity: 1;
-}
-
-
-.builder .sidenav .structure-html, .builder .sidenav .remove, .builder .sidenav .configuration, .builder .sidenav .boxes {
-    display: none;
-}
-
-.builder .sidenav .sortable-drag .configuration, .builder .sidenav .sortable-drag .boxes {
-    display: block;
-}
-
 .builder .sidenav .sortable-drag .structure-html {
-    display: flex;
+  display: block;
+}
+.builder .sidenav .sortable-drag .layout-cell {
+  border: 1px solid #999;
+  min-height: 2em;
+}
+.builder .sidenav .sortable-drag .bloc-sources {
+  font-size: 0.75em;
 }
 
+/* --------------------------------------------------------- Section principale */
 
-.builder .composition .structure-description {
-    display: none;
+.builder .main {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  margin-bottom: 100px;
+  font-size: 28px; /* Increased text to enable scrolling */
+  padding: 0px;
 }
 
-#structure-models, #dataviz-items {
+.builder #composer-report-title {
+  margin: 0;
+  margin-bottom: 1em;
+  text-align: center;
+}
+
+.builder.edit #report-composition {
+  position: relative;
+  min-height: 250px;
+  width: 100%;
+  border: 2px dashed grey;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  word-wrap: break-word;
+}
+
+.builder.edit #report-composition:empty:after {
+  content: "Sélectionner le rapport à éditer.\APuis déposer ici les blocs structurants et les dataviz.";
+  white-space: pre-wrap;
+  position: absolute;
+  top: 50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  text-align: center;
+  font-size:20px;
+  font-weight:700;
+  color:#006878;
+}
+
+/* --------------------------------------------------------- Blocs de composition */
+
+.builder #report-composition .structure-bloc,
+.builder #report-composition .structure-element {
+  position: relative;
+}
+.builder #report-composition .structure-description {
+  display: none;
+}
+
+.builder #report-composition .bloc-tools {
+  position: absolute;
+  top:   0;
+  right: 0;
+}
+
+.builder #report-composition .bloc-title {
+}
+.builder #report-composition .bloc-content {
+}
+.builder #report-composition .bloc-sources {
+  font-size: 12px;
+}
+
+.builder #report-composition .sortable-chosen .cell-tools,
+.builder #report-composition .sortable-chosen .text-edit,
+.builder #report-composition .sortable-chosen .dataviz.list-group-item,
+.builder #report-composition .sortable-chosen .dataviz-container:empty:after {
+  display: none;
+}
+/*.builder #report-composition .sortable-chosen .layout-cell,*/
+.builder #report-composition .sortable-chosen .dataviz-container {
+  min-height: 2em;
+  background: #ccc;
+}
+.builder #report-composition .sortable-chosen {
+  background-color: transparent;
+}
+.builder #report-composition .sortable-drag {
+  width: 100%;
+  background-color: #ffe;
+}
+
+/* --------------------------------------------------------- Actions de composition */
+
+.builder #report-composition .btn-group-sm .btn,
+.builder #report-composition .btn.btn-sm {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.builder #report-composition .list-group-item .bloc-tools,
+.builder #report-composition .splitable-grid  .cell-tools,
+.builder #report-composition .editable-text   .text-edit {
+  filter: alpha(opacity=25);
+  opacity: 0.25;
+  transition: 0.2s;
+}
+.builder #report-composition .list-group-item:hover .bloc-tools,
+.builder #report-composition .splitable-grid:hover  .cell-tools,
+.builder #report-composition .editable-text:hover   .text-edit {
+  filter: alpha(opacity=100);
+  opacity: 1;
+  transition: 0.2s;
+}
+
+.builder #report-composition .splitable-grid {
+  position: relative;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.builder #report-composition .splitable-grid .cell-tools {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  z-index: 5;
+}
+
+.builder #report-composition .editable-text {
+  border: 1px dotted #eee;
+}
+.builder #report-composition .editable-text:hover {
+  border: 1px dashed #999;
+}
+.builder #report-composition .editable-text .btn.text-edit {
+  float: left;
+}
+.builder #report-composition .editable-text .btn.text-edit b {
+  display: none;
+}
+
+/* --------------------------------------------------------- Dataviz containers */
+
+.builder #report-composition .dataviz-container {
+  border: 1px solid #bbb;
+  min-height: 8.5rem;
+  height: 100%;
+  font-size: 1rem;
   padding: 10px;
-  margin-bottom:1rem;
+}
+.builder #report-composition .dataviz-container:empty:after {
+  content: "glisser-déposer\Aune donnée ici";
+  white-space: pre-wrap;
+  margin-top: 1rem;
+  font-size: 2rem;
+  line-height: 2.5rem;
+  text-align: center;
+  color: #bbb;
 }
 
-#structure-models .drag{
-  background-color:white!important;
+.builder #report-composition .dataviz.list-group-item {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+.builder #report-composition .dataviz.list-group-item .data-tools {
+  margin-right: 1em;
+}
+.builder #report-composition .dataviz.list-group-item .data-tools .btn {
+  flex-grow: 0;
+}
+.builder #report-composition .dataviz .data-tools .btn-primary {
+  font-size: 2rem;
+}
+.builder #report-composition .dataviz .data-tools .btn.drag,
+.builder #report-composition .dataviz .data-tools .btn b,
+.builder #report-composition .dataviz .dataviz-description i.fas,
+.builder #report-composition .dataviz .dataviz-definition {
+  display: none;
 }
 
-.dataviz-container li .drag.badge{
-  display:none;
+.builder #report-composition .dataviz:hover {
+  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
 
-.composition {
-    min-height: 250px;
+.builder.edit .dataviz.sortable-drag {
+  font-size: 1.2rem;
+  line-height: 1.5rem;
+  padding: 15px;
+  height: auto;
+}
+.builder.edit .dataviz.sortable-drag .data-tools {
+  display: none;
 }
 
-span.structure-description {
-    font-size: small;
+/* --------------------------------------------------------- Special title block */
+
+.builder #report-composition .report-bloc-title {
+  padding: 15px;
 }
 
-.sidenav label {
-    color: #fff;
+.builder #report-composition .report-bloc-title .dataviz-container {
+  min-height: 5rem;
+  flex-direction: row;
+  justify-content: space-between;
+  border: 5px ridge #bbb;
+}
+.builder #report-composition .report-bloc-title .dataviz-container:empty:after {
+  white-space: normal;
+  line-height: 2rem;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+.builder #report-composition .report-bloc-title .dataviz.list-group-item {
+  flex-grow: 1;
 }
 
-.sidenav .form {
-    padding: 10px;
+.builder #report-composition .report-bloc-title .data-tools {
+  display: none;
+}
+.builder #report-composition .report-bloc-title .dataviz-description i.fas {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  margin-right: 1rem;
+  font-size: 2rem;
+  vertical-align: middle;
 }
 
-.sidenav .tool button{
+/* --------------------------------------------------------- */
+
+.report-component {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+.card.dataviz.used {
+}
+.card.dataviz:not(.used) .card-footer {
     display: none;
 }
-
-.dataviz.list-group-item span {
-    font-size: small;
-}
-
-.structure-html code {
-    display: none;
-}
-
-#report-composition {
-    outline: 2px dashed;
-    outline-color: grey;
-    min-height:200px;
-}
-
-#report-composition:empty:after {
-    content: "Séléctionner le rapport à éditer. Puis déposer ici les blocs structurants et les dataviz.";
-    text-align: center;
-    top: 50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    position: absolute;
-    padding-left: 20px;
-    padding-right: 20px;
-    color:#006878;
-    font-size:20px;
-    font-weight:700;
-}
-
-.composition .report-bloc .dataviz-container {
-    /*border: #007bff;*/
-    border: 1px solid #bbb;
-    min-height: 200px;
-    width: 100%;
-}
-
-/* .composition .report-bloc-title .dataviz-container {
-    height: 135px
-} */
-.composition .bloc-content>.dataviz-container {
-    min-height: 150px;
-}
-
-.bloc-content{
-  margin:15px;
-}
-
-span.text-edit.badge.mreport-secondary-color-2-bg{
-    margin-left: 10px;
-    cursor: pointer;
-    font-size: 13px;
-    font-family: "Segoe UI";
-    letter-spacing: 0;
-    text-transform: lowercase;
-
-}
-
-.composition li.dataviz.list-group-item span {
-    padding-left: 10px;
-}
-
-.structure-element-description {
-    font-size: smaller;
-    padding-left: 10px;
+.card.dataviz .card-footer span {
+    margin-right: 3px;
 }
 
 .tool.configured::after {
-    /*color: mediumvioletred;*/
     content: "  \0040";
 }
-
 .tool,.tool.configured {
     display: inline;
 }
 
-.report-bloc-title .tool .btn {
-    cursor: auto;
-}
-
-#report-composition .btn{
-padding:5px 10px;
-}
-
-#dataviz-items code.dataviz-definition {
-    display: none;
-}
-
-.map-marker-circle-1 {
-  /*background-color:#E91E63;*/
-  border-radius: 18px;
-  border: 4px solid #eaebf0;
-  opacity: 0.50;
-}
-
-.map-marker-circle-2 {
-  background-color:#eaebf0;
-  border-radius: 18px;
-  /*border: 4px solid #E91E63;*/
-  opacity: 0.50;
-}
-
-#bootstrap_columns{
-    /*width: 75%;*/
-    display: inline-block;
-}
-.sortable-chosen span input{
-    display: none !important;
-}
-.sortable-chosen span #nb_columns{
-    display: inline !important;
-}
-.sortable-chosen .edit_columns,
-.sortable-chosen .dividedcolumn{
-    display: none;
-}
-.sortable-ghost .edit_columns,
-.sortable-ghost .dividedcolumn{
-    display: block;
-}
-.edit_columns{
-    position: absolute;
-    top: 10px;
-    font-size: 15px;
-    right: 10px;
-    z-index: 5;
-}
-.divide_column{
-  margin-right:5px;
-}
-.divide_column,
-.empty_column,
-.delete_column{
-    cursor: pointer;
-    font-size: 15px;
-    filter: alpha(opacity=40);
-    opacity: 0.4;
-    transition: 0.2s;
-}
-#report-composition .dataviz-container{
-    padding:35px;
-}
-#report-composition .customBaseColumn {
-    padding: 0;
-}
-.dividedcolumn:hover .divide_column,
-.dividedcolumn:hover .delete_column{
-    filter: alpha(opacity=100);
-    opacity: 1;
-    transition: 0.2s;
-}
-
-.drag_column{
-    position: unset !important;
-}
-.composition .row,
-.composition .view{
-    height: 100%;
-    line-height:0.75rem;
-}
-.dataviz-container{
-    display: flex;
-    height: 100%;
-}
-.report-component{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#element-models{
-    /* margin: 10px; */
-}
-#element-models .titleBloc {
-  line-height:1.5rem;
-}
-#element-models .structure-element .editable-text{
-  margin:0;
-}
-.full-width{
-    width: 100%;
-}
 .color-selector-group{
     display: flex;
     margin-top: 10px;
@@ -486,6 +373,7 @@ padding:5px 10px;
 .chosecolors .input-group-prepend span{
     flex-grow: 1;
 }
+
 #w_text_text,
 #w_title,
 #text-edit-value{
@@ -497,17 +385,18 @@ padding:5px 10px;
     font-size: 16px;
     min-height: 16px;
 }
+
 .manualColorPicking{
     border: none;
     border-radius: 4px;
     margin: 5px;
     box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
     width: 100%;
-
 }
 .manualColorPicking:focus{
     outline: none;
 }
+
 .notdvz{
     display: flex;
 }
@@ -515,6 +404,7 @@ padding:5px 10px;
     display: flex;
     align-items: center;
 }
+
 #divide_form .form-group,
 #divide_form small{
     margin-left: 15px;
@@ -524,6 +414,7 @@ padding:5px 10px;
     margin-left: 0;
     margin-right: 0;
 }
+
 .report-chart-title{
     text-align: center;
 }
@@ -532,8 +423,8 @@ padding:5px 10px;
 }
 .report-figure-chiffre {
     padding-top: 40px !important;
-
 }
+
 .editable-text:before {
     color: #fff;
     margin: 10px;
@@ -571,46 +462,23 @@ padding:5px 10px;
     font-weight: 400px;
 }
 
-.card.dataviz.used {
-    /*background-color: #dae0e5;*/
-}
-.card.dataviz:not(.used) .card-footer {
-    display: none;
-}
-
-.card.dataviz .card-footer span {
-    margin-right: 3px;
-}
-
 span.designed-dataviz {
-    /*right: 30px;*/
-    /*position: absolute;*/
     font-family: "Font Awesome 5 Free";
     font-size: 20px;
     font-weight: 700;
-    /*color: #218838;*/
-    /*margin-top: -10px;*/
 }
-
 span.designed-dataviz:before {
     content: "\f200";
 }
-
 span.certified-dataviz {
-    /* right: 70px; */
-    /* position: absolute; */
     font-family: "Font Awesome 5 Free";
     font-size: 20px;
     font-weight: 700;
     margin-left:15px;
-    /*color:#8cb871;*/
-    /* margin-top: -10px; */
 }
-
 span.certified-dataviz:before {
     content: "\f559";
 }
-
 span.certified-dataviz.disabled,
 span.designed-dataviz.disabled {
     display:none;
@@ -622,60 +490,9 @@ span.designed-dataviz.disabled {
     border-width: thin;
 }
 
-#report-composition .dataviz-container:empty:after {
-    content: "Glisser-déposer une donnée ici";
-    /*color: #818181;*/
-    line-height:2rem;
-}
-
-#report-composition .report-bloc-title .dataviz-container {
-    /*border: #007bff;*/
-    border-style: ridge;
-}
-
 .custom-control-input:checked~.custom-control-label::before{
   background-color:#006878;
   border-color: #006878;
 }
+*/
 
-.sidenav a.composerVersions{
-  font-size:12px;
-  color:white;
-}
-
-.sidenav a.composerVersions:hover{
-  cursor:pointer
-}
-
-#btn_save_report{
-  margin-top:35px;
-}
-
-#ComposerOptionsSelectRow{
-  /*box-shadow: 0 5px 10px rgb(0 0 0 / 20%);*/
-  position: fixed;
-  width:100%;
-  z-index: 99;
-  top:56px;
-}
-
-#ComposerOptionsSelectRow .form-group{
-  margin-top: .5rem;
-  margin-bottom: .75rem;
-}
-
-#ComposerOptionsSelectRow .form-group label{
-  font-size:12px;
-font-weight:700;
-}
-
-.report-bloc .dataviz-container {
-    display: flex;
-    height: 100%;
-    justify-content: center;
-}
-
-.bloc-sources {
-    margin-top:10px;
-    font-size: 12px;
-}

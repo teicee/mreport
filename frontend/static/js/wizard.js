@@ -4,6 +4,11 @@ wizard = (function () {
      */
 
     /*
+     * _initialized: flag true when wizard init is done
+     */
+    var _initialized = false;
+
+    /*
      * Wizard needs data to vizualize dataviz configuration
      * each data sample linked to dataviz is stored for next usage
      * in _storeData
@@ -516,8 +521,11 @@ wizard = (function () {
             document.getElementById("wizard_add").classList.remove("hidden");
             document.getElementById("selectedModelWizard").disabled = true;
             //Use activeModel
-            if (composer.activeModel()) {
-                document.getElementById("selectedModelWizard").value = composer.activeModel().id;
+            let model = composer.activeModel();
+            if (model) {
+                document.getElementById("selectedModelWizard").value = model.id;
+                _updateIconList(model);
+                _updateStyle(model);
             } else {
                 window.alert("Erreur : Pas de modèle sélectionné !")
                 return;
@@ -544,11 +552,10 @@ wizard = (function () {
             var viz = JSON.parse(_dataviz_infos.viz);
 
             //Enable the model if defined
-            let modelId = viz.properties.model || "b";
-            let model = "";
-            if (modelId) {
+            let modelId = viz.properties.model || document.getElementById("selectedModelWizard").value || "composer";
+            let model = (modelId) ? composer.models()[modelId] : "";
+            if (model) {
                 document.getElementById("selectedModelWizard").value = modelId;
-                model = composer.models()[modelId];
                 wizard.updateIconList(model);
             } else {
                 document.getElementById("selectedModelWizard").value = "";
@@ -681,13 +688,17 @@ wizard = (function () {
     var _updateStyle = function (model) {
         $("#wizard-result style").remove();
         //Update style in wizard modal
-        var _css = ['<style>',
+        var _css = [
+//          '<style>',
             //get current/default style
             model.style.match(/(?<=\<style\>)(.|\n)*?(?=\<\/style\>)/g)[0].trim(),
             //add icon style
             model.iconstyle,
-            '</style>']. join(" ");
-        document.getElementById("wizard-view").querySelector("STYLE").innerHTML = _css;
+//          '</style>'
+        ]. join(" ");
+//      document.getElementById("wizard-view").querySelector("STYLE").innerHTML = _css;
+        var $iframe = $('iframe#wizard-view');
+        $iframe.ready(function() { $iframe.contents().find("style").empty().html(_css); });
     };
 
     /**
@@ -858,8 +869,8 @@ wizard = (function () {
      */
     var _onValidateConfig = function () {
         var viz = _form2json();
-        var modelId = viz.properties.model;
-        var model = composer.models()[modelId];
+        var modelId = viz.properties.model || document.getElementById("selectedModelWizard").value || "composer";
+        var model = (modelId) ? composer.models()[modelId] : "";
         if (viz.type && viz.data && viz.properties) {
             //Get dataviz component herited from template and set attributes with properties object
             var elem = $.parseHTML(model.dataviz_components[viz.type].replace("{{dataviz}}", viz.id || viz.properties.id));
@@ -928,7 +939,7 @@ wizard = (function () {
     var _updateColorPicker = function (saved, e) {
         var colorbtn = _colorbtnId += 1;
         var modelId = document.getElementById("selectedModelWizard").value;
-        var model = composer.models()[modelId];
+        var model = (modelId) ? composer.models()[modelId] : "";
         /*if (typeof saved.datasets === "undefined") {
             saved.datasets = _data.dataset.length;
         }*/
@@ -939,6 +950,8 @@ wizard = (function () {
             $("#picker-wrapper").append('<div class="colorbtn colorbtn' + colorbtn + '"></div>');
             $(".colorbtn" + colorbtn).css('background-color', saved.color ? saved.color : "#FFF");
             $(".chosecolors").append('<div class="available_colors color-picker' + colorbtn + '"></div>');
+            if (! model) return;
+
             var pk = new Piklor(".color-picker" + colorbtn, model.parameters.colors, {
                 open: ".picker-wrapper .colorbtn" + colorbtn,
                 closeOnBlur: true,
@@ -997,6 +1010,8 @@ wizard = (function () {
                 $("#addColor").on("click", function (e) {
                     _updateColorPicker({}, e)
                 });
+                // flag init done
+                _initialized = true;
             }
         });
 
@@ -1012,6 +1027,7 @@ wizard = (function () {
     return {
 
         init: _init,
+        ready: function(){ return _initialized; },
         configureDataviz: _configureDataviz,
         json2html: _json2html,
         rgb2hex: _rgb2hex,

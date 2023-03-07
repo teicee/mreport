@@ -553,7 +553,7 @@ class GetLastReportDef(Resource):
                    .order_by(desc(Report_definition.save_date)) \
                    .limit(1).first()
         if result is None:
-            return {"response": "Aucune sauvegarde disponible pour ce rapport"}, 404
+            return {"response": "Aucune sauvegarde disponible pour ce rapport"}, 204
         data = {'response':'success','report_backups':  json.loads(result.json)}
         return jsonify(**data)
 

@@ -3,248 +3,104 @@ composer = (function () {
      * Private
      */
 
+    /*
+     * _composerTemplates - {object}. This var store html templates to render composer structure and actions buttons.
+     */
+    var _composerTemplates = {
+        // HTML used to construct bloc elements and append it to dom with selected HTMLTemplate
+        blockTemplate: [
+            '<li class="structure-bloc list-group-item handle">',
+              '<div class="bloc-tools btn-group btn-group-sm">',
+                '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
+                '<button class="btn btn-danger remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
+              '</div>',
+              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{{LABEL}}}</span>',
+              '<div class="structure-html">{{{HTML}}}</div>',
+            '</li>'
+        ].join(""),
+        // HTML used to construct extra elements and append it to dom with selected HTMLTemplate
+        extraElementTemplate: [
+            '<li class="structure-element list-group-item handle">',
+              '<div class="bloc-tools btn-group btn-group-sm">',
+                '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
+                '<button class="btn btn-danger remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
+              '</div>',
+              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{{TEXT}}}</span>',
+              '<div class="structure-html"><span class="editable-text {{{CLASSE}}}">{{{TEXT}}}</span></div>',
+            '</li>'
+        ].join(""),
+        // HTML used to construct dataviz items and append them to dom in #dataviz-items list
+        datavizTemplate: [
+            '<li data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}" class="dataviz list-group-item handle">',
+              '<div class="data-tools btn-group-vertical btn-group-sm">',
+                '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
+                '<button class="btn btn-primary" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel"><i class="{{icon}}"></i> <b>éditer</b></button>',
+              '</div>',
+              '<span class="dataviz-description"><i class="{{icon}}"></i> {{dvz}}</span>',
+              '<code class="dataviz-definition"></code>',
+            '</li>'
+        ].join(""),
+        
+        // HTML used to add action buttons to divided cells
+        splitable_element: [
+            '<div class="cell-tools btn-group btn-group-sm">',
+              '<button class="btn btn-success" data-toggle="modal" data-target="#divide_form">',
+                '<i class="fas fa-columns"></i> <b>diviser</b>',
+              '</button>',
+              '<button class="btn btn-danger cell-empty">',
+                '<i class="fas fa-undo"></i> <b>vider</b>',
+              '</button>',
+            '</div>',
+        ].join(""),
+        // HTML used to add action buttons to editable texts
+        editable_element: [
+            '<button data-toggle="modal" data-target="#text-edit" class="btn btn-sm btn-warning text-edit">',
+              '<i class="fas fa-edit"></i> <b>éditer</b>',
+            '</button>'
+        ].join("")
+    };
+
+    /*
+     * _listTemplates - {object}. List available templates.
+     * TODO use config file (ask the backend?)
+     */
+    var _listTemplates = {
+        "composer": "",
+        "a":        "Modèle A",
+        "b":        "Modèle B",
+    };
 
     /*
      * _HTMLTemplates - {object}. This var store structured html blocks issued
      * from html template selected
      */
-
     var _HTMLTemplates = {};
-
-    /*
-     * _composerTemplates - {object}. This var store html templates to render composer structure and actions buttons.
-     */
-
-    var _composerTemplates = {
-        /*
-         * blockTemplate - Array. This var is used to construct bloc elements and append it
-         * to dom with selected HTMLTemplate
-         */
-        blockTemplate: [
-            '<div class=" structure-bloc list-group-item">',
-            '<span class="drag badge badge-default">',
-            '<i class="fas fa-arrows-alt"></i>',
-            '<p id="drag-tag">drag</p>',
-            '</span>',
-            '<span class="remove badge badge-danger">',
-            '<i class="fas fa-times"></i> remove',
-            '</span>',
-            '<span class="structure-description">',
-            '{{{DESCRIPTION}}}',
-            '</span>',
-            '<div class="structure-html">{{{HTML}}}</div>',
-            '</div>'
-        ].join("")
-        ,
-        /*
-         * _extraElementTemplate - Array. This var is used to construct extra elements and append it
-         * to dom with selected HTMLTemplate
-         */
-        extraElementTemplate: [
-            [
-                '<div class="structure-element list-group-item titleBloc" draggable="false" style="">',
-                '<span class="drag badge badge-default">',
-                '<i class="fas fa-arrows-alt"></i>',
-                '<p id="drag-tag"> drag</p>',
-                '</span>',
-                '<span class="editable-text {{{CLASSE}}}">{{{TEXT}}}</span>',
-                '<span class="remove badge badge-danger structureElems">',
-                '<i class="fas fa-times"></i> remove',
-                '</span>',
-                '</div>'
-            ].join("")
-        ]
-        ,
-        /*
-         * _datavizTemplate - Array. This var is used to construct dataviz items and append them to dom
-         * in #dataviz-items list
-         */
-
-        datavizTemplate: [
-            '<li data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}" class="dataviz list-group-item handle">',
-            '<span class="drag badge badge-default">',
-            '<p id="drag-tag"> drag</p>',
-            '</span>',
-            '<div class="tool">',
-            '<button class="btn btn-default" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel">',
-            '<i class="{{icon}}"></i>',
-            '</button>',
-            '</div>',
-            '<span>{{dvz}}</span>',
-            '<code class="dataviz-definition"></code>',
-            '</li>'
-        ]
-        ,
-        divide_element: [
-            '<div class="edit_columns">',
-                '<span id="divide-btn" class="badge badge-success divide_column" data-toggle="modal"',
-                    'data-target="#divide_form">',
-                    '<i class="fas fa-columns"></i> <span>Diviser</span>',
-                '</span>',
-                '<span class="badge badge-danger delete_column">',
-                    '<i class="fas fa-undo"></i><span>Vider</span>',
-                '</span>',
-            '</div>'
-        ].join("")
-        ,
-        editable_element: [
-            '<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit badge badge-warning">',
-                '<i class="fas fa-edit"></i>edit',
-            '</span>'
-        ].join("")
-
-    };
 
     /*
      * _activeHTMLTemplate - string. This var store template selected id
      */
-
     var _activeHTMLTemplate = "";
 
     /*
-     * _blockTemplate - Array. This var is used to construct bloc elements and append it
-     * to dom with selected HTMLTemplate
-     */
-
-    var _blockTemplate = [
-        '<div class=" structure-bloc list-group-item">',
-        '<span class="drag badge mreport-primary-color-2-bg">',
-        '<i class="fas fa-arrows-alt"></i>',
-        '<p id="drag-tag">drag</p>',
-        '</span>',
-        '<span class="remove badge mreport-primary-color-2-bg">',
-        '<i class="fas fa-times"></i> remove',
-        '</span>',
-        '<span class="structure-description">',
-        '{{{DESCRIPTION}}}',
-        '</span>',
-        '<div class="structure-html">{{{HTML}}}</div>',
-        '</div>'
-    ].join("");
-
-    var _dynamicBootstrapBloc = [
-        '<div class=" structure-bloc list-group-item disable_dynamic">',
-        '<span class="remove badge ">',
-        '<i class="fas fa-times"></i> remove',
-        '</span>',
-        '<span class="drag badge">',
-        '<i class="fas fa-arrows-alt"></i>',
-        '<p id="drag-tag">drag</p>',
-        '</span>',
-        '<span class="structure-description">',
-         '<input id="bootstrap_columns" type="text" class="form-control col-8" placeholder="Ex : 6 6">',
-        '<p id="nb_columns" class="d-none"></p>',
-        '</span>',
-        '<div class="structure-html">',
-        '<div class="row  bloc-content">',
-        '</div>',
-        '</div>',
-        '</div>'
-    ].join("");
-
-    /*
-     * _extraElementTemplate - Array. This var is used to construct extra elements and append it
-     * to dom with selected HTMLTemplate
-     */
-
-    var _extraElementTemplate = [
-        [
-            '<div class="structure-bloc list-group-item titleBloc" draggable="false" style="">',
-            '<span class="drag badge ">',
-            '<i class="fas fa-arrows-alt"></i>',
-            '<p id="drag-tag"> drag</p>',
-            '</span>',
-            '<div class="text-edit-content dataviz-container">',
-                '<p class="text-htm text">Texte</strong></p>',
-                '<i class="editable-text"></i>',
-            '</div>',
-            '<span class="remove badge mreport-primary-color-2-bg structureElems">',
-            '<i class="fas fa-times"></i> remove',
-            '</span>',
-            '</div>'
-        ].join("")
-    ];
-
-
-
-
-
-    /*
-     * _datavizTemplate - Array. This var is used to construct dataviz items and append them to dom
-     * in #dataviz-items list
-     */
-
-    var _datavizTemplate = [
-        '<li data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}" class="dataviz list-group-item handle">',
-        '<span class="drag badge ">',
-        '<i class="{{icon}}"></i>',
-        '<p id="drag-tag"> drag</p>',
-        '</span>',
-        '<div class="tool">',
-        '<button class="btn btn-default" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel">',
-        '<i class="fas fa-cog"></i>',
-        '</button>',
-        '</div>',
-        '<span>{{dvz}}</span>',
-        '<code class="dataviz-definition"></code>',
-        '</li>'
-    ];
-
-    var _selectedCustomColumn = false;
-    // Savoir si c'est déjà loadé, pour éviter de le reload à chaque fois qu'on change de modèle de rendu, anciennement le modèle admin.
-    // Comme aujourd'hui il n'y a plus de modèle custom, mais un seul modèle admin, on s'abstenir de recharger.
-    var isAlreadyLoaded = false;
-    /*
-     * _selectTemplate. This method is used to update structure, style  and icons store derived
-     * from selected template
+     * _onSelectTemplate: Update style and icons store derived from selected template
      * method linked to #selectedModelComposer change event
      */
-
-    var _selectTemplate = function (e) {
-        var m = report.getAppConfiguration().composerView
-        console.log(_HTMLTemplates[m])
-        //Update structure elements choice in composer page
-        console.log("isAlreadyLoaded", isAlreadyLoaded)
-        if (isAlreadyLoaded) return
-        isAlreadyLoaded = true
-        $("#structure-models .list-group-item").remove();
-        $("#structure-models").append(_HTMLTemplates[m].elements);
-        $("#element-models .list-group-item").remove();
-        $("#element-models").append(_HTMLTemplates[m].extra_elements[0].replace("{{{TEXT}}}", "Texte").replace("{{{CLASSE}}}", ""));
-        //update style in wizard modal
-        // wizard.updateStyle(_HTMLTemplates[m]); // Créer une erreur
-        //update icon store in wizard modal
-        wizard.updateIconList(_HTMLTemplates[m]);
-    }
+    var _onSelectTemplate = function (e) {
+        _activeHTMLTemplate = $(this).val();
+        // NOTE wizard peut ne pas encore être initialisé et fonctionnel !
+        if (_activeHTMLTemplate && wizard.ready()) {
+            // update style in wizard modal
+            wizard.updateStyle(_HTMLTemplates[_activeHTMLTemplate]);
+            // update icon store in wizard modal
+            wizard.updateIconList(_HTMLTemplates[_activeHTMLTemplate]);
+        }
+    };
 
     /*
      * _parseTemplate. This method is used to parse html template
      * and update composer IHM and _HTMLTemplates var with result
      */
-
     var _parseTemplate = function (templateid, html) {
-        //Extra html elements needed to edit report (editable text, divide blocs...)
-        var divide_element = [
-            '<div class="edit_columns">',
-                '<span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal"',
-                    'data-target="#divide_form">',
-                    '<i class="fas fa-columns"></i> <span>Diviser</span>',
-                '</span>',
-                '<span class="badge mreport-primary-color-3-bg empty_column">',
-                    '<i class="fas fa-undo"></i><span>Vider</span>',
-                '</span>',
-                '<span class="badge mreport-primary-color-3-bg delete_column">',
-                    '<i class="fas fa-trash"></i><span>Fusionner</span>',
-                '</span>',
-            '</div>'
-        ].join("");
-
-        var editable_element = [
-            '<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit btn mreport-primary-color-2-bg">',
-                '<i class="fas fa-edit"></i>edit',
-            '</span>'
-        ].join("");
-
         // get data- linked to the template
         var parameters = $(html).data(); /* eg data-colors... */
         if (parameters.colors) {
@@ -256,185 +112,193 @@ composer = (function () {
             style = style.outerHTML;
         }
         //get main template div
-        var page = $(html).find("template.report").get(0).content.firstElementChild.outerHTML;
-        var blocs = [];
+        var page_layout = $(html).find("template.report").get(0).content.firstElementChild.outerHTML;
+        
         //get all report-bloc and report-bloc-title
+        var structure_elements = [];
         $(html).find("template.report-bloc, template.report-bloc-title").each(function (id, template) {
-            var elem = $(template).prop('content').firstElementChild;
-            //add button to editable-text
-            elem.querySelectorAll(".editable-text").forEach(function (t) {
-                $(t).append(_composerTemplates.editable_element);
-            })
-            //add button to divide columns
-            elem.querySelectorAll(".dividedcolumn.customBaseColumn").forEach(function (c) {
-                $(c).prepend(_composerTemplates.divide_element);
-            })
-            var description = elem.getAttribute("data-model-title");
-            blocs.push({
-                "html": elem.outerHTML,
-                "description": description
-            });
+            structure_elements.push( $(template).prop('content').firstElementChild );
         });
-        //Store all blocs in structure - Array
-        var structure = [];
-        var extra_elements = [];
-        blocs.forEach(function (elem) {
-            structure.push(_composerTemplates.blockTemplate.replace("{{{HTML}}}", elem.html).replace("{{{DESCRIPTION}}}", elem.description));
-        });
-        structure.push(_composerTemplates.dynamicBootstrapBloc);
         //Retrieve all dataviz components
         var dataviz_components = {};
         ["figure", "chart", "table", "title", "text", "iframe", "image", "map"].forEach(function (component) {
             var element = $(html).find("template.report-component.report-" + component).prop('content').firstElementChild;
             dataviz_components[component] = $.trim(element.outerHTML);
         });
-        _composerTemplates.extraElementTemplate.forEach(elem => extra_elements.push(elem));
         //Populate _HTMLTemplates with object
         _HTMLTemplates[templateid] = {
             id: templateid,
             parameters: parameters,
             style: style,
-            page: page,
-            elements: structure,
-            extra_elements: extra_elements,
+            page: page_layout,
+            structure_elements: structure_elements,
             dataviz_components: dataviz_components
         };
-        report.getAppConfiguration().report_theme.forEach((modeles) => {
-            $("#selectedModelComposer").append('<option value="' + modeles + '">' + modeles + '</option>');
-            $('#selectedModelComposer option[value=""]').attr('disabled', 'disabled');
-        })
-	$('#selectedModelComposer').val( $('#selectedModelComposer option[value!=""]:first').val() ).trigger('change');
-	$('#selectedModelComposer').val( $('#selectedModelComposer option[value!=""]:first').val() ).trigger('change');
+    };
 
-        $('#selectedModelComposer').val( $('#selectedModelComposer option[value!=""]:first').val() ).trigger('change');
+    /*
+     * _addComposerElements - Add composer action buttons to the edited structures
+     */
+    var _addComposerElements = function ($el) {
+        $el.find(".splitable-grid").prepend(_composerTemplates.splitable_element);
+        $el.find(".editable-text").prepend(_composerTemplates.editable_element);
+    };
 
+    /*
+     * _initComposerBlocks - Update structure elements choice in composer page
+     */
+    var _initComposerBlocks = function () {
+        const $structures = $("#structure-models").remove('.list-group-item');
+        const $elements = $("#element-models").remove('.list-group-item');
+        
+        // generate structures blocks from composer template
+        _HTMLTemplates['composer'].structure_elements.forEach(function (elem) {
+            $structures.append(
+                _composerTemplates.blockTemplate
+                .replace("{{{LABEL}}}", elem.getAttribute("data-label"))
+                .replace("{{{HTML}}}",  elem.outerHTML)
+            );
+        });
+        _addComposerElements($structures);
+        
+        // generate elements blocks from composer template
+        ["Texte"].forEach(function (elem) {
+            $elements.append(
+                _composerTemplates.extraElementTemplate
+                .replace("{{{TEXT}}}",   elem)
+                .replace("{{{CLASSE}}}", "")
+            );
+        });
+        _addComposerElements($elements);
+    };
+
+    /*
+     * _initDatavizContainer - Configure container to be able to receive and configure dataviz.
+     */
+    var _initDatavizContainer = function (node) {
+        $(node).find(".dataviz-container").each(function(i) {
+            new Sortable(this, {
+                group: 'dataviz',
+                animation: 150,
+                onAdd: function (evt) {
+                    $(evt.item).addClass("mreport-primary-color-3-bg");
+                    // Test if title component
+                    var test_title = $(evt.item).closest(".dataviz-container").parent().hasClass("report-bloc-title");
+                    if (test_title) {
+                        // No wizard needed. autoconfig this dataviz & deactivate wizard for this dataviz
+                        var dataviz = $(evt.item).closest(".dataviz").attr("data-dataviz");
+                        // Inject dataviz definition directy
+                        $(evt.item).find("code.dataviz-definition").text(
+                            _HTMLTemplates['composer'].dataviz_components['title'].replace("{{dataviz}}", dataviz)
+                        );
+                        // Set title icon & deactivate wizard button
+                        $(evt.item).find(".dataviz-description i.fas, .data-tools .btn-primary i.fas").attr("class", "fas fa-heading");
+//                      $(evt.item).find(".data-tools .btn-primary").prop('disabled', true);
+                    } else {
+//                      $(evt.item).find(".data-tools .btn-primary").prop('disabled', false);
+                    }
+                }
+            });
+        });
     };
 
     /*
      * _initComposer. This method initializes composer by loading html templates.
      */
-
     var _initComposer = function () {
-	// Load theme list from _appConf
-    console.log(report)
-    console.log(report.getAppConfiguration())
-    console.log(report.getAppConfiguration().composerView)
+        // update left menu after model selection with linked structure elements
+        $("#selectedModelComposer").on('change', _onSelectTemplate);
+        // update left menu after report selection with linked dataviz
+        $("#selectedReportComposer").on('change', _onSelectReport);
 
-    // Chargement de la vue composer admin
-        let m = report.getAppConfiguration().composerView;
+        // Load html templates from server file
+        for (const templateId in _listTemplates) {
             $.ajax({
-                url: "/static/html/model-" + m + ".html",
+                url: "/static/html/model-" + templateId + ".html",
                 dataType: "text",
                 success: function (html) {
-                    //Template parsing
-                    _parseTemplate(m, html);
-
+                    _parseTemplate(templateId, html);
+                    // if composer template: generate structures blocks list
+                    if (templateId == 'composer') return _initComposerBlocks();
+                    // else add the choice to the selector (and select it if none selected yet)
+                    $("#selectedModelComposer").append('<option value="' + templateId + '">' + _listTemplates[templateId] + '</option>');
+                    if (! $("#selectedModelComposer").val()) $("#selectedModelComposer").val(templateId).trigger('change');
                 },
                 error: function (xhr, status, err) {
-                    _alert("Erreur avec le fichier html/model-" + m + ".html " + err, "danger", true);
+                    _alert("Erreur avec le fichier html/model-" + templateId + ".html " + err, "danger", true);
                 }
             });
-            console.log("Loading model-" + m + ".html");
+        };
 
-        // configure #report-composition to accept drag & drop from structure elements
-        new Sortable(document.getElementById("report-composition"), {
-            handle: '.drag', // handle's class
-            group: 'structure',
-            animation: 150,
-            onAdd: function ( /**Event*/ evt) {
-                _configureNewBlock([evt.item]);
-            }
-        });
+        // save report button action
+        $("#btn_save_report").on('click', _saveReport);
+        // configure modal to edit text
+        $('#text-edit').on('show.bs.modal', _onTextEdit);
 
+        // configure modal to divide cells
+        $('#divide_form').on('show.bs.modal', _displayDivideModal);
+        $('#separation_input').on('change', _changeOrientationInput);
+        $('#dimensions_division').on('change', _changeDivideColumns);
+        $('#divide_modal_btn').on('click', _saveDivideConfig);
+/*
+        // cell remove: keep existing dataviz
+        $('.cell-tools').on('click', '.cell-empty', _deleteDvzFromComposer);
+        $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
+        $(e.currentTarget).closest(".structure-bloc").remove();
+*/
 
         // configure #structure-models to allow drag with clone option
         new Sortable(document.getElementById("structure-models"), {
-            handle: '.drag', // handle's class
-            dragClass: "sortable-drag",
-            filter: ".disable_dynamic",
-            preventOnFilter: false,
-            group: {
-                name: 'structure',
-                pull: 'clone',
-                put: false // Do not allow items to be put into this list
-            },
-            animation: 150,
-            sort: false // To disable sorting: set sort to false
+            group: { name: 'structure', pull: 'clone', put: false },
         });
-
         // configure #element-models to allow drag with clone option
         new Sortable(document.getElementById("element-models"), {
-            handle: '.drag',
-            group: {
-                name: 'structure',
-                pull: 'clone',
-                put: false // Do not allow items to be put into this list
-            },
-            animation: 150,
-            sort: false // To disable sorting: set sort to false
+            group: { name: 'structure', pull: 'clone', put: false },
         });
-
         // configure #dataviz-items to allow drag
         new Sortable(document.getElementById("dataviz-items"), {
-            group: 'dataviz',
-            animation: 150
+            group: { name: 'dataviz', pull: 'clone', put: false },
         });
-
-        // save report button action
-        $("#btn_save_report").click(_saveReport);
-
-        // update left menu after report selection with linked dataviz
-        $("#selectedReportComposer").change(_onSelectReport);
-
-        // update left menu after model selection with linked structure elements
-        $("#selectedModelComposer").change(_selectTemplate);
-
-        // configure modal to edit text
-        $('#text-edit').on('show.bs.modal', _onTextEdit);
-        // check dynamic bloc validity
-        $(document).on('keyup', '#bootstrap_columns', _handleStructureBlocs);
-        $(document).on('keypress', '#bootstrap_columns', _onlyIntegerInput);
-        // L'orientation est désormais automatique
-        // $('#separation_input').on('change', _changeOrientationInput);
-        // Afficher la taille des colonnes à diviser dans le modal, si c'est une row ça ne fait rien
-        // Permet de changer l'orientation le type du bloc enfant (col ou row) en fonction du bloc parent
-        $(document).on('click', '#divide-btn', _selectRowOrColumnChild);
-        $('#dimensions_division').on('change', _changeDivideColumns);
-        $(document).on('show.bs.modal', '#divide_form', _displayDivideModal);
-        // _saveDivideConfig() est à refaire de zéro !
-        $(document).on('click', '#divide_modal_btn', _saveDivideConfig);
-        $(document).on('click', 'span.empty_column', _deleteDvzFromComposer);
-        $(document).on('click', 'span.delete_column', _deleteCellFromComposer);
-
     };
 
     /*
      * _onSelectReport. This method is linked to #selectedReportComposer -event change-
      * to update dataviz items linked to selected report
      */
-
     var _onSelectReport = function (e) {
-        // clear composition
-        $("#report-composition .structure-bloc").remove();
-        //Get reportid
         var reportId = $(this).val();
-        //get and show report title
-        var title = admin.getReportData(reportId).title;
-        $("#composer-report-title").text(title);
 
-        // Load template from JSON
+        // clear composition
+        $("#report-composition").empty();
+        // get and show report title
+        $("#composer-report-title").text( admin.getReportData(reportId).title );
+
+        // Update dataviz items in menu list
+        var $dvzContainer = $("#dataviz-items").empty();
+        admin.getReportData(reportId).dataviz.forEach(function (dvz) {
+            $dvzContainer.append(
+                _composerTemplates.datavizTemplate
+                .replace(/{{dvz}}/g,      dvz.title)
+                .replace(/{{id}}/g,       dvz.id)
+                .replace(/{{reportId}}/g, reportId)
+                .replace(/{{type}}/g,     dvz.type)
+                .replace(/{{icon}}/g,     _getDatavizTypeIcon(dvz.type))
+            );
+        });
+
+        // Request last report backup data
         $.ajax({
             type: "GET",
             url: [report.getAppConfiguration().api, "backup", reportId, "last"].join("/"),
             dataType: "json",
             error: function (xhr, status, error) {
-                var msg = "erreur : " + error;
-                console.error(msg);
+                console.error("erreur : " + error);
             },
             success: function (data) {
+                // Load template from JSON
                 console.log(data);
 //              saver.loadJsonReport(reportId, data.report_backups);
-/*
+                /*
                     let alldvz = reportCompo.getElementsByClassName("dataviz");
                     for (elem of alldvz) {
                         wizard.getSampleData(elem.dataset.dataviz);
@@ -444,105 +308,41 @@ composer = (function () {
                         $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
                         $(e.currentTarget).closest(".structure-bloc").remove();
                     });
-                    $("#report-composition .structure-element").find(".structureElems").click(function (e) {
+                    $("#report-composition .structure-element").find(".remove").click(function (e) {
                         e.currentTarget.parentNode.remove();
                     });
-*/
-            }
-        });
-
-
-//		return; // disable load from HTML
-
-
-        // Load template from HTML
-        const dc = Date.parse(new Date());
-        $.ajax({
-            type: "GET",
-            url: [report.getAppConfiguration().location, reportId, "report_composer.html?dc=" + dc].join("/"),
-            success: function (html) {
-                if (html.length > 0) {
-                    let reportCompo = document.getElementById("report-composition");
-                    reportCompo.innerHTML = html;
-                    let alldvz = reportCompo.getElementsByClassName("dataviz");
-                    for (elem of alldvz) {
-                        wizard.getSampleData(elem.dataset.dataviz);
-                    }
-                    _configureNewBlock(reportCompo.querySelectorAll(".row"));
-                    $("#report-composition .structure-bloc").find(".remove").click(function (e) {
-                        $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
-                        $(e.currentTarget).closest(".structure-bloc").remove();
-                    });
-                    $("#report-composition .structure-element").find(".structureElems").click(function (e) {
-                        e.currentTarget.parentNode.remove();
-                    });
-                }
-            },
-            complete: function () {
-                //Update dataviz items in menu list
-                var lst = [];
-                var dataviz_lst = admin.getReportData(reportId).dataviz;
-                dataviz_lst.forEach(function (dvz) {
-                    var dvzList = [...document.getElementById("report-composition").querySelectorAll(".dataviz-container .dataviz")];
-                    var isAbsent = dvzList.every(function (oldDvz) {
-                        return oldDvz.dataset.dataviz !== dvz.id;
-                    })
-                    if (isAbsent) {
-                        if (dvz != null)
-                            var dvztpl = _composerTemplates.datavizTemplate.join("");
-                        dvztpl = dvztpl.replace(/{{dvz}}/g, dvz.title);
-                        dvztpl = dvztpl.replace(/{{id}}/g, dvz.id);
-                        dvztpl = dvztpl.replace(/{{reportId}}/g, reportId);
-                        dvztpl = dvztpl.replace(/{{type}}/g, dvz.type);
-                        dvztpl = dvztpl.replace(/{{icon}}/g, _getDatavizTypeIcon(dvz.type));
-                        lst.push(dvztpl);
-                    }
+                */
+                
+                // configure #report-composition to accept drag & drop from structure elements
+                new Sortable(document.getElementById("report-composition"), {
+                    handle: '.drag',
+                    group: 'structure',
+                    animation: 150,
+                    onAdd: function (evt) { _initDatavizContainer(evt.item); }
                 });
-                $("#dataviz-items .dataviz.list-group-item").remove();
-                $("#dataviz-items").append(lst.join(""));
-            },
-            error: function (error) {
-                console.log(error);
+
             }
         });
     };
 
     var _getDatavizTypeIcon  = function (type) {
-        let icon = 'fas fa-arrows-alt';
         switch (type) {
-            case "chart":
-            icon = "fas fa-chart-bar";
-            break;
-            case "table":
-            icon = "fas fa-table";
-            break;
-            case "figure":
-            icon = "fas fa-sort-numeric-down";
-            break;
-            case "title":
-            icon = "fas fa-heading";
-            break;
-            case "map":
-            icon = "fas fa-map-marker-alt";
-            break;
-            case "image":
-            icon = "fas fa-image";
-            break;
-            case "iframe":
-            icon = "fas fa-external-link-alt";
-            break;
-            case "text":
-            icon = "fas fa-comment";
-            break;
+            case "chart":  return "fas fa-chart-bar";
+            case "table":  return "fas fa-table";
+            case "figure": return "fas fa-sort-numeric-down";
+            case "title":  return "fas fa-heading";
+            case "map":    return "fas fa-map-marker-alt";
+            case "image":  return "fas fa-image";
+            case "iframe": return "fas fa-external-link-alt";
+            case "text":   return "fas fa-comment";
         }
-        return icon;
+        return 'fas fa-arrows-alt';
     };
 
     /*
      * _onTextEdit. This method is linked to #text-edit modal -event show-
      * to configure modal
      */
-
     var _onTextEdit = function (a) {
         var source;
         var content;
@@ -696,98 +496,6 @@ composer = (function () {
 
     };
 
-    /*
-     * _configureNewBlock. This method configure fresh dropped blocks to be able to receive
-     * and configure dataviz.
-     */
-
-    var _configureNewBlock = function (rows) {
-        $(rows).each(function (id, row) {
-            $(row).find(".dataviz-container").each(function (id, col) {
-                new Sortable(col, {
-                    group: 'dataviz',
-                    filter: '.edit_columns',
-                    preventOnFilter: false,
-                    animation: 150,
-                    onAdd: function ( /**Event*/ evt) {
-                        //Test if title component
-                        var test_title = $(evt.item).closest(".dataviz-container").parent().hasClass("report-bloc-title");
-
-                        if (test_title) {
-                            //No wizard needed. autoconfig this dataviz & deactivate wizard for this dataviz
-                            var dataviz = $(evt.item).closest(".dataviz").attr("data-dataviz");
-                            var elem = $.parseHTML(composer.activeModel().dataviz_components.title.replace("{{dataviz}}", dataviz));
-                            var definition = elem[0].outerHTML;
-                            // Inject dataviz definition directy
-                            $(evt.item).find("code.dataviz-definition").text(definition);
-                            $(evt.item).addClass("full-width");
-                            //Set title icon & deactivate wizard button
-                            var btn = $(evt.item).find(".tool button");
-                            $(btn).removeAttr("data-target").removeAttr("data-toggle");
-                            $(btn).find("i").get(0).className = "fas fa-heading";
-                        } else if ($(evt.item).hasClass("structure-element") && $(evt.item).find(".editable-text:contains(edit)").length == 0) {
-                            // add edit button near to editable text elements
-                            var btn = $(evt.item).find(".editable-text").append('<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit btn mreport-primary-color-2-bg"><i class="fas fa-edit"></i>edit</span>').find(".text-edit");
-                        }
-                        /* TO DO FOR RESIZE */
-                        // if(!evt.from.classList.contains("list-group")){
-                        //     evt.from.style.maxHeight="125px";
-                        // }
-                        // col.classList.add("resized");
-                        // var containers = document.querySelectorAll(".composition .dataviz-container:not(.resized)");
-
-                        // containers.forEach(function(container){
-                        //     container.style.minHeight = col.offsetHeight+"px";
-                        // })
-                        // evt.from.style.maxHeight="unset";
-                        // col.classList.remove("resized");
-
-                    }
-
-                });
-                $(row).find(".remove").click(function (e) {
-                    //keep existing dataviz
-                    $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
-                    $(e.currentTarget).closest(".structure-bloc").remove();
-                });
-                if ($(row).find(".editable-text:contains(edit)").length == 0) {
-                    // add edit button near to editable text elements
-                    var btn = $(row).find(".editable-text").append('<span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit btn mreport-primary-color-2-bg"><i class="fas fa-edit"></i>edit</span>').find(".text-edit");
-                }
-            });
-            $(row).find(".structureElems").click(function (e) {
-                e.currentTarget.parentNode.remove();
-            });
-            if (row.classList.contains("structure-element")) {
-                let item = row;
-                let editText = item.getElementsByClassName("editable-text")[0];
-                if (editText) {
-                    var span = document.createElement("span");
-                    span.classList.add("to-remove", "text-edit", "badge", "mreport-grey1-bg");
-                    span.dataset.target = "#text-edit";
-                    span.dataset.toggle = "modal";
-                    span.innerHTML = "edit";
-                    var icon = document.createElement("i");
-                    icon.classList.add("fas", "fa-edit");
-                    span.prepend(icon);
-                    editText.appendChild(span);
-                }
-            }
-
-        })
-
-
-        //enable remove buton
-
-    };
-
-    /*
-     * _configureNewElement. This method configure fresh dropped element
-     */
-
-    var _configureNewElement = function (elem) {
-        console.log(elem);
-    };
 
     /*
      * __exportHTML. This method is used to convert composer composition
@@ -800,7 +508,6 @@ composer = (function () {
             alert("Veuillez sélectionner un template");
             return;
         }
-
         var html = [];
         // Get first title
         $("#report-composition .report-bloc-title").each(function (id, title) {
@@ -819,7 +526,7 @@ composer = (function () {
             });
             //delete extra controls
             $(tmp_bloc).find(".to-remove").remove();
-            $(tmp_bloc).find(".edit_columns").remove();
+            $(tmp_bloc).find(".cell-tools").remove();
             if (tmp_bloc.hasClass("structure-element")) {
                 $(tmp_bloc).find(".badge").remove();
                 tmp_bloc.removeClass("list-group-item");
@@ -867,17 +574,6 @@ composer = (function () {
 
         return _export;
     };
-    /*
-     * _compose.  This public method is used to activate composer for a given report
-     * eg composer.compose("test");
-     */
-
-    var _compose = function (reportId) {
-        //Show composeur page
-        $("#btn-composer").click();
-        //Set report select value
-        $('#selectedReportComposer option[value="' + reportId + '"]').prop('selected', true).trigger("change");
-    }
 
     /*
      * _saveTeport.  This method is used by #btn_save_report to
@@ -938,6 +634,7 @@ composer = (function () {
         });
 
     };
+
     var checkHorizontalBootstrap = function (inputs) {
         var regex = new RegExp(/1[0-1]|[1-9]/);
         var test = true;
@@ -952,102 +649,10 @@ composer = (function () {
             "str_array": inputs
         };
     }
-    var checkBootstrapForStructureBlocs = function (input_value) {
-        input_value = input_value.trim();
-        var regex = new RegExp(/((1[0-2]|[1-9]) ){0,11}(1[0-2]|[1-9])/);
-        var str_array = input_value.split(' ');
-
-        var columns_sum = str_array.reduce((total, element) => {
-            return parseInt(total) + parseInt(element);
-        });
-        return {
-            "isValid": regex.test(input_value) && columns_sum == 12,
-            "str_array": str_array
-        };
-    }
     var checkVerticalBootstrap = function (input_value) {
         return {
             "numberOfSplit": document.getElementById("dimensions_division").value.trim()
         };
-    }
-    var _handleStructureBlocs = function () {
-        var str = $(this).val();
-        var check = checkBootstrapForStructureBlocs(str);
-        if (check.isValid) {
-            var columns_number = check.str_array.length;
-            columns_number = columns_number > 1 ? columns_number + " colonnes" : columns_number + " colonne"
-            var structure = '\
-                <div class="lyrow report-bloc">\
-                    <h4 class="bloc-title editable-text">Titre du bloc<!-- this text is editable in composer --></h4>\
-                    <div class="view bloc-content">\
-                    <div class="row ">\
-            ';
-            check.str_array.forEach(elem => {
-                structure +=
-                    '<div class="col-md-' + elem + ' dividedcolumn customBaseColumn">\
-                    <div class="edit_columns">\
-                        <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
-                            <i class="fas fa-columns"></i>\
-                            Diviser\
-                        </span>\
-                        <span class="badge mreport-primary-color-3-bg empty_column">\
-                            <i class="fas fa-undo"></i>\
-                        <span>Vider</span>\
-                        </span>\
-                        <span class="badge mreport-primary-color-3-bg delete_column">\
-                            <i class="fas fa-trash"></i><span>Fusionner</span>\
-                        </span>\
-                    </div>\
-                    <div class="dataviz-container card list-group-item">\
-                        <!--dataviz component is injected here -->\
-                    </div>\
-                </div>'
-            });
-            $(this).parent().siblings(":last").html(structure + '</div></div>\
-            <div class="bloc-sources">\
-                <div class="col">\
-                    <p><i class="editable-text">SOURCE: xxx<!-- this text is editable in composer --></i></p>\
-                </div>\
-            </div>\
-            </div>');
-            $(this).parent().parent().removeClass("disable_dynamic");
-            $(this).siblings("#nb_columns").html(columns_number);
-        } else {
-            $(this).parent().siblings(":last").html("");
-            $(this).parent().parent().addClass("disable_dynamic");
-        }
-
-    }
-    var _onlyIntegerInput = function (evt) {
-        // Only ASCII charactar in that range allowed
-        var ASCIICode = (evt.which) ? evt.which : evt.keyCode
-        if (ASCIICode > 31 && ASCIICode != 32 && (ASCIICode < 48 || ASCIICode > 57))
-            return false;
-        return true;
-    }
-
-    // Sert à connaître le parent du bloc sélectionné à diviser dans le composer
-    // Elle marche bien quand il s'agit du premier bloc à diviser
-    // Une fois que l'injection est faite pour réellement diviser les blocs c'est là où ça coince car l'injection n'est pas propre
-    // Il faut refaire proprement _saveDivideConfig() et normalement il n'y a pas de problème avec cette fonction
-    var _selectRowOrColumnChild = function (evt) {
-        let bloc = evt.target.parentNode;
-        console.log(bloc.className)
-        while(bloc.className.toString().includes("layout-cell") == false) {
-            bloc = bloc.parentNode;
-            console.log(bloc)
-        }
-        var separation = document.getElementById("separation_input");
-        console.log(bloc.parentNode)
-        console.log(bloc.parentNode.className.toString())
-        // Si le bloc parent est un col layout-rows mettre separation à 0 pour diviser verticalement
-        // sinon si c'est un row layout-columns mettre separation à 1 pour diviser horizontalement
-        if (bloc.parentNode.className.toString().includes("layout-rows")) {
-            separation.value = 0;
-        } else {
-            separation.value = 1;
-        }
-
     }
 
     var _changeOrientationInput = function () {
@@ -1111,8 +716,24 @@ composer = (function () {
         }
     }
     var _displayDivideModal = function (evt) {
-        _selectedCustomColumn = evt.relatedTarget.parentNode.nextElementSibling;
+        _selectedCustomColumn = evt.relatedTarget.closest('.layout-cell');
+        console.log(_selectedCustomColumn);
+
+		var separation = 0;
+		var parent = _selectedCustomColumn;
+		while (parent = parent.parentElement) {
+			if (parent.classList.contains('layout-rows')) { separation = 0; break; }
+			if (parent.classList.contains('layout-cols')) { separation = 1; break; }
+		}
+		console.log(parent);
+		console.log(separation);
+		document.getElementById("separation_input").value = separation;
+		document.getElementById("separation_input").disabled = true;
+
     }
+
+
+
 
     // Cette fonction sert à confirmer et injecter le code html pour diviser des éléments du composer après la modal
     // Tout n'est pas à jeter mais il faut vraiment la refaire en entier de zéro pour injecter le html "proprement" dans ce merveilleux code
@@ -1124,16 +745,16 @@ composer = (function () {
             let check = checkHorizontalBootstrap(inputs);
             if (check.isValid) {
                 let parent = _selectedCustomColumn.parentNode;
-                parent.classList.remove("dividedcolumn");
+                parent.classList.remove("splitable-grid");
                 _selectedCustomColumn.className = "lyrow ";
                 _selectedCustomColumn.previousElementSibling.remove();
                 let savedContent = _selectedCustomColumn.querySelectorAll("li, div.structure-element");
                 let saved = false;
-                var structure = "<div class='view'><div class='row layout-cols dividedcolumn'>";
+                var structure = "<div class='view'><div class='row layout-cols splitable-grid'>";
                 check.str_array.forEach(function (column) {
                     structure +=
-                        '<div class="col-md-' + column.value + ' layout-cell dividedcolumn customBaseColumn">\
-                        <div class="edit_columns">\
+                        '<div class="col-md-' + column.value + ' layout-cell splitable-grid">\
+                        <div class="cell-tools">\
                             <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
                                 <i class="fas fa-columns"></i>\
                                 Diviser\
@@ -1171,7 +792,7 @@ composer = (function () {
             var numberOfSplit = document.getElementById("dimensions_division").value;
             let check = checkVerticalBootstrap(numberOfSplit);
             let parent = _selectedCustomColumn.parentNode;
-            parent.classList.remove("dividedcolumn");
+            parent.classList.remove("splitable-grid");
             _selectedCustomColumn.previousElementSibling.remove();
             let savedContent = _selectedCustomColumn.querySelectorAll("li, div.structure-element");
             _selectedCustomColumn.remove();
@@ -1183,8 +804,8 @@ composer = (function () {
                     '<div class="lyrow h-' + height + ' verticalDivision">\
                         <div class="view">\
                         <div class="row layout-rows">\
-                        <div class="col layout-cell dividedcolumn customBaseColumn">\
-                            <div class="edit_columns">\
+                        <div class="col layout-cell splitable-grid">\
+                            <div class="cell-tools">\
                                 <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
                                     <i class="fas fa-columns"></i>\
                                     Diviser\
@@ -1223,12 +844,32 @@ composer = (function () {
 
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     var _deleteCellFromComposer = function (e) {
         var parent = e.currentTarget.parentNode.nextElementSibling.parentNode.closest(".row");
         var niv = parseInt(parent.firstElementChild.className.match(/\d/)[0]);
         e.currentTarget.parentNode.nextElementSibling.parentNode.remove();
         parent.closest(".row").firstElementChild.className = parent.closest(".row").firstElementChild.className.replace(niv, niv*2);
-
     }
 
     var _deleteDvzFromComposer = function (e) {
@@ -1249,18 +890,29 @@ composer = (function () {
             }
             dvz.parentNode.removeChild(dvz);
         }
-
     }
+
     return {
         initComposer: _initComposer,
-        compose: /* used by admin.js */ _compose,
-        activeModel: /* used by wizard.js */ function () {
-            return _HTMLTemplates[_activeHTMLTemplate];
+
+        /* used by admin.js */
+        compose: function(reportId) {
+            // show composer page
+            $("#btn-composer").click();
+            // set report select value
+            $('#selectedReportComposer option[value="' + reportId + '"]').prop('selected', true).trigger("change");
         },
-        models: /* used for test pupose */ function () {
+
+        /* used by wizard.js */
+        models: function() {
             return _HTMLTemplates;
         },
-        templates: _composerTemplates,
+
+        /* used by wizard.js & textConfiguration.js */
+        activeModel: function() {
+            return _HTMLTemplates[_activeHTMLTemplate];
+        },
+
         getDatavizTypeIcon: _getDatavizTypeIcon
     }; // fin return
 
@@ -1269,5 +921,5 @@ composer = (function () {
 $(document).ready(function () {
     composer.initComposer();
     wizard.init();
-    //textedit.init();
+//  textedit.init();
 });
