@@ -12,7 +12,7 @@ composer = (function () {
             '<li class="structure-bloc list-group-item handle">',
               '<div class="bloc-tools btn-group btn-group-sm">',
                 '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
-                '<button class="btn btn-danger remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
+                '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
               '</div>',
               '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{{LABEL}}}</span>',
               '<div class="structure-html">{{{HTML}}}</div>',
@@ -23,7 +23,7 @@ composer = (function () {
             '<li class="structure-element list-group-item handle">',
               '<div class="bloc-tools btn-group btn-group-sm">',
                 '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
-                '<button class="btn btn-danger remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
+                '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
               '</div>',
               '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{{TEXT}}}</span>',
               '<div class="structure-html"><span class="editable-text {{{CLASSE}}}">{{{TEXT}}}</span></div>',
@@ -235,17 +235,23 @@ composer = (function () {
         // configure modal to edit text
         $('#text-edit').on('show.bs.modal', _onTextEdit);
 
+        // remove/empty actions
+        $('#report-composition').on('click', '.bloc-tools .bloc-remove', function(e){
+            const $bloc = $(e.currentTarget).closest(".structure-bloc");
+//          $bloc.find(".dataviz").appendTo("#dataviz-items");
+            $bloc.remove();
+        });
+        $('#report-composition').on('click', '.cell-tools .cell-empty', function(e){
+            const $cell = $(e.currentTarget).closest(".layout-cell").find('.dataviz-container');
+//          $cell.find(".dataviz").appendTo("#dataviz-items");
+            $cell.empty();
+        });
+
         // configure modal to divide cells
         $('#divide_form').on('show.bs.modal', _displayDivideModal);
         $('#separation_input').on('change', _changeOrientationInput);
         $('#dimensions_division').on('change', _changeDivideColumns);
         $('#divide_modal_btn').on('click', _saveDivideConfig);
-/*
-        // cell remove: keep existing dataviz
-        $('.cell-tools').on('click', '.cell-empty', _deleteDvzFromComposer);
-        $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
-        $(e.currentTarget).closest(".structure-bloc").remove();
-*/
 
         // configure #structure-models to allow drag with clone option
         new Sortable(document.getElementById("structure-models"), {
@@ -304,11 +310,11 @@ composer = (function () {
                         wizard.getSampleData(elem.dataset.dataviz);
                     }
                     _configureNewBlock(reportCompo.querySelectorAll(".row"));
-                    $("#report-composition .structure-bloc").find(".remove").click(function (e) {
+                    $("#report-composition .structure-bloc").find(".bloc-remove").click(function (e) {
                         $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
                         $(e.currentTarget).closest(".structure-bloc").remove();
                     });
-                    $("#report-composition .structure-element").find(".remove").click(function (e) {
+                    $("#report-composition .structure-element").find(".bloc-remove").click(function (e) {
                         e.currentTarget.parentNode.remove();
                     });
                 */
@@ -715,9 +721,15 @@ composer = (function () {
 
         }
     }
+
+
     var _displayDivideModal = function (evt) {
-        _selectedCustomColumn = evt.relatedTarget.closest('.layout-cell');
-        console.log(_selectedCustomColumn);
+        var cell = evt.relatedTarget.closest('.layout-cell');
+        var cols = evt.relatedTarget.closest('.layout-cols');
+        var rows = evt.relatedTarget.closest('.layout-rows');
+console.log(rows);
+console.log(cols);
+console.log(cell);
 
 		var separation = 0;
 		var parent = _selectedCustomColumn;
@@ -840,57 +852,10 @@ composer = (function () {
             console.log("injection ligne")
         }
 
-
-
     }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    var _deleteCellFromComposer = function (e) {
-        var parent = e.currentTarget.parentNode.nextElementSibling.parentNode.closest(".row");
-        var niv = parseInt(parent.firstElementChild.className.match(/\d/)[0]);
-        e.currentTarget.parentNode.nextElementSibling.parentNode.remove();
-        parent.closest(".row").firstElementChild.className = parent.closest(".row").firstElementChild.className.replace(niv, niv*2);
-    }
-
-    var _deleteDvzFromComposer = function (e) {
-        var deleteBtn = e.currentTarget;
-        var linkedDvz = deleteBtn.parentNode.nextElementSibling.querySelectorAll(".dataviz");
-        for (dvz of linkedDvz) {
-            var dvzList = [...document.getElementById("dataviz-items").getElementsByClassName("dataviz")];
-            var isAbsent = dvzList.every(function (oldDvz) {
-                return oldDvz.dataset.dataviz !== dvz.dataset.dataviz;
-            })
-            if (isAbsent) {
-                var dvztpl = _composerTemplates.datavizTemplate.join("");
-                dvztpl = dvztpl.replace(/{{dvz}}/g, dvz.title);
-                dvztpl = dvztpl.replace(/{{id}}/g, dvz.dataset.dataviz);
-                dvztpl = dvztpl.replace(/{{reportId}}/g, dvz.reportId);
-                dvztpl = dvztpl.replace(/{{icon}}/g, _getDatavizTypeIcon(dvz.type));
-                document.getElementById("dataviz-items").innerHTML += dvztpl;
-            }
-            dvz.parentNode.removeChild(dvz);
-        }
-    }
 
     return {
         initComposer: _initComposer,
