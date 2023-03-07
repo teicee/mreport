@@ -192,7 +192,9 @@ wizard = (function () {
         $(".colorbtn, .color-picker").each(function (index, elem) {
             elem.remove();
         })
-
+        //remove preview css from selected template
+        $("#wizard-result style").remove();
+        document.getElementById("wizard-view").querySelector("STYLE").innerHTML = "";
     };
 
     /**
@@ -689,16 +691,12 @@ wizard = (function () {
         $("#wizard-result style").remove();
         //Update style in wizard modal
         var _css = [
-//          '<style>',
             //get current/default style
             model.style.match(/(?<=\<style\>)(.|\n)*?(?=\<\/style\>)/g)[0].trim(),
             //add icon style
             model.iconstyle,
-//          '</style>'
         ]. join(" ");
-//      document.getElementById("wizard-view").querySelector("STYLE").innerHTML = _css;
-        var $iframe = $('iframe#wizard-view');
-        $iframe.ready(function() { $iframe.contents().find("style").empty().html(_css); });
+        document.getElementById("wizard-view").querySelector("STYLE").innerHTML = _css;
     };
 
     /**
@@ -1002,6 +1000,7 @@ wizard = (function () {
                 $("body").append(html);
                 //Events management
                 $('#wizard-panel').on('show.bs.modal', _onWizardOpened);
+                $('#wizard-panel').on('hide.bs.modal', _clean);
                 $("#w_dataviz_type").change(_onChangeDatavizType);
                 $("#wizard_refresh").click(_onValidateConfig);
                 $("#wizard_default_save").click(function (e) {

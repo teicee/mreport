@@ -157,6 +157,10 @@
   color:#006878;
 }
 
+.builder i.fas {
+  width: 1em;
+}
+
 /* --------------------------------------------------------- Blocs de composition */
 
 .builder #report-composition .structure-bloc,

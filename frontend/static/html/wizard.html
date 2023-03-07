@@ -219,18 +219,13 @@
 
 
 
-
-
-                        <div class="col-lg-8 card-container flip">
-<iframe id="wizard-view" src="/static/html/wizard-view.html">
-<!--
+                        <div id="wizard-view" class="col-lg-8 card-container flip">
                             <style></style>
                             <div class="card card-flip">
                                 <div class="front">
                                     <div class="card-body">
                                         <h6 class="card-title">Affichage</h6>
-                                        <div id="wizard-result">
-                                        </div>
+                                        <div id="wizard-result"><!--code is injected here --></div>
                                     </div>
                                 </div>
                                 <div class="back">
@@ -238,24 +233,20 @@
                                         <h6 class="card-title">Icônes
                                             <button type="button" class="close" onclick="document.querySelector('.card-container').classList.toggle('backcard');" aria-label="Close">
                                                 <span aria-hidden="true">×</span>
-                                              </button>
+                                            </button>
                                         </h6>
-                                        <div id="wizard-icons">
-                                        </div>
+                                        <div id="wizard-icons"><!--code is injected here --></div>
                                     </div>
-
                                 </div>
                             </div>
--->
-</iframe>
                         </div>
+
 
 
                         <div class="row wizard-code" style="padding-top: 10p;display: none;">
                             <div class="col">
                                 <div class="card">
-                                    <code class="card-body" id="wizard-code">
-                                        <!--code is injected here --></code>
+                                    <code class="card-body" id="wizard-code"><!--code is injected here --></code>
                                 </div>
                             </div>
                         </div>
