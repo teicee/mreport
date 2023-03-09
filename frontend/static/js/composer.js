@@ -64,7 +64,25 @@ composer = (function () {
             '<button data-toggle="modal" data-target="#text-edit" class="btn btn-sm btn-warning text-edit">',
               '<i class="fas fa-edit"></i> <b>éditer</b>',
             '</button>'
-        ].join("")
+        ].join(""),
+        // HTML used to add a new child column inside a structure block
+        layout_cell: [
+            '<div class="col-{{SIZE}} layout-cell">',
+              '<ul class="dataviz-container list-group"></ul>',
+            '</div>'
+        ].join(""),
+        // HTML used to add a new input for colunm size in the division form
+        grid_col_input: [
+            '<div class="col">',
+              '<input type="number" min="1" max="12" class="form-control" placeholder="col-size" value="{{VAL}}" />',
+            '</div>'
+        ].join(""),
+        // HTML used for the add new column button in the division form
+        grid_col_adder: [
+            '<div class="col" style="flex-grow:0;">',
+              '<button type="button" id="grid-add-col" class="btn btn-success" title="Ajouter une colonne"><i class="fas fa-plus"></i></button>',
+            '</div>'
+        ].join(""),
     };
 
     /*
@@ -148,18 +166,21 @@ composer = (function () {
 
     /*
      * _addComposerElements - Add composer action buttons to the edited structures
+     * NOTE: à appliquer après l'insertion dans le composer (pour le check de profondeur)
      */
     var _addComposerElements = function ($el) {
-        $el.find(".layout-cols").prepend(_composerTemplates.cols_tools);
+        $el.find(".layout-cols").addBack(".layout-cols").prepend(_composerTemplates.cols_tools);
 
-//      $el.find(".layout-cell").prepend(_composerTemplates.cell_tools);
-        $el.find(".layout-cell").each(function(){
+//      $el.find(".layout-cell").addBack(".layout-cell").prepend(_composerTemplates.cell_tools);
+        $el.find(".layout-cell").addBack(".layout-cell").each(function(){
             $(this).prepend(_composerTemplates.cell_tools);
             // retrait du bouton de division si profondeur max atteinte (possible jusqu'à 4x4)
             if ($(this).parentsUntil('.bloc-content', '.layout-cols').length > 2) $(this).find('.cell-divide').remove();
         });
 
-        $el.find(".editable-text").prepend(_composerTemplates.editable_element);
+        $el.find(".editable-text").addBack(".editable-text").prepend(_composerTemplates.editable_element);
+
+        return $el;
     };
 
     /*
@@ -193,8 +214,9 @@ composer = (function () {
     /*
      * _initDatavizContainer - Configure container to be able to receive and configure dataviz.
      */
-    var _initDatavizContainer = function ($el) {
+    var _initDatavizContainer = function ($el, noempty) {
         $el.find(".dataviz-container").each(function(i) {
+            if (! noempty) $(this).empty();
             new Sortable(this, {
                 group: 'dataviz',
                 animation: 150,
@@ -705,21 +727,21 @@ composer = (function () {
         var colsList = [];
         for (var i = 0; i < colsDiv.childElementCount; i++) {
             var col = colsDiv.children[i];
+            // prendre uniquement les enfants ayant la classe "layout-cell" ou "layout-rows"
             const reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
             if (! reTest.test(col.className)) continue;
-
+            // récupération de la taille à partir de la classe "col-##"
             const reSize = new RegExp('^(.* )?col-([0-9]+)');
             var result = reSize.exec(col.className);
-            colsList.push( (result !== null) ? result[2] : 0 );
+            colsList.push( (result !== null) ? result[2] : 1 );
         }
-        console.log(colsList);
 
         // mise à jour du formulaire des dimensions
         var $colsForm = $(this).find('#grid-columns-size').empty();
-        colsList.forEach(function(c) {
-            $colsForm.append('<div class="col"><input type="number" min="1" max="12" class="form-control" placeholder="col-size" value="'+c+'" /></div>');
+        colsList.forEach(function(size) {
+            $colsForm.append( _composerTemplates.grid_col_input.replace('{{VAL}}', size) );
         });
-        $colsForm.append('<div class="col"><button type="button" id="grid-add-col" class="btn btn-success">Add</button></div>');
+        $colsForm.append(_composerTemplates.grid_col_adder);
 
         // permettre la suppression de la rangée seulement si d'autres existent
         $(this).find('#grid-delete-cols').prop("disabled", (rowsNum < 2)).css("display", (rowsNum < 2)?'none':'block' );
@@ -731,7 +753,7 @@ composer = (function () {
     var _gridAddNewCol = function (evt) {
         var $btncol = $(this).closest('.col');
         var size = Math.max(1, 12 - _gridCheckCols($btncol.parent().find('input')));
-        $btncol.before('<div class="col"><input type="number" min="1" max="12" class="form-control" placeholder="col-size" value="'+size+'" /></div>');
+        $btncol.before( _composerTemplates.grid_col_input.replace('{{VAL}}', size) );
         if ($btncol.siblings('.col').length >= 12) $btncol.remove();
     }
 
@@ -764,117 +786,38 @@ composer = (function () {
      * TODO
      */
     var _gridValidate = function (evt) {
+        var colsDiv = _gridSelected;
         var $form = $(this).closest('.modal').find('form');
+        var $inputs = $form.find('#grid-columns-size input');
 
         // vérification des dimensions horizontales (total 12 pour grid bs)
-        if (_gridCheckCols($form.find('#grid-columns-size input')) != 12) {
+        if (_gridCheckCols($inputs) != 12) {
             alert("La somme des tailles des colonnes n'est pas égale à 12 !");
             return false;
         }
 
-        $(this).closest('.modal').modal('hide');
-        /*
-        var columns_orientation = $("#separation_input").val().trim();
-        if (columns_orientation == 0) {
-            var inputs = document.getElementById("columns-inputs").querySelectorAll("input");
-            let check = checkHorizontalBootstrap(inputs);
-            if (check.isValid) {
-                let parent = _selectedCustomColumn.parentNode;
-                parent.classList.remove("splitable-grid");
-                _selectedCustomColumn.className = "lyrow ";
-                _selectedCustomColumn.previousElementSibling.remove();
-                let savedContent = _selectedCustomColumn.querySelectorAll("li, div.structure-element");
-                let saved = false;
-                var structure = "<div class='view'><div class='row layout-cols splitable-grid'>";
-                check.str_array.forEach(function (column) {
-                    structure +=
-                        '<div class="col-md-' + column.value + ' layout-cell splitable-grid">\
-                        <div class="cell-tools">\
-                            <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
-                                <i class="fas fa-columns"></i>\
-                                Diviser\
-                            </span>\
-                            <span class="badge mreport-primary-color-3-bg empty_column">\
-                                <i class="fas fa-undo"></i>\
-                                <span>Vider</span>\
-                            </span>\
-                            <span class="badge mreport-primary-color-3-bg delete_column">\
-                                <i class="fas fa-trash"></i>\
-                                <span>Fusionner</span>\
-                            </span>\
-                        </div>\
-                        <div class="dataviz-container card list-group-item">\
-                            <!--dataviz component is injected here -->';
-                    if (!saved && savedContent !== null) {
-                        saved = true;
-                        savedContent.forEach(function (elem) {
-                            structure += elem.outerHTML;
-                        });
-                    }
-                    structure +=
-                        '</div>\
-                    </div>'
-                });
-                structure += '</div>\
-                </div>'
-                _selectedCustomColumn.parentNode.parentNode.innerHTML = structure;
-                _selectedCustomColumn.replaceWith(_selectedCustomColumn.cloneNode(true));
-                _configureNewBlock(parent.querySelectorAll(".row"));
-                $('#divide_form').modal('hide')
-                console.log("injection colonne")
-            }
-        } else {
-            var numberOfSplit = document.getElementById("dimensions_division").value;
-            let check = checkVerticalBootstrap(numberOfSplit);
-            let parent = _selectedCustomColumn.parentNode;
-            parent.classList.remove("splitable-grid");
-            _selectedCustomColumn.previousElementSibling.remove();
-            let savedContent = _selectedCustomColumn.querySelectorAll("li, div.structure-element");
-            _selectedCustomColumn.remove();
-            let saved = false;
-            var structure = "";
-            let height = 100 / check.numberOfSplit;
-            for (let i = 0; i < check.numberOfSplit; i++) {
-                structure +=
-                    '<div class="lyrow h-' + height + ' verticalDivision">\
-                        <div class="view">\
-                        <div class="row layout-rows">\
-                        <div class="col layout-cell splitable-grid">\
-                            <div class="cell-tools">\
-                                <span class="badge mreport-primary-color-3-bg divide_column" data-toggle="modal" data-target="#divide_form">\
-                                    <i class="fas fa-columns"></i>\
-                                    Diviser\
-                                </span>\
-                                <span class="badge mreport-primary-color-3-bg empty_column">\
-                                    <i class="fas fa-undo"></i>\
-                                    <span>Vider</span>\
-                                </span>\
-                                <span class="badge mreport-primary-color-3-bg delete_column">\
-                                    <i class="fas fa-trash"></i>\
-                                    <span>Fusionner</span>\
-                                </span>\
-                            </div>\
-                            <div class="dataviz-container card list-group-item">\
-                                <!--dataviz component is injected here -->';
-                if (!saved && savedContent !== null) {
-                    saved = true;
-                    savedContent.forEach(function (elem) {
-                        structure += elem.outerHTML;
-                    });
-                }
-                structure +=
-                    '</div>\
-                        </div>\
-                        </div>\
-                        </div>\
-                    </div>'
-            };
-            parent.innerHTML = structure;
-            _configureNewBlock(parent.querySelectorAll(".row,.test"));
-            $('#divide_form').modal('hide')
-            console.log("injection ligne")
+        const reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
+        const reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
+        var inputIdx = 0;
+        var curCol;
+        // modification des colonnes existantes
+        for (var i = 0; i < colsDiv.childElementCount; i++) {
+            curCol = colsDiv.children[i];
+            // prendre uniquement les enfants ayant la classe "layout-cell" ou "layout-rows"
+            if (! reTest.test(curCol.className)) continue;
+            // modifier les classes de largeur "col-##" selon les inputs du formulaire
+            curCol.className = curCol.className.replace(reSize, '$1col-'+$inputs[inputIdx++].value+'$3');
         }
-        */
+        // génération des nouvelles colonnes
+        while (inputIdx < $inputs.length) {
+            var $cell = _initDatavizContainer(
+                $( _composerTemplates.layout_cell.replace('{{SIZE}}', $inputs[inputIdx++].value) )
+            );
+            $cell.appendTo(colsDiv);
+            _addComposerElements($cell);
+        }
+
+        $(this).closest('.modal').modal('hide');
     }
 
 
