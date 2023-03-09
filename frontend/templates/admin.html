@@ -627,58 +627,30 @@
     </div>
 
     <!-- Structure dividing modal -->
-    <div class="modal fade" id="divide_form" tabindex="-1" role="dialog" aria-labelledby="divideForm" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="composer_grid_form" tabindex="-1" role="dialog" aria-labelledby="gridForm" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="divide_title">Division</h5>
+                    <h5 class="modal-title">Division</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Fermer">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <form>
-                        <div class="form-group">
-                            <label for="separation_input">Séparation :</label>
-                            <select class="form-control" id="separation_input" name="separation_input">
-                                <option value="0">Verticale</option>
-                                <option value="1">Horizontale</option>
-                            </select>
+                        <div class="form-row" id="grid-columns-size">
                         </div>
-                        <div class="form-group">
-                            <label for="dimensions_division">Dimensions :</label>
-                            <div class="form-check form-check-inline">
-                              <input class="form-check-input" type="radio" name="dimensions_division" id="dimRadio2" value="2" selected="selected">
-                              <label class="form-check-label" for="dimRadio2">2</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                              <input class="form-check-input" type="radio" name="dimensions_division" id="dimRadio3" value="3">
-                              <label class="form-check-label" for="dimRadio3">3</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                              <input class="form-check-input" type="radio" name="dimensions_division" id="dimRadio4" value="4">
-                              <label class="form-check-label" for="dimRadio4">4</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                              <input class="form-check-input" type="radio" name="dimensions_division" id="dimRadio5" value="5">
-                              <label class="form-check-label" for="dimRadio5">5</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                              <input class="form-check-input" type="radio" name="dimensions_division" id="dimRadio6" value="6">
-                              <label class="form-check-label" for="dimRadio6">6</label>
-                            </div>
-                        </div>
-                        <div class="form-group no-margin" id="columns-inputs">
-                            <div class="row">
-                            </div>
-                            <small id="dimensions_help" class="form-text text-muted orientation_changed">Le total
-                                doit être 12</small>
-                        </div>
+                        <small id="dimensions_help" class="form-text text-muted orientation_changed">Le total doit être 12</small>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn mreport-primary-color-2-bg" data-dismiss="modal">Fermer</button>
-                    <button id="divide_modal_btn" type="button" class="text-save btn mreport-primary-color-1-bg">Enregistrer</button>
+                <div class="modal-footer btn-toolbar justify-content-between">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-danger" id="grid-delete-cols">Supprimer cette rangée de colonnes du bloc</button>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn mreport-primary-color-2-bg" data-dismiss="modal">Fermer</button>
+                            <button type="button" class="text-save btn mreport-primary-color-1-bg" id="grid-validate">Valider</button>
+                        </div>
                 </div>
             </div>
         </div>

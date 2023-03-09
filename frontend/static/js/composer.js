@@ -42,9 +42,16 @@ composer = (function () {
         ].join(""),
         
         // HTML used to add action buttons to divided cells
-        splitable_element: [
+        cols_tools: [
+            '<div class="cols-tools btn-group btn-group-sm">',
+              '<button class="btn btn-warning" data-toggle="modal" data-target="#composer_grid_form">',
+                '<i class="fas fa-grip-horizontal"></i> <b>grid</b>',
+              '</button>',
+            '</div>',
+        ].join(""),
+        cell_tools: [
             '<div class="cell-tools btn-group btn-group-sm">',
-              '<button class="btn btn-success" data-toggle="modal" data-target="#divide_form">',
+              '<button class="btn btn-success cell-divide">',
                 '<i class="fas fa-columns"></i> <b>diviser</b>',
               '</button>',
               '<button class="btn btn-danger cell-empty">',
@@ -87,6 +94,8 @@ composer = (function () {
      */
     var _onSelectTemplate = function (e) {
         _activeHTMLTemplate = $(this).val();
+        /*
+        // NOTE inutilisé pour ne charger les css du template que lorsque le wizard est ouvert
         // NOTE wizard peut ne pas encore être initialisé et fonctionnel !
         if (_activeHTMLTemplate && wizard.ready()) {
             // update style in wizard modal
@@ -94,6 +103,7 @@ composer = (function () {
             // update icon store in wizard modal
             wizard.updateIconList(_HTMLTemplates[_activeHTMLTemplate]);
         }
+        */
     };
 
     /*
@@ -140,7 +150,15 @@ composer = (function () {
      * _addComposerElements - Add composer action buttons to the edited structures
      */
     var _addComposerElements = function ($el) {
-        $el.find(".splitable-grid").prepend(_composerTemplates.splitable_element);
+        $el.find(".layout-cols").prepend(_composerTemplates.cols_tools);
+
+//      $el.find(".layout-cell").prepend(_composerTemplates.cell_tools);
+        $el.find(".layout-cell").each(function(){
+            $(this).prepend(_composerTemplates.cell_tools);
+            // retrait du bouton de division si profondeur max atteinte (possible jusqu'à 4x4)
+            if ($(this).parentsUntil('.bloc-content', '.layout-cols').length > 2) $(this).find('.cell-divide').remove();
+        });
+
         $el.find(".editable-text").prepend(_composerTemplates.editable_element);
     };
 
@@ -175,8 +193,8 @@ composer = (function () {
     /*
      * _initDatavizContainer - Configure container to be able to receive and configure dataviz.
      */
-    var _initDatavizContainer = function (node) {
-        $(node).find(".dataviz-container").each(function(i) {
+    var _initDatavizContainer = function ($el) {
+        $el.find(".dataviz-container").each(function(i) {
             new Sortable(this, {
                 group: 'dataviz',
                 animation: 150,
@@ -200,6 +218,7 @@ composer = (function () {
                 }
             });
         });
+        return $el;
     };
 
     /*
@@ -242,16 +261,38 @@ composer = (function () {
             $bloc.remove();
         });
         $('#report-composition').on('click', '.cell-tools .cell-empty', function(e){
-            const $cell = $(e.currentTarget).closest(".layout-cell").find('.dataviz-container');
-//          $cell.find(".dataviz").appendTo("#dataviz-items");
-            $cell.empty();
+            const $data = $(e.currentTarget).closest(".layout-cell").find('.dataviz-container');
+//          $data.find(".dataviz").appendTo("#dataviz-items");
+            $data.empty();
+        });
+
+        /*
+         * Ajout d'un niveau de découpage à partir d'un layout-cell devenant un layout-rows (contenant 2 rows)
+         * Attention: valable uniquement pour un layout-cell ayant déjà des frères (layout-cell ou layout-rows) !
+         * Sinon si le layout-cols parent ne contient que cet unique layout-cell (en col-12)...
+         * - soit action divide disabled (utiliser action grid sur le layout-cols parent pour étendre rows ou cols)
+         * - soit ajout d'une row (layout-cols) plutôt que split du layout-cell
+         * - soit split vertical du layout-cell, càd ajout d'une col (layout-cell) => choix le plus attendu
+         */
+        $('#report-composition').on('click', '.cell-tools .cell-divide', function(e){
+            const $cell = $(e.currentTarget).closest(".layout-cell");
+            if ($cell.siblings('.layout-cell, .layout-rows').length) {
+                $cell.removeClass("layout-cell").addClass("layout-rows");
+                $cell.find(".cell-tools").remove();
+                $cell.wrapInner('<div class="row layout-cols"><div class="col-12 layout-cell"></div></div>');
+                $cell.append(_initDatavizContainer($cell.find(".layout-cols").clone()));
+                _addComposerElements($cell);
+            } else {
+                $cell.removeClass("col-12").addClass("col-6");
+                $cell.after(_initDatavizContainer($cell.clone()));
+            }
         });
 
         // configure modal to divide cells
-        $('#divide_form').on('show.bs.modal', _displayDivideModal);
-        $('#separation_input').on('change', _changeOrientationInput);
-        $('#dimensions_division').on('change', _changeDivideColumns);
-        $('#divide_modal_btn').on('click', _saveDivideConfig);
+        $('#composer_grid_form').on('show.bs.modal', _gridOpenForm);
+        $('#grid-columns-size').on('click', '#grid-add-col', _gridAddNewCol);
+        $('#grid-delete-cols').on('click', _gridDeleteCols);
+        $('#grid-validate'   ).on('click', _gridValidate);
 
         // configure #structure-models to allow drag with clone option
         new Sortable(document.getElementById("structure-models"), {
@@ -324,7 +365,7 @@ composer = (function () {
                     handle: '.drag',
                     group: 'structure',
                     animation: 150,
-                    onAdd: function (evt) { _initDatavizContainer(evt.item); }
+                    onAdd: function (evt) { _initDatavizContainer($(evt.item)); }
                 });
 
             }
@@ -641,116 +682,98 @@ composer = (function () {
 
     };
 
-    var checkHorizontalBootstrap = function (inputs) {
-        var regex = new RegExp(/1[0-1]|[1-9]/);
-        var test = true;
-        var columns_sum = 0;
-        for (input of inputs) {
-            if (!regex.test(input.value.trim()))
-                test = false;
-            columns_sum += Number.parseInt(input.value)
+
+
+
+    var _gridSelected = null;
+
+    /*
+     * _gridOpenForm - Ouverture de la modal Dimension avec initialisation du formulaire.
+     */
+    var _gridOpenForm = function (evt) {
+        // groupes de lignes et de colonnes sélectionnées
+        var colsDiv = evt.relatedTarget.closest('.layout-cols');
+        var rowsDiv = evt.relatedTarget.closest('.layout-rows');
+        _gridSelected = colsDiv;
+
+        // comptage du nombre de lignes
+        var rowsNum = 0;
+        for (var i = 0; i < rowsDiv.childElementCount; i++)
+            if (rowsDiv.children[i].classList.contains('layout-cols')) rowsNum++;
+
+        // liste des colonnes (avec leurs largeurs bs)
+        var colsList = [];
+        for (var i = 0; i < colsDiv.childElementCount; i++) {
+            var col = colsDiv.children[i];
+            const reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
+            if (! reTest.test(col.className)) continue;
+
+            const reSize = new RegExp('^(.* )?col-([0-9]+)');
+            var result = reSize.exec(col.className);
+            colsList.push( (result !== null) ? result[2] : 0 );
         }
-        return {
-            "isValid": test && columns_sum == 12,
-            "str_array": inputs
-        };
-    }
-    var checkVerticalBootstrap = function (input_value) {
-        return {
-            "numberOfSplit": document.getElementById("dimensions_division").value.trim()
-        };
+        console.log(colsList);
+
+        // mise à jour du formulaire des dimensions
+        var $colsForm = $(this).find('#grid-columns-size').empty();
+        colsList.forEach(function(c) {
+            $colsForm.append('<div class="col"><input type="number" min="1" max="12" class="form-control" placeholder="col-size" value="'+c+'" /></div>');
+        });
+        $colsForm.append('<div class="col"><button type="button" id="grid-add-col" class="btn btn-success">Add</button></div>');
+
+        // permettre la suppression de la rangée seulement si d'autres existent
+        $(this).find('#grid-delete-cols').prop("disabled", (rowsNum < 2)).css("display", (rowsNum < 2)?'none':'block' );
     }
 
-    var _changeOrientationInput = function () {
-        var dimensionsInputs = document.getElementById("columns-inputs")
-        console.log(dimensionsInputs)
-        if ($(this).val() == 0) {
-            var row = document.createElement('div');
-            row.classList.add("row");
-            for (let i = 0; i < 2; i++) {
-                let div = document.createElement("div");
-                div.classList.add("col-4", "horizontal-column");
-                let input = document.createElement("input");
-                input.type = "number";
-                input.classList.add("form-control");
-                input.value = 6;
-                div.appendChild(input);
-                row.appendChild(div);
-            }
-            dimensionsInputs.prepend(row);
-            dimensionsInputs.querySelector("small").innerHTML = "Le total doit être 12";
-            _resetSelectForDivision(6);
-        } else {
-            var previousModel = dimensionsInputs.querySelector(".row");
-            dimensionsInputs.querySelector("small").innerHTML = "Les divisions verticales ont toutes la même  taille";
-            previousModel.parentNode.removeChild(previousModel);
-            var row = document.createElement('div');
-            _resetSelectForDivision(4);
+    /*
+     * _gridAddNewCol - Ajout d'une cellule dans le formulaire (avec saisie de la largeur bs)
+     */
+    var _gridAddNewCol = function (evt) {
+        var $btncol = $(this).closest('.col');
+        var size = Math.max(1, 12 - _gridCheckCols($btncol.parent().find('input')));
+        $btncol.before('<div class="col"><input type="number" min="1" max="12" class="form-control" placeholder="col-size" value="'+size+'" /></div>');
+        if ($btncol.siblings('.col').length >= 12) $btncol.remove();
+    }
 
+    /*
+     * _gridCheckCols - Vérification des dimensions horizontales (total 12 pour grid bs)
+     */
+    var _gridCheckCols = function ($inputs) {
+        var total = 0;
+        $inputs.each( function(){
+            let n = Number.parseInt($(this).val(), 10);
+            n = isNaN(n) ? 1 : Math.max(1, Math.min(12, n));
+            $(this).val(n);
+            total+= n;
+        });
+        return total;
+    }
+
+    /*
+     * _gridDeleteCols - Suppression de toute la rangée sélectionnée (.row.layout-cols)
+     * NOTE: peut générer une structure non souhaitée en laissant des "étages" superflus
+     */
+    var _gridDeleteCols = function (evt) {
+        if (! _gridSelected) return;
+        _gridSelected.remove();
+        $(this).closest('.modal').modal('hide');
+    }
+
+    /*
+     * _gridValidate - Enregistrement du formulaire des dimensions pour application dans le composer.
+     * TODO
+     */
+    var _gridValidate = function (evt) {
+        var $form = $(this).closest('.modal').find('form');
+
+        // vérification des dimensions horizontales (total 12 pour grid bs)
+        if (_gridCheckCols($form.find('#grid-columns-size input')) != 12) {
+            alert("La somme des tailles des colonnes n'est pas égale à 12 !");
+            return false;
         }
-    }
-    var _resetSelectForDivision = function (number) {
-        var selectDimensions = document.getElementById("dimensions_division");
-        selectDimensions.innerHTML = "";
-        for (let i = 2; i <= number; i++) {
-            let option = document.createElement("option");
-            option.value = i;
-            option.text = i;
-            selectDimensions.add(option);
-        }
-    }
-    var _changeDivideColumns = function (event) {
-        var separation = document.getElementById("separation_input").value;
-        if (separation == 0) {
-            var previousModel = document.getElementById("columns-inputs").querySelector(".row");
-            previousModel.parentNode.removeChild(previousModel)
-            var row = document.createElement('div');
-            row.classList.add("row");
-            for (let i = 0; i < event.target.value; i++) {
-                let div = document.createElement("div");
-                div.classList.add("col-4", "horizontal-column");
-                let input = document.createElement("input");
-                input.type = "text";
-                input.classList.add("form-control");
-                input.value = Math.floor(12 / event.target.value);
-                div.appendChild(input);
-                row.appendChild(div);
-            }
-            document.getElementById("columns-inputs").prepend(row);
-        } else {
 
-        }
-    }
-
-
-    var _displayDivideModal = function (evt) {
-        var cell = evt.relatedTarget.closest('.layout-cell');
-        var cols = evt.relatedTarget.closest('.layout-cols');
-        var rows = evt.relatedTarget.closest('.layout-rows');
-console.log(rows);
-console.log(cols);
-console.log(cell);
-
-		var separation = 0;
-		var parent = _selectedCustomColumn;
-		while (parent = parent.parentElement) {
-			if (parent.classList.contains('layout-rows')) { separation = 0; break; }
-			if (parent.classList.contains('layout-cols')) { separation = 1; break; }
-		}
-		console.log(parent);
-		console.log(separation);
-		document.getElementById("separation_input").value = separation;
-		document.getElementById("separation_input").disabled = true;
-
-    }
-
-
-
-
-    // Cette fonction sert à confirmer et injecter le code html pour diviser des éléments du composer après la modal
-    // Tout n'est pas à jeter mais il faut vraiment la refaire en entier de zéro pour injecter le html "proprement" dans ce merveilleux code
-    // Ne pas hésiter à tout supprimer
-    var _saveDivideConfig = function () {
+        $(this).closest('.modal').modal('hide');
+        /*
         var columns_orientation = $("#separation_input").val().trim();
         if (columns_orientation == 0) {
             var inputs = document.getElementById("columns-inputs").querySelectorAll("input");
@@ -851,10 +874,8 @@ console.log(cell);
             $('#divide_form').modal('hide')
             console.log("injection ligne")
         }
-
+        */
     }
-
-
 
 
     return {
