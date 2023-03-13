@@ -9,126 +9,84 @@ saver = (function () {
      * Private
      */
 
-
-    /*
-.report-bloc
-    .bloc-title
-    .bloc-content
-        .row (r1)
-            .customBaseColumn (rn)
-                .dataviz-container (r1)
-            .customBaseColumn (rn)
-                .verticalDivision (on)
-                    .row (r1)
-                        .customBaseColumn (rn)
-                            .dataviz-container (r1)
-            .customBaseColumn (n)
-                .row (1)
-                    .customBaseColumn (n)
-                        .dataviz-container (1)
-                    .customBaseColumn
-                        .verticalDivision (n)
-                            .row (1)
-                                .customBaseColumn (n)
-                                    .dataviz-container (1)
-    */
-
-
-    class Bloc {
+    class JsonReport {
         constructor() {
-          this.divisions = [];
-          this.definition = {};
-          this.sources = "";
-          this.title = {};
-          this.model = "-";
-          this.type = "Bloc";
+            this.title = "",
+            this.theme = composer.activeModel().id;
+            this.blocs = [];
+            this.confs = {};
         }
-      }
+    }
 
-      class BlocElement {
-        constructor(text, style) {
-          this.text = text;
-          this.style = style;
-          this.type = "BlocElement";
+    class JsonBloc {
+        constructor(ref) {
+            this.ref     = ref;
+            this.type    = "bloc";
+            this.title   = {};
+            this.layout  = {};
+            this.sources = "";
         }
-      }
+    }
 
-      class BlocTitle {
-        constructor(datavizid) {
-          this.title = datavizid;
-          this.type = "BlocTitle";
-        }
-      }
+    const reType = new RegExp('^(.* )?layout-(cell|cols|rows)( .*)?$');
+    const reSize = new RegExp('^(.* )?col-([0-9]+)');
 
-
-      class JsonReport {
-        constructor() {
-          this.structure = {
-            title: "",
-            blocs: []
-          }
-          this.configuration = {};
-          this.theme =  "";
-        }
-      }
-
-
-    var _getDivisions = function (element) {
-        let results = {
-            divisions: []
-        };
-
-        element.querySelectorAll(":scope > .verticalDivision").forEach(function(verticalDivision) {
-            let properties = {
-                style: verticalDivision.className.replace("verticalDivisionlumn","").replace("lyrow","").trim(),
-                childrens: verticalDivision.querySelector(".customBaseColumn").parentElement,
-                type: "V"
+    /**
+     *
+     */
+    var _parseBlocLayout = function (node) {
+        let structure = {};
+        let result;
+        
+        result = node.className.match(reType);
+        if (result !== null) structure.type = result[2];
+        else return;
+        
+        result = node.className.match(reSize);
+        if (result !== null) structure.size = result[2];
+        
+        if (structure.type !== 'cell') {
+            // récursion sur les structures enfants d'un layout-rows ou layout-cols
+            structure.bloc = []
+            for (var i = 0; i < node.childElementCount; i++) {
+                result = _parseBlocLayout(node.children[i]);
+                if (result) structure.bloc.push(result);
             }
-            results.divisions.push(properties);
-        });
+            if (! structure.bloc.length) delete structure.bloc;
+        } else {
+            // recherche des dataviz listées dans le conteneur d'un layout-cell
+            structure.data = []
+            node.querySelectorAll(".dataviz-container .dataviz").forEach(function (dvz) {
+                structure.data.push( dvz.dataset.dataviz );
+            });
+        }
+        
+        return structure;
+    }
 
-        element.querySelectorAll(":scope > .customBaseColumn").forEach(function(baseColumn) {
-            //check if maincolumn is divided or if contains container
-            let properties = {
-                style: "",
-                isContainer: false,
-                dataviz : false,
-                childrens: false,
-                type: "H"
-            }
-            properties.style = baseColumn.className.replace("customBaseColumn","").replace("dividedcolumn","").trim();
+    /**
+     * _composition2json : Export DOM structures to JSON data.
+     */
+    var _composition2json = function (composition) {
+        let jsonReport = new JsonReport();
+        
+        // Loop on blocs
+        for (let i = 0; i < composition.childElementCount; i++) {
+            const child  = composition.children[i];
+            const blocRef = child.dataset.bloc;
+            if (! blocRef) continue;
+            
+            let jsonBloc = new JsonBloc(blocRef);
+            jsonBloc.type    = child.className.match(/structure-(bloc|element)/)[1];
+            jsonBloc.title   = child.querySelector(".structure-html .bloc-title");
+            jsonBloc.layout  = _parseBlocLayout(child.querySelector(".structure-html .bloc-content"));
+            jsonBloc.sources = child.querySelector(".structure-html .bloc-sources");
+            
+            jsonReport.blocs.push(jsonBloc);
+        }
 
-            if (baseColumn.querySelectorAll(":scope > .dataviz-container").length > 0) {
-                properties.isContainer = true;
-                properties.dataviz = baseColumn.querySelector(".dataviz").dataset.dataviz || false;
-                properties.childrens = false;
-            } else {
-                properties.isContainer = false;
-                if (baseColumn.querySelectorAll(".verticalDivision, .customBaseColumn").length > 0) {
-                    properties.childrens = baseColumn;
-                } else if (baseColumn.querySelectorAll(":scope > .lyrow>.view>.row").length > 0) {
-                    properties.childrens = baseColumn.querySelector(":scope > .lyrow>.view>.row");
-                } else {
-                    properties.childrens = baseColumn.querySelector(".customBaseColumn").parentElement;
-                }
-
-            }
-            results.divisions.push(properties)
-        });
-
-        return results;
-    };
-
-
-    var _composition2json = function (composition, theme) {
-        var jsonReport = new JsonReport();
-        jsonReport.theme = theme || composer.activeModel().id;
-
+/*
         // Loop on dataviz definitions
-        composition.querySelectorAll("code.dataviz-definition").forEach(function (definition) {
-            let parser = new DOMParser();
-            let datavizid = definition.parentElement.dataset.dataviz;
-            if (datavizid) {
                 let properties = false;
                 if (definition.textContent) {
                     let dvz_element = parser.parseFromString(definition.textContent, "text/html").querySelector(".dataviz");
@@ -136,10 +94,8 @@ saver = (function () {
                     properties.dataviz_class = dvz_element.className.match(/report-*(chart|figure|text|table|map|title|image|iframe)/)[1];
                 }
                 jsonReport.configuration[datavizid] = properties;
-            }
-        });
 
-        // Loop on blocs
+
         var blocs = [];
         composition.querySelectorAll("#report-composition > .list-group-item").forEach(function (bloc_item, blocidx) {
             let bloc_type = bloc_item.className.match(/structure-*(bloc|element)/)[1];
@@ -229,21 +185,19 @@ saver = (function () {
             }
             return { 'type': b.type }
         })
-
+*/
         console.log('Objet Report créé à partir de la page composition : ', jsonReport);
         return jsonReport
     };
 
 
-    var _saveJsonReport = function (report_id, composition, theme) {
-        var jsonReport = _composition2json(composition, theme);
-        
+    var _saveJsonReport = function (report_id, report_data, theme) {
         $.ajax({
             dataType: "json",
             contentType: "application/json",
             type: "PUT",
             url: [report.getAppConfiguration().api, "backup", report_id].join("/"),
-            data: JSON.stringify(jsonReport),
+            data: JSON.stringify(report_data),
             dataType: 'json',
             success: function (data) {
                 if (data.response === "success") {
@@ -490,6 +444,8 @@ saver = (function () {
      */
 
     return {
+        exportJson:     _composition2json,
+        importJson:     _json2composition,
         saveJsonReport: _saveJsonReport,
         loadJsonReport: _loadJsonReport,
         testHtml2Json:  _test_html2json,

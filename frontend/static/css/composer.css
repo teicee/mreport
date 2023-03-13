@@ -341,6 +341,7 @@
 
 .builder #report-composition .dataviz.configured .data-tools .btn.edit {
   background-color: #28a745;
+  color: #ffffff;
 }
 
 .builder #report-composition .dataviz .dataviz-description {

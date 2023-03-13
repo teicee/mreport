@@ -679,9 +679,13 @@ composer = (function () {
         var _report = $("#selectedReportComposer").val();
 
         // Save JSON report
-        saver.saveJsonReport(_report, document.getElementById("report-composition"));
+        const report_data = saver.exportJson(document.getElementById("report-composition"));
+        console.log(JSON.stringify(report_data));
+
+        saver.saveJsonReport(_report, report_data);
 
         // Save HTML report
+        /*
         var html_options = {tabString: '  '};
         var newDom = indent.html(_exportHTML(), html_options);
         var _css = ['<style>',
@@ -727,7 +731,7 @@ composer = (function () {
                 console.log(a, b, c);
             }
         });
-
+        */
     };
 
 
