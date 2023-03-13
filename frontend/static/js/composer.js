@@ -9,24 +9,24 @@ composer = (function () {
     var _composerTemplates = {
         // HTML used to construct bloc elements and append it to dom with selected HTMLTemplate
         blockTemplate: [
-            '<li class="structure-bloc list-group-item handle">',
+            '<li class="structure-bloc list-group-item handle" data-bloc="{{REF}}">',
               '<div class="bloc-tools btn-group btn-group-sm">',
                 '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
                 '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
               '</div>',
-              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{{LABEL}}}</span>',
-              '<div class="structure-html">{{{HTML}}}</div>',
+              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>',
+              '<div class="structure-html">{{HTML}}</div>',
             '</li>'
         ].join(""),
         // HTML used to construct extra elements and append it to dom with selected HTMLTemplate
         extraElementTemplate: [
-            '<li class="structure-element list-group-item handle">',
+            '<li class="structure-element list-group-item handle" data-bloc="{{REF}}">',
               '<div class="bloc-tools btn-group btn-group-sm">',
                 '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
                 '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
               '</div>',
-              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{{TEXT}}}</span>',
-              '<div class="structure-html"><span class="editable-text {{{CLASSE}}}">{{{TEXT}}}</span></div>',
+              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{TEXT}}</span>',
+              '<div class="structure-html"><span class="editable-text {{CLASS}}">{{TEXT}}</span></div>',
             '</li>'
         ].join(""),
         // HTML used to construct dataviz items and append them to dom in #dataviz-items list
@@ -128,27 +128,24 @@ composer = (function () {
     };
 
     /*
-     * _parseTemplate. This method is used to parse html template
-     * and update composer IHM and _HTMLTemplates var with result
+     * _parseTemplate. Method used to parse HTML template and store to _HTMLTemplates
      */
     var _parseTemplate = function (templateid, html) {
         // get data- linked to the template
         var parameters = $(html).data(); /* eg data-colors... */
-        if (parameters.colors) {
-            parameters.colors = parameters.colors.split(",");
-        }
+        if (parameters.colors) parameters.colors = parameters.colors.split(",");
+        
         //get style
-        var style = $(html).find("style")[0];
-        if (style) {
-            style = style.outerHTML;
-        }
+        var page_style = $(html).find("style")[0];
+        if (page_style) page_style = page_style.outerHTML;
+        
         //get main template div
         var page_layout = $(html).find("template.report").get(0).content.firstElementChild.outerHTML;
         
         //get all report-bloc and report-bloc-title
-        var structure_elements = [];
+        var structure_elements = {};
         $(html).find("template.report-bloc, template.report-bloc-title").each(function (id, template) {
-            structure_elements.push( $(template).prop('content').firstElementChild );
+            structure_elements[ template.id ] = $(template).prop('content').firstElementChild;
         });
         //Retrieve all dataviz components
         var dataviz_components = {};
@@ -158,10 +155,10 @@ composer = (function () {
         });
         //Populate _HTMLTemplates with object
         _HTMLTemplates[templateid] = {
-            id: templateid,
-            parameters: parameters,
-            style: style,
-            page: page_layout,
+            id:                 templateid,
+            parameters:         parameters,
+            style:              page_style,
+            page:               page_layout,
             structure_elements: structure_elements,
             dataviz_components: dataviz_components
         };
@@ -194,21 +191,24 @@ composer = (function () {
         const $elements = $("#element-models").remove('.list-group-item');
         
         // generate structures blocks from composer template
-        _HTMLTemplates['composer'].structure_elements.forEach(function (elem) {
+        for (var ref in _HTMLTemplates['composer'].structure_elements) {
+            const elem = _HTMLTemplates['composer'].structure_elements[ref];
             $structures.append(
                 _composerTemplates.blockTemplate
-                .replace("{{{LABEL}}}", elem.getAttribute("data-label"))
-                .replace("{{{HTML}}}",  elem.outerHTML)
+                .replaceAll("{{LABEL}}", elem.getAttribute("data-label"))
+                .replaceAll("{{HTML}}", elem.outerHTML)
+                .replaceAll("{{REF}}", ref)
             );
-        });
+        };
         _addComposerElements($structures);
         
         // generate elements blocks from composer template
         ["Texte"].forEach(function (elem) {
             $elements.append(
                 _composerTemplates.extraElementTemplate
-                .replace("{{{TEXT}}}",   elem)
-                .replace("{{{CLASSE}}}", "")
+                .replaceAll("{{CLASS}}", "")
+                .replaceAll("{{TEXT}}", elem)
+                .replaceAll("{{REF}}", "extra-" + elem.toLowerCase())
             );
         });
         _addComposerElements($elements);
@@ -297,7 +297,7 @@ composer = (function () {
 //          $cell.find(".dataviz").appendTo("#dataviz-items");
             $cell.remove();
             
-            // s'il ne reste plus qu'un seul enfant (layout-cell ou layout-rows) dans le layout-cols
+            // ajustements sur le layout-cols selon son nombre d'enfants (layout-cell ou layout-rows)
             var $others = $cols.children('.layout-cell, .layout-rows');
             if ($others.length == 0) $cols.remove();
             else if ($others.length == 1) {
@@ -435,8 +435,8 @@ composer = (function () {
     };
 
     /*
-     * _onTextEdit. This method is linked to #text-edit modal -event show-
-     * to configure modal
+     * _onTextEdit. method linked to #text-edit modal show event to configure modal
+     * TODO
      */
     var _onTextEdit = function (a) {
         var source;

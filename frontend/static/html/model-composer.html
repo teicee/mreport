@@ -9,13 +9,13 @@
 
     <template class="report-bloc-title" id="btitle">
         <div class="report-bloc-title" data-label="Titre" data-description="Titre">
-            <ul class="dataviz-container list-group list-group-horizontal"></ul>
+            <ul class="dataviz-container list-group list-group-horizontal"><!--dataviz component is injected here --></ul>
         </div>
     </template>
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-bloc" id="b12">
-        <div class="lyrow report-bloc b12" data-label="1 colonne" data-description="100%">
+        <div class="lyrow report-bloc" data-label="1 colonne" data-description="100%">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
@@ -34,7 +34,7 @@
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-bloc" id="b6-6">
-        <div class="lyrow report-bloc b6-6" data-label="2 colonnes" data-description="50%/50%">
+        <div class="lyrow report-bloc" data-label="2 colonnes" data-description="50%/50%">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
@@ -56,7 +56,7 @@
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-bloc" id="b4-4-4">
-        <div class="lyrow report-bloc b4-4-4" data-label="3 colonnes" data-description="33%/33%/33%">
+        <div class="lyrow report-bloc" data-label="3 colonnes" data-description="33%/33%/33%">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
@@ -81,7 +81,7 @@
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-bloc" id="b4-4-4_2">
-        <div class="report-bloc lyrow b4-4-4_2" data-label="3 colonnes + 2" data-description="33%/33%/33%x2">
+        <div class="report-bloc lyrow" data-label="3 colonnes + 2" data-description="33%/33%/33%x2">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
