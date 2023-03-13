@@ -32,11 +32,11 @@ composer = (function () {
         // HTML used to construct dataviz items and append them to dom in #dataviz-items list
         datavizTemplate: [
             '<li data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}" class="dataviz list-group-item handle">',
-              '<div class="data-tools btn-group-vertical btn-group-sm">',
+              '<div class="data-tools btn-group-sm">',
                 '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
-                '<button class="btn btn-primary" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel"><i class="{{icon}}"></i> <b>éditer</b></button>',
+                '<button class="btn btn-warning edit" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel"><i class="fas fa-cogs"></i> <b>éditer</b></button>',
               '</div>',
-              '<span class="dataviz-description"><i class="{{icon}}"></i> {{dvz}}</span>',
+              '<span class="dataviz-description"><i class="dvz-icon {{icon}}"></i> {{dvz}}</span>',
               '<code class="dataviz-definition"></code>',
             '</li>'
         ].join(""),
@@ -235,10 +235,10 @@ composer = (function () {
                             _HTMLTemplates['composer'].dataviz_components['title'].replace("{{dataviz}}", dataviz)
                         );
                         // Set title icon & deactivate wizard button
-                        $(evt.item).find(".dataviz-description i.fas, .data-tools .btn-primary i.fas").attr("class", "fas fa-heading");
-//                      $(evt.item).find(".data-tools .btn-primary").prop('disabled', true);
+                        $(evt.item).find(".dataviz-description .dvz-icon").attr("class", "dvz-icon fas fa-heading");
+//                      $(evt.item).find(".data-tools .btn.edit").prop('disabled', true);
                     } else {
-//                      $(evt.item).find(".data-tools .btn-primary").prop('disabled', false);
+//                      $(evt.item).find(".data-tools .btn.edit").prop('disabled', false);
                     }
                 }
             });

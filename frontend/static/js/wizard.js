@@ -9,6 +9,11 @@ wizard = (function () {
     var _initialized = false;
 
     /*
+     * _composer_dataviz: DOM element configured from the composer
+     */
+    var _composer_dataviz;
+
+    /*
      * Wizard needs data to vizualize dataviz configuration
      * each data sample linked to dataviz is stored for next usage
      * in _storeData
@@ -454,13 +459,21 @@ wizard = (function () {
     var _configureDataviz = function (datavizId) {
         //Get current dataviz id
         var datavizId = $("#wizard-panel").attr("data-related-id");
+
         //copy paste generated code in <code> element
-        $('[data-dataviz="' + datavizId + '"] code.dataviz-definition').text($("#wizard-code").text());
-        var ico = $("#w_dataviz_type option:selected").attr("data-icon");
+        var dvzCode = document.createElement('div');
+        dvzCode.innerHTML = document.getElementById('wizard-code').textContent;
+        _composer_dataviz.find('code.dataviz-definition').text(
+            html2json( dvzCode.querySelector('.dataviz') )
+        );
+
         //update dataviz element icon (chart for chart, table for table...)
-        $('[data-dataviz="' + datavizId + '"] button i').get(0).className = ico;
+        var ico = $("#w_dataviz_type option:selected").attr("data-icon");
+        _composer_dataviz.find('.dataviz-description .dvz-icon').prop('class', 'dvz-icon ' + ico);
+
         //Tag dataviz element as yet configured
-        $('[data-dataviz="' + datavizId + '"] button').closest(".tool").addClass("configured");
+        _composer_dataviz.addClass("configured");
+
         //Reset and hide wizard modal
         $("#wizard-result div").remove();
         $("#wizard-code").text("");
@@ -541,6 +554,10 @@ wizard = (function () {
         //Set datavizid in the modal
         $(e.currentTarget).attr("data-related-id", datavizId);
         $(e.currentTarget).find(".modal-title").text(datavizId);
+
+        // Store dataviz DOM element edited from the composer
+        _composer_dataviz = $(e.relatedTarget).closest(".dataviz");
+
         //clear wizard form;
         _clean();
         $("#wizard-parameters .nav-tabs>.nav-item").first().tab('show');
@@ -548,7 +565,7 @@ wizard = (function () {
         //textedit.configureButtons(e.currentTarget);
         //Test if dataviz has a default visualization or is yet configured in active session
         //check if configuration exists for this dataviz with attributes. eg data-colors...
-        var yetConfigured = $(e.relatedTarget).closest(".dataviz").find("code.dataviz-definition").text() || false;
+        var yetConfigured = _composer_dataviz.find("code.dataviz-definition").text() || false;
         if (_dataviz_infos && _dataviz_infos.viz && !yetConfigured) {
             //Occurs when wizard is called from store
             var viz = JSON.parse(_dataviz_infos.viz);
@@ -569,8 +586,7 @@ wizard = (function () {
             _existingConfig = viz;
         } else if (yetConfigured) {
             //Occurs when wizard is called from report composer and dataviz is yet configured
-            var _code = $($.parseHTML(yetConfigured)).find(".dataviz");
-            _existingConfig = html2json(_code[0]);
+            _existingConfig = JSON.parse(yetConfigured);
         } else {
             //Occurs when wizard is called from report composer
             _existingConfig = false;
@@ -704,12 +720,13 @@ wizard = (function () {
      * @param  {element} html
      */
     var html2json = function (html) {
+        if (! html) return {};
         //Get the config from html attributes
-        var properties = {};
-        properties = html.dataset;
-        properties.id = html.id;
+        var properties = ('dataset' in html) ? html.dataset : {};
+        if ('id' in html) properties.id = html.id;
         var cfg = {
             "type": "",
+//            "properties": { ...properties }
             "properties": properties
         };
         // Get dataviz type (hugly !)
@@ -720,7 +737,7 @@ wizard = (function () {
                 cfg.type = t[1];
             }
         })
-        return cfg;
+        return JSON.stringify(cfg);
     };
 
     /**
