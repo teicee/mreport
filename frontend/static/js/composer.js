@@ -54,8 +54,11 @@ composer = (function () {
               '<button class="btn btn-success cell-divide">',
                 '<i class="fas fa-columns"></i> <b>diviser</b>',
               '</button>',
-              '<button class="btn btn-danger cell-empty">',
+              '<button class="btn btn-warning cell-empty">',
                 '<i class="fas fa-undo"></i> <b>vider</b>',
+              '</button>',
+              '<button class="btn btn-danger cell-delete">',
+                '<i class="fas fa-trash"></i> <b>supprimer</b>',
               '</button>',
             '</div>',
         ].join(""),
@@ -287,6 +290,30 @@ composer = (function () {
 //          $data.find(".dataviz").appendTo("#dataviz-items");
             $data.empty();
         });
+        $('#report-composition').on('click', '.cell-tools .cell-delete', function(e){
+            const $cell = $(e.currentTarget).closest(".layout-cell");
+            const $cols = $cell.closest(".layout-cols");
+            const $rows = $cols.closest(".layout-rows");
+//          $cell.find(".dataviz").appendTo("#dataviz-items");
+            $cell.remove();
+            
+            // s'il ne reste plus qu'un seul enfant (layout-cell ou layout-rows) dans le layout-cols
+            var $others = $cols.children('.layout-cell, .layout-rows');
+            if ($others.length == 0) $cols.remove();
+            else if ($others.length == 1) {
+                // remplacer la classe de largeur "col-##" en "col-12"
+                const reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
+                $others.attr('class',$others.attr('class').replace(reSize, '$1col-12$3'));
+            }
+            // nettoyage des conteneurs superflus (rows-# / cols / rows|cell-12 => rows|cell-#)
+            var $others = $rows.children('.layout-cols').children('.layout-cell, .layout-rows');
+            if ($others.length == 1) {
+                // le layout-rows grand-parent récupère directement le contenu de l'unique petit-enfant layout-rows|layout-cell
+                var $contents = $others.children().detach();
+                $rows.empty().append($contents);
+                $rows.removeClass("layout-rows").addClass($others.hasClass("layout-rows") ? "layout-rows" : "layout-cell");
+            }
+        });
 
         /*
          * Ajout d'un niveau de découpage à partir d'un layout-cell devenant un layout-rows (contenant 2 rows)
@@ -313,8 +340,7 @@ composer = (function () {
         // configure modal to divide cells
         $('#composer_grid_form').on('show.bs.modal', _gridOpenForm);
         $('#grid-columns-size').on('click', '#grid-add-col', _gridAddNewCol);
-        $('#grid-delete-cols').on('click', _gridDeleteCols);
-        $('#grid-validate'   ).on('click', _gridValidate);
+        $('#grid-validate').on('click', _gridValidate);
 
         // configure #structure-models to allow drag with clone option
         new Sortable(document.getElementById("structure-models"), {
@@ -741,10 +767,9 @@ composer = (function () {
         colsList.forEach(function(size) {
             $colsForm.append( _composerTemplates.grid_col_input.replace('{{VAL}}', size) );
         });
-        $colsForm.append(_composerTemplates.grid_col_adder);
-
-        // permettre la suppression de la rangée seulement si d'autres existent
-        $(this).find('#grid-delete-cols').prop("disabled", (rowsNum < 2)).css("display", (rowsNum < 2)?'none':'block' );
+        if (! colsDiv.classList.contains('layout-fixed')) {
+            $colsForm.append(_composerTemplates.grid_col_adder);
+        }
     }
 
     /*
@@ -772,18 +797,7 @@ composer = (function () {
     }
 
     /*
-     * _gridDeleteCols - Suppression de toute la rangée sélectionnée (.row.layout-cols)
-     * NOTE: peut générer une structure non souhaitée en laissant des "étages" superflus
-     */
-    var _gridDeleteCols = function (evt) {
-        if (! _gridSelected) return;
-        _gridSelected.remove();
-        $(this).closest('.modal').modal('hide');
-    }
-
-    /*
      * _gridValidate - Enregistrement du formulaire des dimensions pour application dans le composer.
-     * TODO
      */
     var _gridValidate = function (evt) {
         var colsDiv = _gridSelected;

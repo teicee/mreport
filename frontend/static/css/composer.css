@@ -1,25 +1,15 @@
 
+/*
+.builder.edit #report-composition .layout-rows { border: 2px dotted #009; }
+.builder.edit #report-composition .layout-cell { border: 2px dotted #900; }
+*/
+
 #composer,
 .builder.edit,
 .builder.edit .main,
 .builder.edit #report-composition {
   min-height: 100%;
 }
-
-/*
-.builder.edit #report-composition .layout-rows {
-  background-color: #fcc;
-  border: 2px dotted #900;
-}
-.builder.edit #report-composition .layout-cols {
-  background-color: #cfc;
-  border: 2px dotted #090;
-}
-.builder.edit #report-composition .layout-cell {
-  background-color: #ccf;
-  border: 2px dotted #009;
-}
-*/
 
 /* --------------------------------------------------------- Barre supérieure */
 
@@ -186,6 +176,10 @@
   font-size: 12px;
 }
 
+.builder #report-composition .layout-cols.layout-fixed > .layout-cell .cell-tools .cell-delete {
+  display: none;
+}
+
 .builder #report-composition > li.sortable-chosen .layout-rows {
   margin-top: 0;
 }
@@ -306,6 +300,10 @@
 .builder #report-composition .editable-text .btn.text-edit {
   float: left;
   margin: -1px 0.5em 0 -1px;
+}
+
+.builder #report-composition .layout-cols.layout-fixed > .layout-cell .cell-tools .cell-delete {
+  display: none;
 }
 
 /* --------------------------------------------------------- Dataviz containers */
