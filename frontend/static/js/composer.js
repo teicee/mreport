@@ -3,6 +3,10 @@ composer = (function () {
      * Private
      */
 
+    const _reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
+    const _reType = new RegExp('^(.* )?layout-(cell|cols|rows)( .*)?$');
+    const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
+
     /*
      * _composerTemplates - {object}. This var store html templates to render composer structure and actions buttons.
      */
@@ -306,8 +310,7 @@ composer = (function () {
             if ($others.length == 0) $cols.remove();
             else if ($others.length == 1) {
                 // remplacer la classe de largeur "col-##" en "col-12"
-                const reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
-                $others.attr('class',$others.attr('class').replace(reSize, '$1col-12$3'));
+                $others.attr('class',$others.attr('class').replace(_reSize, '$1col-12$3'));
             }
             // nettoyage des conteneurs superflus (rows-# / cols / rows|cell-12 => rows|cell-#)
             var $others = $rows.children('.layout-cols').children('.layout-cell, .layout-rows');
@@ -366,15 +369,17 @@ composer = (function () {
      */
     var _onSelectReport = function (e) {
         var reportId = $(this).val();
+        var reportData = admin.getReportData(reportId);
 
         // clear composition
-        $("#report-composition").empty();
-        // get and show report title
-        $("#composer-report-title").text( admin.getReportData(reportId).title );
+        var $composition  = $("#report-composition").empty();
+        var $dvzContainer = $("#dataviz-items").empty();
+
+        if (! reportData) return alert("Rapport sélectionné non valide !");
+        $("#composer-report-title").text( reportData.title );
 
         // Update dataviz items in menu list
-        var $dvzContainer = $("#dataviz-items").empty();
-        admin.getReportData(reportId).dataviz.forEach(function (dvz) {
+        reportData.dataviz.forEach(function (dvz) {
             $dvzContainer.append(
                 _composerTemplates.datavizTemplate
                 .replace(/{{dvz}}/g,      dvz.title)
@@ -388,41 +393,117 @@ composer = (function () {
         // Request last report backup data
         $.ajax({
             type: "GET",
-            url: [report.getAppConfiguration().api, "backup", reportId, "last"].join("/"),
             dataType: "json",
-            error: function (xhr, status, error) {
-                console.error("erreur : " + error);
-            },
-            success: function (data) {
+            url: [report.getAppConfiguration().api, "backup", reportId, "last"].join("/")
+        })
+        .done(function (data, status, xhr) {
+            if (status !== 'nocontent') {
+                if (! 'report_backups' in data) return alert("Impossible de charger la version enregistrée !");
+                console.log(data.report_backups);
+
                 // Load template from JSON
-                console.log(data);
-//              saver.loadJsonReport(reportId, data.report_backups);
+                if ('theme' in data.report_backups) {
+                    $("#selectedModelComposer").val( data.report_backups.theme ).trigger('change');
+                }
+                if ('blocs' in data.report_backups) {
+                    data.report_backups.blocs.forEach( function (bloc) {
+                        const blocType = ('type' in bloc) ? bloc.type : '';  // TODO
+                        const blocRef  = ('ref'  in bloc) ? bloc.ref  : '';
+                        
+                        var $structure = $('#structure-models .structure-bloc[data-bloc="' + blocRef + '"]').clone();
+                        if ($structure.length) {
+                            // nettoyage des conteneurs non-structurant de la composition
+                            // TODO tout ce qui est dans bloc-content mais sans classe layout ?
+                            $structure.find('.cols-tools, .cell-tools').remove();
+                            $structure.find('.dataviz-container').remove();
+
+                            // intégration des données du JSON dans le DOM du composer
+                            if ('title' in bloc) $structure.find('.structure-html .bloc-title h4').text( bloc.title );  // TODO
+                            if ('layout' in bloc) _parseJsonStructure(bloc.layout, $structure.find('.structure-html .bloc-content'));
+                            if ('sources' in bloc) $structure.find('.structure-html .bloc-sources p').html( bloc.sources );  // TODO
+
+                            $composition.append( $structure );
+                            _addComposerElements( $structure );
+                            _initDatavizContainer( $structure, true );
+                        }
+                    });
+                }
+            }
+
+            // configure #report-composition to accept drag & drop from structure elements
+            new Sortable(document.getElementById("report-composition"), {
+                handle: '.drag',
+                group: 'structure',
+                animation: 150,
+                onAdd: function (evt) { _initDatavizContainer($(evt.item)); }
+            });
+
                 /*
                     let alldvz = reportCompo.getElementsByClassName("dataviz");
                     for (elem of alldvz) {
                         wizard.getSampleData(elem.dataset.dataviz);
                     }
-                    _configureNewBlock(reportCompo.querySelectorAll(".row"));
-                    $("#report-composition .structure-bloc").find(".bloc-remove").click(function (e) {
-                        $(e.currentTarget).closest(".structure-bloc").find(".dataviz").appendTo("#dataviz-items");
-                        $(e.currentTarget).closest(".structure-bloc").remove();
-                    });
-                    $("#report-composition .structure-element").find(".bloc-remove").click(function (e) {
-                        e.currentTarget.parentNode.remove();
-                    });
                 */
-                
-                // configure #report-composition to accept drag & drop from structure elements
-                new Sortable(document.getElementById("report-composition"), {
-                    handle: '.drag',
-                    group: 'structure',
-                    animation: 150,
-                    onAdd: function (evt) { _initDatavizContainer($(evt.item)); }
-                });
+        })
+        .fail(function (xhr, status, error) {
+            console.error("erreur : " + error);
+        });
+    };
 
+
+    /**
+     *    layout.type        rows | cols | cell
+     *    layout.size        col-#
+     *    layout.node        []
+     *    layout.data        []
+     */
+    var _parseJsonStructure = function (layout, $node) {
+        let childIdx = 0;
+        let $children = $node.children('.layout-cell, .layout-cols, .layout-rows');
+        
+        if ('node' in layout) layout.node.forEach(function (child) {
+            let $child = (childIdx < $children.length) ? $( $children[childIdx++] ) : $('<div>').appendTo( $node );
+            
+            // nettoyage des classes ('col-#', 'layout-#' et 'row')
+            let nodeCsize = ('size' in child) ? child.size : 0;
+            let nodeClass = $child.attr('class') || '';
+            $child.attr('class', nodeClass.replace(_reSize, '$1$3').replace(_reType, '$1$3')).removeClass('row');
+            
+            if ('type' in child) switch(child.type) {
+                case 'rows':
+                    $child.addClass('layout-rows col-' + nodeCsize);
+                    _parseJsonStructure(child, $child);
+                break;
+                case 'cols':
+                    $child.addClass('layout-cols row');
+                    _parseJsonStructure(child, $child);
+                break;
+                case 'cell':
+                    let $cell = $( _composerTemplates.layout_cell.replace('{{SIZE}}', nodeCsize) );
+                    if ('data' in child) child.data.forEach(function (dvzData) {
+                        if (! dvzData.properties || ! dvzData.properties.id)
+                            return console.warn("Dataviz invalide: aucune propriété contenant l'identifiant (ignorée)");
+                        
+                        let datavizId = dvzData.properties.id;
+                        let $dataviz = $('#dataviz-items .dataviz[data-dataviz="'+ datavizId +'"]').clone();
+                        
+                        if (! $dataviz.length)
+                            return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ datavizId +")");
+                        
+                        // si présence du type, alors le dataviz a été configuré
+                        if (dvzData.type) {
+                            $dataviz.find('code.dataviz-definition').text( JSON.stringify(dvzData) );
+                            $dataviz.addClass('configured');
+                        }
+                        
+                        $cell.find('.dataviz-container').append( $dataviz );
+                    });
+                    $child.replaceWith( $cell );
+                break;
             }
         });
     };
+
 
     var _getDatavizTypeIcon  = function (type) {
         switch (type) {
@@ -757,11 +838,9 @@ composer = (function () {
         for (var i = 0; i < colsDiv.childElementCount; i++) {
             var col = colsDiv.children[i];
             // prendre uniquement les enfants ayant la classe "layout-cell" ou "layout-rows"
-            const reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
-            if (! reTest.test(col.className)) continue;
+            if (! _reTest.test(col.className)) continue;
             // récupération de la taille à partir de la classe "col-##"
-            const reSize = new RegExp('^(.* )?col-([0-9]+)');
-            var result = reSize.exec(col.className);
+            var result = _reSize.exec(col.className);
             colsList.push( (result !== null) ? result[2] : 1 );
         }
 
@@ -813,17 +892,15 @@ composer = (function () {
             return false;
         }
 
-        const reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
-        const reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
         var inputIdx = 0;
         var curCol;
         // modification des colonnes existantes
         for (var i = 0; i < colsDiv.childElementCount; i++) {
             curCol = colsDiv.children[i];
             // prendre uniquement les enfants ayant la classe "layout-cell" ou "layout-rows"
-            if (! reTest.test(curCol.className)) continue;
+            if (! _reTest.test(curCol.className)) continue;
             // modifier les classes de largeur "col-##" selon les inputs du formulaire
-            curCol.className = curCol.className.replace(reSize, '$1col-'+$inputs[inputIdx++].value+'$3');
+            curCol.className = curCol.className.replace(_reSize, '$1col-'+$inputs[inputIdx++].value+'$3');
         }
         // génération des nouvelles colonnes
         while (inputIdx < $inputs.length) {

@@ -32,9 +32,9 @@ saver = (function () {
     const reSize = new RegExp('^(.* )?col-([0-9]+)');
 
     /**
-     *
+     * _parseBlocLayout: parcours en profondeur (récursif) de la structure d'un bloc pour export HTML vers JSON
      */
-    var _parseBlocLayout = function (node) {
+    var _parseHtmlLayout = function (node) {
         let structure = {};
         let result;
         
@@ -47,17 +47,22 @@ saver = (function () {
         
         if (structure.type !== 'cell') {
             // récursion sur les structures enfants d'un layout-rows ou layout-cols
-            structure.bloc = []
+            structure.node = []
             for (var i = 0; i < node.childElementCount; i++) {
-                result = _parseBlocLayout(node.children[i]);
-                if (result) structure.bloc.push(result);
+                result = _parseHtmlLayout(node.children[i]);
+                if (result) structure.node.push(result);
             }
-            if (! structure.bloc.length) delete structure.bloc;
+            if (! structure.node.length) delete structure.node;
         } else {
             // recherche des dataviz listées dans le conteneur d'un layout-cell
             structure.data = []
             node.querySelectorAll(".dataviz-container .dataviz").forEach(function (dvz) {
-                structure.data.push( dvz.dataset.dataviz );
+
+				const dvzCode = dvz.querySelector('code.dataviz-definition').textContent;
+				console.log(dvzCode);
+
+				const dvzJson = (dvzCode) ? JSON.parse(dvzCode) : { properties: { id: dvz.dataset.dataviz } };
+                structure.data.push( dvzJson );
             });
         }
         
@@ -78,9 +83,9 @@ saver = (function () {
             
             let jsonBloc = new JsonBloc(blocRef);
             jsonBloc.type    = child.className.match(/structure-(bloc|element)/)[1];
-            jsonBloc.title   = child.querySelector(".structure-html .bloc-title");
-            jsonBloc.layout  = _parseBlocLayout(child.querySelector(".structure-html .bloc-content"));
-            jsonBloc.sources = child.querySelector(".structure-html .bloc-sources");
+            jsonBloc.title   = child.querySelector(".structure-html .bloc-title h4").textContent;
+            jsonBloc.layout  = _parseHtmlLayout(child.querySelector(".structure-html .bloc-content"));
+            jsonBloc.sources = child.querySelector(".structure-html .bloc-sources p").innerHtml;
             
             jsonReport.blocs.push(jsonBloc);
         }

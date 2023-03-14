@@ -325,73 +325,77 @@
   color: #bbb;
 }
 
-.builder #report-composition .dataviz.list-group-item {
+.builder #report-composition .dataviz-container .dataviz {
   position: relative;
+  /* from mreport-primary-color-3-bg */
+  background-color: #BFE4EA;
+  color: #006878;
 }
-.builder #report-composition .dataviz .data-tools {
+.builder #report-composition .dataviz-container .dataviz .data-tools {
   position: absolute;
   bottom: 0;
   right: 0;
   z-index: 50;
 }
 
-.builder #report-composition .dataviz .data-tools .btn.drag,
-.builder #report-composition .dataviz .data-tools .btn b {
+.builder #report-composition .dataviz-container .dataviz .data-tools .btn.drag,
+.builder #report-composition .dataviz-container .dataviz .data-tools .btn b {
   display: none;
 }
 
-.builder #report-composition .dataviz.configured .data-tools .btn.edit {
+.builder #report-composition .dataviz-container .dataviz.configured .data-tools .btn.edit {
   background-color: #28a745;
   color: #ffffff;
 }
 
-.builder #report-composition .dataviz .dataviz-description {
+.builder #report-composition .dataviz-container .dataviz .dataviz-description {
   display: flex;
   justify-content: flex-start;
   align-items: center;
 }
-.builder #report-composition .dataviz .dataviz-description .dvz-icon {
+.builder #report-composition .dataviz-container .dataviz .dataviz-description .dvz-icon {
   flex-grow: 0;
   font-size: 2rem;
   margin-right: 0.5em;
 }
 
-.builder #report-composition .dataviz .dataviz-definition {
+.builder #report-composition .dataviz-container .dataviz .dataviz-definition {
   font-size: 0.75em;
   line-height: 1em;
   display: none;
 }
 
-.builder #report-composition .dataviz:hover {
+.builder #report-composition .dataviz-container .dataviz:hover {
   box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
-.builder #report-composition .dataviz:hover .data-tools .btn b {
+.builder #report-composition .dataviz-container .dataviz:hover .data-tools .btn b {
   display: inline;
 }
-.builder #report-composition .dataviz:hover .data-tools {
+.builder #report-composition .dataviz-container .dataviz:hover .data-tools {
   filter: alpha(opacity=100);
   opacity: 1;
   transition: 0.5s;
 }
-.builder #report-composition .dataviz .data-tools {
+.builder #report-composition .dataviz-container .dataviz .data-tools {
   filter: alpha(opacity=50);
   opacity: 0.5;
 }
 
-.builder.edit .dataviz.sortable-chosen {
+.builder.edit #report-composition .dataviz-container .dataviz.sortable-chosen {
   background-color: transparent;
 }
-.builder.edit .dataviz.sortable-chosen .data-tools {
+.builder.edit #report-composition .dataviz-container .dataviz.sortable-chosen .data-tools {
   display: none;
 }
 
-.builder.edit .dataviz.sortable-drag {
+.builder.edit #report-composition .dataviz-container .dataviz.sortable-drag {
+  background-color: #BFE4EA;
   font-size: 1.2rem;
   line-height: 1.5rem;
   padding: 15px;
   height: auto;
 }
-.builder.edit .dataviz.sortable-drag .data-tools {
+.builder.edit #report-composition .dataviz-container .dataviz.sortable-drag .data-tools {
   display: none;
 }
 
