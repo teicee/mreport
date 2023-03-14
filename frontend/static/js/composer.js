@@ -34,9 +34,9 @@ composer = (function () {
             '<li data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}" class="dataviz list-group-item handle">',
               '<div class="data-tools btn-group-sm">',
                 '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
-                '<button class="btn btn-warning edit" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel"><i class="fas fa-cogs"></i> <b>éditer</b></button>',
+                '<button class="btn btn-warning edit" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel"><i class="fas fa-cog"></i> <b>éditer</b></button>',
               '</div>',
-              '<span class="dataviz-description"><i class="dvz-icon {{icon}}"></i> {{dvz}}</span>',
+              '<span class="dataviz-description"><i class="dvz-icon {{icon}}" title="{{id}}"></i> {{dvz}}</span>',
               '<code class="dataviz-definition"></code>',
             '</li>'
         ].join(""),
@@ -130,7 +130,7 @@ composer = (function () {
     /*
      * _parseTemplate. Method used to parse HTML template and store to _HTMLTemplates
      */
-    var _parseTemplate = function (templateid, html) {
+    var _parseTemplate = function (templateId, html) {
         // get data- linked to the template
         var parameters = $(html).data(); /* eg data-colors... */
         if (parameters.colors) parameters.colors = parameters.colors.split(",");
@@ -154,8 +154,8 @@ composer = (function () {
             dataviz_components[component] = $.trim(element.outerHTML);
         });
         //Populate _HTMLTemplates with object
-        _HTMLTemplates[templateid] = {
-            id:                 templateid,
+        _HTMLTemplates[templateId] = {
+            id:                 templateId,
             parameters:         parameters,
             style:              page_style,
             page:               page_layout,
@@ -222,6 +222,7 @@ composer = (function () {
             if (! noempty) $(this).empty();
             new Sortable(this, {
                 group: 'dataviz',
+                filter: '.btn.edit',
                 animation: 150,
                 onAdd: function (evt) {
                     $(evt.item).addClass("mreport-primary-color-3-bg");
@@ -257,6 +258,7 @@ composer = (function () {
 
         // Load html templates from server file
         for (const templateId in _listTemplates) {
+            if (templateId in _HTMLTemplates) continue;
             $.ajax({
                 url: "/static/html/model-" + templateId + ".html",
                 dataType: "text",
@@ -266,7 +268,8 @@ composer = (function () {
                     if (templateId == 'composer') return _initComposerBlocks();
                     // else add the choice to the selector (and select it if none selected yet)
                     $("#selectedModelComposer").append('<option value="' + templateId + '">' + _listTemplates[templateId] + '</option>');
-                    if (! $("#selectedModelComposer").val()) $("#selectedModelComposer").val(templateId).trigger('change');
+                    // auto-select the first loaded model
+                    if (! _activeHTMLTemplate) $("#selectedModelComposer").val(templateId).trigger('change');
                 },
                 error: function (xhr, status, err) {
                     _alert("Erreur avec le fichier html/model-" + templateId + ".html " + err, "danger", true);
@@ -275,7 +278,8 @@ composer = (function () {
         };
 
         // save report button action
-        $("#btn_save_report").on('click', _saveReport);
+        $("#save_report_json").on('click', _saveReportJson);
+        $("#save_report_html").on('click', _saveReportHtml);
         // configure modal to edit text
         $('#text-edit').on('show.bs.modal', _onTextEdit);
 
@@ -671,46 +675,31 @@ composer = (function () {
     };
 
     /*
-     * _saveTeport.  This method is used by #btn_save_report to
-     * save active composition into dedicated report.html
+     * _saveReportHtml: used by #save_report_html button to save active composition into dedicated report.html
      */
+    var _saveReportHtml = function () {
+        var _report_id = $("#selectedReportComposer").val();
+        if (! _report_id) return;
 
-    var _saveReport = function () {
-        var _report = $("#selectedReportComposer").val();
-
-        // Save JSON report
-        const report_data = saver.exportJson(document.getElementById("report-composition"));
-        console.log(JSON.stringify(report_data));
-
-        saver.saveJsonReport(_report, report_data);
+        // Export HTML report
+        var _report_html = indent.html(_exportHTML(), {tabString: '  '});
+        var _report_css  = composer.activeModel().style.match(/(?<=\<style\>)(.|\n)*?(?=\<\/style\>)/g)[0].trim();
+            _report_css += " " + composer.activeModel().iconstyle;
 
         // Save HTML report
-        /*
-        var html_options = {tabString: '  '};
-        var newDom = indent.html(_exportHTML(), html_options);
-        var _css = ['<style>',
-            composer.activeModel().style.match(/(?<=\<style\>)(.|\n)*?(?=\<\/style\>)/g)[0].trim(),
-            composer.activeModel().iconstyle,
-            '</style>']. join(" ");
-        var composerHTML = document.getElementById("report-composition").innerHTML;
-        composerHTML = indent.html(composerHTML, html_options);
-        //get String beetwenn <style>...</style>
-        var css = _css.substring(_css.lastIndexOf("<style>") + 7, _css.lastIndexOf("</style")).trim();
         $.ajax({
             type: "POST",
-            url: [report.getAppConfiguration().api, "report_html", _report].join("/"),
-            data: JSON.stringify({
-                html: newDom,
-                css: css,
-                composer: composerHTML
-            }),
+            url: [report.getAppConfiguration().api, "report_html", _report_id].join("/"),
+            data: JSON.stringify({ html: _report_html, css:  _report_css }),
             dataType: 'json',
             contentType: 'application/json',
-            success: function (response) {
-                if (response.response === "success") {
+        })
+        .done(function (data) {
+            console.log(data);
+                if (data.response === "success") {
                     Swal.fire({
                         title: 'Sauvegardé',
-                        text: "Le rapport \'" + _report + "\' a été sauvegardé",
+                        text: "Le rapport \'" + _report_id + "\' a été sauvegardé",
                         icon: 'success',
                         showCancelButton: true,
                         cancelButtonText: 'Ok',
@@ -718,20 +707,30 @@ composer = (function () {
                         cancelButtonColor: '#32CD32',
                         confirmButtonText: 'Afficher'
                     }).then((result) => {
-                        if (result.value) {
-                            window.open("/mreport/" + _report, "_blank");
-                        }
+                        if (result.value) window.open("/mreport/" + _report_id, "_blank");
                     });
                 } else {
-                    alert("enregistrement échec :" + response.response)
+                    alert("enregistrement échec :" + data.response)
                 }
-
-            },
-            error: function (a, b, c) {
-                console.log(a, b, c);
-            }
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+            console.log(jqXHR, textStatus, errorThrown);
         });
-        */
+    };
+
+    /*
+     * _saveReportJson: used by #save_report_json button to save active composition definitions in JSON into database
+     */
+    var _saveReportJson = function () {
+        var _report_id = $("#selectedReportComposer").val();
+        if (! _report_id) return;
+
+        // Export JSON report
+        const _report_json = saver.exportJson(document.getElementById("report-composition"));
+        if (! _report_json) return;
+
+        // Save JSON report
+        saver.saveJsonReport(_report_id, _report_json);
     };
 
 
@@ -847,7 +846,7 @@ composer = (function () {
             // show composer page
             $("#btn-composer").click();
             // set report select value
-            $('#selectedReportComposer option[value="' + reportId + '"]').prop('selected', true).trigger("change");
+            $('#selectedReportComposer').val(reportId).trigger("change");
         },
 
         /* used by wizard.js */
@@ -857,6 +856,8 @@ composer = (function () {
 
         /* used by wizard.js & textConfiguration.js */
         activeModel: function() {
+            if (! _activeHTMLTemplate) return;
+            if (! _activeHTMLTemplate in _HTMLTemplates) return;
             return _HTMLTemplates[_activeHTMLTemplate];
         },
 

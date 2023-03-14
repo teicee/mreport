@@ -11,7 +11,7 @@ saver = (function () {
 
     class JsonReport {
         constructor() {
-            this.title = "",
+            this.title = $("#composer-report-title").text(),
             this.theme = composer.activeModel().id;
             this.blocs = [];
             this.confs = {};

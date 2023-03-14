@@ -457,22 +457,21 @@ wizard = (function () {
      * @param  {string} datavizId
      */
     var _configureDataviz = function (datavizId) {
-        //Get current dataviz id
-        var datavizId = $("#wizard-panel").attr("data-related-id");
+        var dvzElem = (datavizId) ? $("[data-dataviz='"+datavizId+"']") : _composer_dataviz;
 
         //copy paste generated code in <code> element
         var dvzCode = document.createElement('div');
         dvzCode.innerHTML = document.getElementById('wizard-code').textContent;
-        _composer_dataviz.find('code.dataviz-definition').text(
-            html2json( dvzCode.querySelector('.dataviz') )
+        dvzElem.find('code.dataviz-definition').text(
+            _html2json( dvzCode.querySelector('.dataviz') )
         );
 
         //update dataviz element icon (chart for chart, table for table...)
-        var ico = $("#w_dataviz_type option:selected").attr("data-icon");
-        _composer_dataviz.find('.dataviz-description .dvz-icon').prop('class', 'dvz-icon ' + ico);
+        var dvzIcon = $("#w_dataviz_type option:selected").attr("data-icon");
+        dvzElem.find('.dvz-icon').prop('class', 'dvz-icon ' + dvzIcon);
 
         //Tag dataviz element as yet configured
-        _composer_dataviz.addClass("configured");
+        dvzElem.addClass("configured");
 
         //Reset and hide wizard modal
         $("#wizard-result div").remove();
@@ -525,7 +524,6 @@ wizard = (function () {
      * @param  {event} e
      */
     var _onWizardOpened = function (e) {
-
         //Detect wich component calls this
         if (e.relatedTarget.dataset.component === "store") {
             //deactivate button save in report
@@ -719,25 +717,15 @@ wizard = (function () {
      * convert data attributes of html element to a Dataviz object
      * @param  {element} html
      */
-    var html2json = function (html) {
+    var _html2json = function (html) {
         if (! html) return {};
-        //Get the config from html attributes
-        var properties = ('dataset' in html) ? html.dataset : {};
+        let type_class = html.className.match(/^(.* )?report-([^ ]*)( .*)?$/);
+        let properties = { ...html.dataset };
         if ('id' in html) properties.id = html.id;
-        var cfg = {
-            "type": "",
-//            "properties": { ...properties }
-            "properties": properties
-        };
-        // Get dataviz type (hugly !)
-        // check class linked to dataviz - eg : from class report-chart" --> extract chart
-        html.classList.forEach(function (cls) {
-            var t = cls.split("report-");
-            if (t.length === 2) {
-                cfg.type = t[1];
-            }
-        })
-        return JSON.stringify(cfg);
+        return JSON.stringify({
+            'type':       (type_class !== null) ? type_class[2] : '',
+            'properties': properties
+        });
     };
 
     /**
@@ -1022,6 +1010,9 @@ wizard = (function () {
                 $("#wizard_refresh").click(_onValidateConfig);
                 $("#wizard_default_save").click(function (e) {
                     admin.saveVisualization(_dataviz_definition);
+                });
+                $("#wizard_add").click(function (e) {
+                    wizard.configureDataviz();
                 });
                 $("#addColor").on("click", function (e) {
                     _updateColorPicker({}, e)

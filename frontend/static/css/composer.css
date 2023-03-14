@@ -148,7 +148,7 @@
   color:#006878;
 }
 
-.builder i.fas {
+.builder #report-composition i.fas {
   width: 1em;
 }
 
@@ -332,10 +332,11 @@
   position: absolute;
   bottom: 0;
   right: 0;
+  z-index: 50;
 }
+
 .builder #report-composition .dataviz .data-tools .btn.drag,
-.builder #report-composition .dataviz .data-tools .btn b,
-.builder #report-composition .dataviz .dataviz-definition {
+.builder #report-composition .dataviz .data-tools .btn b {
   display: none;
 }
 
@@ -355,11 +356,33 @@
   margin-right: 0.5em;
 }
 
+.builder #report-composition .dataviz .dataviz-definition {
+  font-size: 0.75em;
+  line-height: 1em;
+  display: none;
+}
+
 .builder #report-composition .dataviz:hover {
   box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
 .builder #report-composition .dataviz:hover .data-tools .btn b {
   display: inline;
+}
+.builder #report-composition .dataviz:hover .data-tools {
+  filter: alpha(opacity=100);
+  opacity: 1;
+  transition: 0.5s;
+}
+.builder #report-composition .dataviz .data-tools {
+  filter: alpha(opacity=50);
+  opacity: 0.5;
+}
+
+.builder.edit .dataviz.sortable-chosen {
+  background-color: transparent;
+}
+.builder.edit .dataviz.sortable-chosen .data-tools {
+  display: none;
 }
 
 .builder.edit .dataviz.sortable-drag {
@@ -414,21 +437,16 @@
   justify-content: center;
 }
 
-/*
-.card.dataviz.used {
-}
-.card.dataviz:not(.used) .card-footer {
-    display: none;
-}
-.card.dataviz .card-footer span {
-    margin-right: 3px;
+#wizard-panel #wizard-code {
+  font-size: 10px;
+  line-height: 12px;
+  display: block;
 }
 
-.tool.configured::after {
-    content: "  \0040";
-}
-.tool,.tool.configured {
-    display: inline;
+
+/*
+.card.dataviz:not(.used) .card-footer {
+    display: none;
 }
 
 .color-selector-group{
