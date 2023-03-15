@@ -4,7 +4,6 @@ composer = (function () {
      */
 
     const _reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
-    const _reType = new RegExp('^(.* )?layout-(cell|cols|rows)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
 
     /*
@@ -173,17 +172,16 @@ composer = (function () {
      * NOTE: à appliquer après l'insertion dans le composer (pour le check de profondeur)
      */
     var _addComposerElements = function ($el) {
+        // boutons d'action sur textes éditables
+        $el.find(".editable-text").addBack(".editable-text").prepend(_composerTemplates.editable_element);
+        // boutons d'action sur groupe de colonnes
         $el.find(".layout-cols").addBack(".layout-cols").prepend(_composerTemplates.cols_tools);
-
-//      $el.find(".layout-cell").addBack(".layout-cell").prepend(_composerTemplates.cell_tools);
+        // boutons d'action sur colonnes finales (cellules)
         $el.find(".layout-cell").addBack(".layout-cell").each(function(){
             $(this).prepend(_composerTemplates.cell_tools);
             // retrait du bouton de division si profondeur max atteinte (possible jusqu'à 4x4)
             if ($(this).parentsUntil('.bloc-content', '.layout-cols').length > 2) $(this).find('.cell-divide').remove();
         });
-
-        $el.find(".editable-text").addBack(".editable-text").prepend(_composerTemplates.editable_element);
-
         return $el;
     };
 
@@ -224,6 +222,7 @@ composer = (function () {
     var _initDatavizContainer = function ($el, noempty) {
         $el.find(".dataviz-container").each(function(i) {
             if (! noempty) $(this).empty();
+            // drop dataviz behaviors
             new Sortable(this, {
                 group: 'dataviz',
                 filter: '.btn.edit',
@@ -247,6 +246,8 @@ composer = (function () {
                     }
                 }
             });
+            // init existing dataviz for wizard
+            for (let dvz of this.getElementsByClassName("dataviz")) wizard.getSampleData(dvz.dataset['dataviz']);
         });
         return $el;
     };
@@ -264,26 +265,30 @@ composer = (function () {
         for (const templateId in _listTemplates) {
             if (templateId in _HTMLTemplates) continue;
             $.ajax({
-                url: "/static/html/model-" + templateId + ".html",
                 dataType: "text",
-                success: function (html) {
-                    _parseTemplate(templateId, html);
-                    // if composer template: generate structures blocks list
-                    if (templateId == 'composer') return _initComposerBlocks();
-                    // else add the choice to the selector (and select it if none selected yet)
-                    $("#selectedModelComposer").append('<option value="' + templateId + '">' + _listTemplates[templateId] + '</option>');
-                    // auto-select the first loaded model
-                    if (! _activeHTMLTemplate) $("#selectedModelComposer").val(templateId).trigger('change');
-                },
-                error: function (xhr, status, err) {
-                    _alert("Erreur avec le fichier html/model-" + templateId + ".html " + err, "danger", true);
-                }
+                url: "/static/html/model-" + templateId + ".html"
+            })
+            .done(function (data, status, xhr) {
+                _parseTemplate(templateId, data);
+                // if composer template: generate structures blocks list
+                if (templateId == 'composer') return _initComposerBlocks();
+                // else add the choice to the selector (and select it if none selected yet)
+                $("#selectedModelComposer").append('<option value="' + templateId + '">' + _listTemplates[templateId] + '</option>');
+                // auto-select the first loaded model
+                if (! _activeHTMLTemplate) $("#selectedModelComposer").val(templateId).trigger('change');
+            })
+            .fail(function (xhr, status, err) {
+                _alert("Erreur avec le fichier html/model-" + templateId + ".html " + err, "danger", true);
             });
         };
 
-        // save report button action
-        $("#save_report_json").on('click', _saveReportJson);
+        // save report buttons (json & html)
         $("#save_report_html").on('click', _saveReportHtml);
+        $("#save_report_json").on('click', function(e){
+            const report_id = $("#selectedReportComposer").val();
+            if (report_id) saver.saveJsonReport(report_id, document.getElementById("report-composition"));
+        });
+
         // configure modal to edit text
         $('#text-edit').on('show.bs.modal', _onTextEdit);
 
@@ -361,6 +366,12 @@ composer = (function () {
         new Sortable(document.getElementById("dataviz-items"), {
             group: { name: 'dataviz', pull: 'clone', put: false },
         });
+        // configure #report-composition to accept drag & drop from structure elements
+        new Sortable(document.getElementById("report-composition"), {
+            handle: '.drag',
+            group: { name: 'structure' },
+            onAdd: function (evt) { _initDatavizContainer($(evt.item)); }
+        });
     };
 
     /*
@@ -369,16 +380,17 @@ composer = (function () {
      */
     var _onSelectReport = function (e) {
         var reportId = $(this).val();
-        var reportData = admin.getReportData(reportId);
-
+        
         // clear composition
         var $composition  = $("#report-composition").empty();
         var $dvzContainer = $("#dataviz-items").empty();
-
-        if (! reportData) return alert("Rapport sélectionné non valide !");
+        
+        // check report exists
+        var reportData = admin.getReportData(reportId);
         $("#composer-report-title").text( reportData.title );
-
-        // Update dataviz items in menu list
+        if (! reportData) return _alert("Rapport sélectionné non disponible !", "danger", true);
+        
+        // add available dataviz items in menu list
         reportData.dataviz.forEach(function (dvz) {
             $dvzContainer.append(
                 _composerTemplates.datavizTemplate
@@ -389,119 +401,9 @@ composer = (function () {
                 .replace(/{{icon}}/g,     _getDatavizTypeIcon(dvz.type))
             );
         });
-
-        // Request last report backup data
-        $.ajax({
-            type: "GET",
-            dataType: "json",
-            url: [report.getAppConfiguration().api, "backup", reportId, "last"].join("/")
-        })
-        .done(function (data, status, xhr) {
-            if (status !== 'nocontent') {
-                if (! 'report_backups' in data) return alert("Impossible de charger la version enregistrée !");
-                console.log(data.report_backups);
-
-                // Load template from JSON
-                if ('theme' in data.report_backups) {
-                    $("#selectedModelComposer").val( data.report_backups.theme ).trigger('change');
-                }
-                if ('blocs' in data.report_backups) {
-                    data.report_backups.blocs.forEach( function (bloc) {
-                        const blocType = ('type' in bloc) ? bloc.type : '';  // TODO
-                        const blocRef  = ('ref'  in bloc) ? bloc.ref  : '';
-                        
-                        var $structure = $('#structure-models .structure-bloc[data-bloc="' + blocRef + '"]').clone();
-                        if ($structure.length) {
-                            // nettoyage des conteneurs non-structurant de la composition
-                            // TODO tout ce qui est dans bloc-content mais sans classe layout ?
-                            $structure.find('.cols-tools, .cell-tools').remove();
-                            $structure.find('.dataviz-container').remove();
-
-                            // intégration des données du JSON dans le DOM du composer
-                            if ('title' in bloc) $structure.find('.structure-html .bloc-title h4').text( bloc.title );  // TODO
-                            if ('layout' in bloc) _parseJsonStructure(bloc.layout, $structure.find('.structure-html .bloc-content'));
-                            if ('sources' in bloc) $structure.find('.structure-html .bloc-sources p').html( bloc.sources );  // TODO
-
-                            $composition.append( $structure );
-                            _addComposerElements( $structure );
-                            _initDatavizContainer( $structure, true );
-                        }
-                    });
-                }
-            }
-
-            // configure #report-composition to accept drag & drop from structure elements
-            new Sortable(document.getElementById("report-composition"), {
-                handle: '.drag',
-                group: 'structure',
-                animation: 150,
-                onAdd: function (evt) { _initDatavizContainer($(evt.item)); }
-            });
-
-                /*
-                    let alldvz = reportCompo.getElementsByClassName("dataviz");
-                    for (elem of alldvz) {
-                        wizard.getSampleData(elem.dataset.dataviz);
-                    }
-                */
-        })
-        .fail(function (xhr, status, error) {
-            console.error("erreur : " + error);
-        });
-    };
-
-
-    /**
-     *    layout.type        rows | cols | cell
-     *    layout.size        col-#
-     *    layout.node        []
-     *    layout.data        []
-     */
-    var _parseJsonStructure = function (layout, $node) {
-        let childIdx = 0;
-        let $children = $node.children('.layout-cell, .layout-cols, .layout-rows');
         
-        if ('node' in layout) layout.node.forEach(function (child) {
-            let $child = (childIdx < $children.length) ? $( $children[childIdx++] ) : $('<div>').appendTo( $node );
-            
-            // nettoyage des classes ('col-#', 'layout-#' et 'row')
-            let nodeCsize = ('size' in child) ? child.size : 0;
-            let nodeClass = $child.attr('class') || '';
-            $child.attr('class', nodeClass.replace(_reSize, '$1$3').replace(_reType, '$1$3')).removeClass('row');
-            
-            if ('type' in child) switch(child.type) {
-                case 'rows':
-                    $child.addClass('layout-rows col-' + nodeCsize);
-                    _parseJsonStructure(child, $child);
-                break;
-                case 'cols':
-                    $child.addClass('layout-cols row');
-                    _parseJsonStructure(child, $child);
-                break;
-                case 'cell':
-                    let $cell = $( _composerTemplates.layout_cell.replace('{{SIZE}}', nodeCsize) );
-                    if ('data' in child) child.data.forEach(function (dvzData) {
-                        if (! dvzData.properties || ! dvzData.properties.id)
-                            return console.warn("Dataviz invalide: aucune propriété contenant l'identifiant (ignorée)");
-                        
-                        let datavizId = dvzData.properties.id;
-                        let $dataviz = $('#dataviz-items .dataviz[data-dataviz="'+ datavizId +'"]').clone();
-                        
-                        if (! $dataviz.length)
-                            return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ datavizId +")");
-                        
-                        // si présence du type, alors le dataviz a été configuré
-                        if (dvzData.type) {
-                            $dataviz.find('code.dataviz-definition').text( JSON.stringify(dvzData) );
-                            $dataviz.addClass('configured');
-                        }
-                        
-                        $cell.find('.dataviz-container').append( $dataviz );
-                    });
-                    $child.replaceWith( $cell );
-                break;
-            }
-        });
+        // load the last report definition from database (async)
+        saver.loadJsonReport(reportId);
     };
 
 
@@ -518,6 +420,7 @@ composer = (function () {
         }
         return 'fas fa-arrows-alt';
     };
+
 
     /*
      * _onTextEdit. method linked to #text-edit modal show event to configure modal
@@ -672,8 +575,6 @@ composer = (function () {
             //close modal
             $("#text-edit").modal("hide");
         });
-
-
     };
 
 
@@ -682,7 +583,6 @@ composer = (function () {
      * into valid html ready to use in mreport.
      * Method is used by _saveReport method.
      */
-
     var _exportHTML = function () {
         if (!_HTMLTemplates[_activeHTMLTemplate]) {
             alert("Veuillez sélectionner un template");
@@ -794,26 +694,10 @@ composer = (function () {
                     alert("enregistrement échec :" + data.response)
                 }
         })
-        .fail(function (jqXHR, textStatus, errorThrown) {
-            console.log(jqXHR, textStatus, errorThrown);
+        .fail(function (xhr, status, err) {
+            console.log(xhr, status, err);
         });
     };
-
-    /*
-     * _saveReportJson: used by #save_report_json button to save active composition definitions in JSON into database
-     */
-    var _saveReportJson = function () {
-        var _report_id = $("#selectedReportComposer").val();
-        if (! _report_id) return;
-
-        // Export JSON report
-        const _report_json = saver.exportJson(document.getElementById("report-composition"));
-        if (! _report_json) return;
-
-        // Save JSON report
-        saver.saveJsonReport(_report_id, _report_json);
-    };
-
 
 
 
@@ -915,6 +799,50 @@ composer = (function () {
     }
 
 
+
+    /*
+     * _makeCellLayout: used to generate composition HTML for a "layout-cell" (cf. saver.loadJsonReport)
+     */
+    var _makeCellLayout = function (colSize, dvzList) {
+        // génération du code HTML à partir du template de composition
+        let $cell = $( _composerTemplates.layout_cell.replace('{{SIZE}}', colSize) );
+        
+        // traitement des définitions de dataviz à intégrer
+        if (dvzList) dvzList.forEach(function (dvzData) {
+            if (! dvzData.properties || ! dvzData.properties.id)
+                return console.warn("Dataviz invalide: aucune propriété contenant l'identifiant (ignorée)");
+            
+            // génération du HTML de la dataviz en clonant l'élément disponible dans la sidebar
+            let datavizId = dvzData.properties.id;
+            let $dataviz = $('#dataviz-items .dataviz[data-dataviz="'+ datavizId +'"]').clone();
+            if (! $dataviz.length)
+                return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ datavizId +")");
+            
+            // si présence du type dans la définition, alors la dataviz a été configurée
+            if (dvzData.type) {
+                $dataviz.find('code.dataviz-definition').text( JSON.stringify(dvzData) );
+                $dataviz.addClass('configured');
+            }
+            
+            $cell.find('.dataviz-container').append( $dataviz );
+        });
+        return $cell;
+    };
+
+    /*
+     * _addBlocLayout:  used to generate composition HTML and events for a new bloc (cf. saver.loadJsonReport)
+     */
+    var _addBlocLayout = function ($bloc) {
+        $("#report-composition").append( $bloc );
+        _addComposerElements( $bloc );
+        _initDatavizContainer( $bloc, true );
+    };
+
+
+
+    /*
+     * Public
+     */
     return {
         initComposer: _initComposer,
 
@@ -937,6 +865,10 @@ composer = (function () {
             if (! _activeHTMLTemplate in _HTMLTemplates) return;
             return _HTMLTemplates[_activeHTMLTemplate];
         },
+
+        /* used by saver.js */
+        makeCell: _makeCellLayout,
+        addBloc:  _addBlocLayout,
 
         getDatavizTypeIcon: _getDatavizTypeIcon
     }; // fin return
