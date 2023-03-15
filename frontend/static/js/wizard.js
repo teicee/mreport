@@ -1037,6 +1037,7 @@ wizard = (function () {
         ready: function(){ return _initialized; },
         configureDataviz: _configureDataviz,
         json2html: _json2html,
+        html2json: _html2json,
         rgb2hex: _rgb2hex,
         updateIconList: _updateIconList,
         getSampleData: _getSampleData,

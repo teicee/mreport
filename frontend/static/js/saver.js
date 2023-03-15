@@ -99,9 +99,13 @@ saver = (function () {
             // recherche des dataviz listées dans le conteneur d'un layout-cell
             structure.data = [];
             node.querySelectorAll(".dataviz-container .dataviz").forEach(function (dvz) {
-                const dvzCode = dvz.querySelector('code.dataviz-definition').textContent;
-                const dvzJson = (dvzCode) ? JSON.parse(dvzCode) : { properties: { id: dvz.dataset.dataviz } };
-                structure.data.push( dvzJson );
+                try {
+                    const dvzCode = dvz.querySelector('code.dataviz-definition').textContent;
+                    const dvzJson = (dvzCode) ? JSON.parse(dvzCode) : { properties: { id: dvz.dataset.dataviz } };
+                    structure.data.push( dvzJson );
+                } catch (e) {
+                    console.error(e);
+                }
             });
         }
         return structure;
@@ -119,10 +123,19 @@ saver = (function () {
             const blocRef = child.dataset.bloc;
             if (blocRef) {
                 let jsonBloc = new JsonBloc(blocRef);
-                jsonBloc.type    = child.className.match(/structure-(bloc|element)/)[1];
-                jsonBloc.title   = child.querySelector(".structure-html .bloc-title h4").textContent;
-                jsonBloc.layout  = _parseHtmlLayout(child.querySelector(".structure-html .bloc-content"));
-                jsonBloc.sources = child.querySelector(".structure-html .bloc-sources p").innerHtml;
+                
+                result = child.className.match(/structure-(bloc|element)/);
+                if (result) jsonBloc.type    = result[1];
+                
+                result = child.querySelector(".structure-html .bloc-title h4");
+                if (result) jsonBloc.title   = result.textContent;
+                
+                result = child.querySelector(".structure-html .bloc-content");
+                if (result) jsonBloc.layout  = _parseHtmlLayout(result);
+                
+                result = child.querySelector(".structure-html .bloc-sources p");
+                if (result) jsonBloc.sources = result.innerHtml;
+                
                 jsonReport.blocs.push(jsonBloc);
             }
         }
@@ -273,8 +286,10 @@ saver = (function () {
         })
         .done(function (data, status, xhr) {
             console.debug(data);
-            if (status === 'nocontent') return;
-            if (data.response === "success" && data.report_backups) {
+            if (status === 'nocontent') {
+                // No database version, try to import from old HTML composer
+                _loadHtmlReport(report_id);
+            } else if (data.response === "success" && data.report_backups) {
                 // Load composition from JSON
                 _json2composition(data.report_backups);
             } else {
@@ -284,6 +299,56 @@ saver = (function () {
                     'error'
                 );
             }
+        })
+        .fail(function (xhr, status, err) {
+            Swal.fire(
+                "Une erreur s'est produite",
+                "L'API ne réponds pas :<br>" + _parseError(xhr.responseText),
+                'error'
+            );
+        });
+    };
+
+    /**
+     * _loadHtmlReport : Load report HTML composer version from the server (old save format).
+     */
+    var _loadHtmlReport = function (report_id) {
+        // Request composer report file
+        $.ajax({
+            type: "GET",
+            url: [report.getAppConfiguration().location, report_id, "report_composer.html?dc=" + Date.now()].join("/")
+        })
+        .done(function (html, status, xhr) {
+            console.debug(html);
+            if (! html) return;
+            
+            // Alter HTML for compatibility with the new composition parser
+            let composition = document.createRange().createContextualFragment(
+                html.replaceAll('col-md', 'col')
+            );
+            composition.querySelectorAll('.structure-bloc').forEach( function(div){
+                let rb = div.querySelector('.report-bloc');
+                let bloc = (rb) ? rb.className.split(' ').pop() : 'b4-4-4';
+                div.setAttribute('data-bloc', bloc);
+            });
+            composition.querySelectorAll('.bloc-content').forEach( function(div){
+                div.classList.add('layout-rows');
+            });
+            composition.querySelectorAll('div.row').forEach( function(div){
+                div.classList.add('layout-cols');
+            });
+            composition.querySelectorAll('.customBaseColumn').forEach( function(div){
+                div.classList.add('layout-cell');
+            });
+            composition.querySelectorAll('code.dataviz-definition').forEach( function(div){
+                let dvzCode = document.createElement('div');
+                dvzCode.innerHTML = div.textContent;
+                div.textContent = wizard.html2json( dvzCode.querySelector('.dataviz') );
+            });
+            console.debug(composition);
+            
+            // Save composition to JSON and load it
+            _json2composition(_composition2json(composition));
         })
         .fail(function (xhr, status, err) {
             Swal.fire(
