@@ -3,7 +3,7 @@ saver = (function () {
      * Private
      */
 
-    const _reType = new RegExp('^(.* )?layout-(cell|cols|rows)( .*)?$');
+    const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
 
     class JsonReport {
@@ -87,7 +87,7 @@ saver = (function () {
         result = node.className.match(_reSize);
         if (result !== null) structure.size = result[2];
         
-        if (structure.type !== 'cell') {
+        if (structure.type === 'rows' || structure.type === 'cols') {
             // récursion sur les structures enfants d'un "layout-rows" ou "layout-cols"
             structure.node = [];
             for (var i = 0; i < node.childElementCount; i++) {
@@ -104,7 +104,7 @@ saver = (function () {
                     const dvzJson = (dvzCode) ? JSON.parse(dvzCode) : { properties: { id: dvz.dataset.dataviz } };
                     structure.data.push( dvzJson );
                 } catch (e) {
-                    console.error(e);
+                    console.error(e, dvzCode);
                 }
             });
         }
@@ -210,35 +210,53 @@ saver = (function () {
      * _parseJsonStructure: 
      */
     var _parseJsonStructure = function (layout, $node) {
-        let childIdx = 0;
-        let $children = $node.children('.layout-cell, .layout-cols, .layout-rows');
-        
-        if (layout.node) layout.node.forEach(function (child) {
-            let $child = (childIdx < $children.length) ? $( $children[childIdx++] ) : $('<div>').appendTo( $node );
-            
-            // nettoyage des classes ('col-#', 'layout-#' et 'row')
-            let nodeCsize = child.size || 1;
-            let nodeClass = $child.attr('class') || '';
-            $child.attr('class', nodeClass.replace(_reSize, '$1$3').replace(_reType, '$1$3')).removeClass('col row');
-            
-            if ('type' in child) switch(child.type) {
-                case 'rows':
-                    $child.addClass('layout-rows col-' + nodeCsize);
-                    _parseJsonStructure(child, $child);
-                break;
-                case 'cols':
-                    $child.addClass('layout-cols row');
-                    _parseJsonStructure(child, $child);
-                break;
-                case 'cell':
-                    $child.replaceWith( composer.makeCell(nodeCsize, child.data) );
-                    if (child.node) console.warn("Layout invalide: présence d'enfants dans un noeud terminal (ignorés)", child.node);
-                break;
-                default:
-                    console.warn("Layout invalide: type de conteneur non reconnu (ignoré)", child.type);
-            }
-        });
-        if (layout.data) console.warn("Layout invalide: définitions de dataviz inattendues (ignorées)", layout.data);
+        // traitement d'un noeud "data" avec sa liste de dataviz
+        if (layout.type == 'data') {
+            let $container = $node.find('.dataviz-container').first();
+            if (layout.data) layout.data.forEach(function (dvzData) {
+                const $dataviz = composer.makeDataviz(dvzData);
+                if (! $dataviz) return;
+                if (! $container.length) console.warn("Aucun conteneur pour dataviz");
+                $container.append($dataviz);
+            });
+            return;
+        }
+        // traitement d'un noeud "rows" ou "cols" avec sa liste d'enfants
+        if (layout.type == 'rows' || layout.type == 'cols') {
+            let $children = $node.children('.layout-rows, .layout-cols, .layout-cell, .layout-data');
+            let childIdx = 0;
+            if (layout.node) layout.node.forEach(function (child) {
+                let $child = (childIdx < $children.length) ? $( $children[childIdx++] ) : $('<div>').appendTo( $node );
+                
+                // nettoyage des classes ('col-#', 'layout-#' et 'row')
+                let nodeCsize = child.size || 1;
+                let nodeClass = $child.attr('class') || '';
+                $child.attr('class', nodeClass.replace(_reSize, '$1$3').replace(_reType, '$1$3')).removeClass('col row');
+                
+                if ('type' in child) switch(child.type) {
+                    case 'rows':
+                        $child.addClass('layout-rows col-' + nodeCsize);
+                        _parseJsonStructure(child, $child);
+                    break;
+                    case 'cols':
+                        $child.addClass('layout-cols row');
+                        _parseJsonStructure(child, $child);
+                    break;
+                    case 'data':
+                        $child.addClass('layout-data');
+                        _parseJsonStructure(child, $child);
+                    break;
+                    case 'cell':
+                        $child.replaceWith( composer.makeCell(nodeCsize, child.data) );
+                        if (child.node) console.warn("Layout invalide: présence d'enfants dans un noeud terminal (ignorés)", child.node);
+                    break;
+                    default:
+                        console.warn("Layout invalide: type de conteneur non reconnu (ignoré)", child.type);
+                }
+            });
+            return;
+        }
+        console.warn("Layout invalide: type de conteneur non reconnu (ignoré)", layout.type);
     };
 
     /**
@@ -251,7 +269,7 @@ saver = (function () {
         }
         // traitement des blocs définis pour génération du DOM de composition
         if (jsonReport.blocs) jsonReport.blocs.forEach( function (bloc) {
-            const blocType = bloc.type || '';  // TODO type bloc ou element (texte) ?
+            const blocType = bloc.type || '';  // TODO gestion du type "element"
             const blocRef  = bloc.ref  || '';
             
             // génération du HTML du bloc structurant en clonant l'élément disponible dans la sidebar
@@ -259,9 +277,8 @@ saver = (function () {
             if (! $structure.length) return console.warn("Bloc invalide: aucun bloc disponible correspondant (ignoré)", blocRef);
             
             // nettoyage des conteneurs non-structurant de la composition
-            // TODO tout ce qui est dans bloc-content mais sans classe layout ?
-            $structure.find('.cols-tools, .cell-tools').remove();
-            $structure.find('.dataviz-container').remove();
+            $structure.find('.cols-tools, .cell-tools, .text-edit').remove();
+            $structure.find('.layout-cell .dataviz-container').remove();
             
             // intégration des données du JSON dans le DOM du composer
             if ('title' in bloc) $structure.find('.structure-html .bloc-title h4').text( bloc.title );  // TODO
@@ -270,7 +287,7 @@ saver = (function () {
             
             // mise en place du bloc dans l'interface de composition
             console.debug("Contenu HTML du bloc fabriqué à partir de l'objet Report :", $structure.first());
-            composer.addBloc( $structure );
+            composer.loadBloc( $structure );
         });
     };
 

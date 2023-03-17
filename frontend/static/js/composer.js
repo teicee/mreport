@@ -145,9 +145,9 @@ composer = (function () {
         //get main template div
         var page_layout = $(html).find("template.report").get(0).content.firstElementChild.outerHTML;
         
-        //get all report-bloc and report-bloc-title
+        //get all report-bloc
         var structure_elements = {};
-        $(html).find("template.report-bloc, template.report-bloc-title").each(function (id, template) {
+        $(html).find("template.report-bloc").each(function (id, template) {
             structure_elements[ template.id ] = $(template).prop('content').firstElementChild;
         });
         //Retrieve all dataviz components
@@ -226,28 +226,25 @@ composer = (function () {
             new Sortable(this, {
                 group: 'dataviz',
                 filter: '.btn.edit',
-                animation: 150,
                 onAdd: function (evt) {
-                    $(evt.item).addClass("mreport-primary-color-3-bg");
+                    let $item = $(evt.item);
                     // Test if title component
-                    var test_title = $(evt.item).closest(".dataviz-container").parent().hasClass("report-bloc-title");
-                    if (test_title) {
+                    if ($item.closest(".dataviz-container").hasClass("dvz-title")) {
                         // No wizard needed. autoconfig this dataviz & deactivate wizard for this dataviz
-                        var dataviz = $(evt.item).closest(".dataviz").attr("data-dataviz");
-                        // Inject dataviz definition directy
-                        $(evt.item).find("code.dataviz-definition").text(
-                            _HTMLTemplates['composer'].dataviz_components['title'].replace("{{dataviz}}", dataviz)
-                        );
+                        var dataviz = $item.closest(".dataviz").attr("data-dataviz");
+                        // Inject dataviz definition directly
+                        $item.find("code.dataviz-definition").text('{ "type": "title", "properties": {"id": "'+ dataviz +'"} }');
                         // Set title icon & deactivate wizard button
-                        $(evt.item).find(".dataviz-description .dvz-icon").attr("class", "dvz-icon fas fa-heading");
-//                      $(evt.item).find(".data-tools .btn.edit").prop('disabled', true);
+                        $item.find(".dataviz-description .dvz-icon").attr("class", "dvz-icon fas fa-heading");
+                        $item.find(".data-tools .btn.edit").hide();
                     } else {
-//                      $(evt.item).find(".data-tools .btn.edit").prop('disabled', false);
+                        $item.find(".data-tools .btn.edit").show();
                     }
                 }
             });
             // init existing dataviz for wizard
             for (let dvz of this.getElementsByClassName("dataviz")) wizard.getSampleData(dvz.dataset['dataviz']);
+            if ($(this).hasClass("dvz-title")) $(this).find(".data-tools .btn.edit").hide();
         });
         return $el;
     };
@@ -809,30 +806,41 @@ composer = (function () {
         
         // traitement des définitions de dataviz à intégrer
         if (dvzList) dvzList.forEach(function (dvzData) {
-            if (! dvzData.properties || ! dvzData.properties.id)
-                return console.warn("Dataviz invalide: aucune propriété contenant l'identifiant (ignorée)");
-            
-            // génération du HTML de la dataviz en clonant l'élément disponible dans la sidebar
-            let datavizId = dvzData.properties.id;
-            let $dataviz = $('#dataviz-items .dataviz[data-dataviz="'+ datavizId +'"]').clone();
-            if (! $dataviz.length)
-                return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ datavizId +")");
-            
-            // si présence du type dans la définition, alors la dataviz a été configurée
-            if (dvzData.type) {
-                $dataviz.find('code.dataviz-definition').text( JSON.stringify(dvzData) );
-                $dataviz.addClass('configured');
-            }
-            
-            $cell.find('.dataviz-container').append( $dataviz );
+            const $dataviz = _makeDataviz(dvzData);
+            if ($dataviz) $cell.find('.dataviz-container').append($dataviz);
         });
+        
         return $cell;
     };
 
     /*
-     * _addBlocLayout:  used to generate composition HTML and events for a new bloc (cf. saver.loadJsonReport)
+     * _makeDataviz: used to generate composition HTML for a dataviz (cf. saver.loadJsonReport)
      */
-    var _addBlocLayout = function ($bloc) {
+    var _makeDataviz = function (dvzData) {
+        if (! dvzData) return;
+        if (! dvzData.properties || ! dvzData.properties.id) {
+            console.warn("Dataviz invalide: aucune propriété contenant l'identifiant (ignorée)");
+            return;
+        }
+        // génération du HTML de la dataviz en clonant l'élément disponible dans la sidebar
+        let datavizId = dvzData.properties.id;
+        let $dataviz = $('#dataviz-items .dataviz[data-dataviz="'+ datavizId +'"]').clone();
+        if (! $dataviz.length) {
+            console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ datavizId +")");
+            return;
+        }
+        // si présence du type dans la définition, alors la dataviz a été configurée
+        if (dvzData.type) {
+            $dataviz.find('code.dataviz-definition').text( JSON.stringify(dvzData) );
+            $dataviz.addClass('configured');
+        }
+        return $dataviz;
+    };
+
+    /*
+     * _loadBlocLayout:  used to generate composition HTML and events for a new bloc (cf. saver.loadJsonReport)
+     */
+    var _loadBlocLayout = function ($bloc) {
         $("#report-composition").append( $bloc );
         _addComposerElements( $bloc );
         _initDatavizContainer( $bloc, true );
@@ -867,8 +875,9 @@ composer = (function () {
         },
 
         /* used by saver.js */
-        makeCell: _makeCellLayout,
-        addBloc:  _addBlocLayout,
+        makeDataviz: _makeDataviz,
+        makeCell:    _makeCellLayout,
+        loadBloc:    _loadBlocLayout,
 
         getDatavizTypeIcon: _getDatavizTypeIcon
     }; // fin return
