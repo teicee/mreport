@@ -220,7 +220,7 @@ composer = (function () {
         $el.find(".layout-cell").addBack(".layout-cell").each(function(){
             $(this).prepend(_composerTemplates.cell_tools);
             // retrait du bouton de division si profondeur max atteinte (possible jusqu'à 4x4)
-            if ($(this).parentsUntil('.bloc-content', '.layout-cols').length > 2) $(this).find('.cell-divide').remove();
+            if ($(this).parentsUntil('.bloc-layout', '.layout-cols').length > 2) $(this).find('.cell-divide').remove();
         });
         return $el;
     };

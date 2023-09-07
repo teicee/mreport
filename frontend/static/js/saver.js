@@ -130,7 +130,7 @@ saver = (function () {
                 result = child.querySelector(".bloc-html .bloc-title h4");
                 if (result) jsonBloc.title   = result.textContent;
                 
-                result = child.querySelector(".bloc-html .bloc-content");
+                result = child.querySelector(".bloc-html .bloc-layout");
                 if (result) jsonBloc.layout  = _parseHtmlLayout(result);
                 
                 result = child.querySelector(".bloc-html .bloc-sources p");
@@ -282,7 +282,7 @@ saver = (function () {
             
             // intégration des données du JSON dans le DOM du composer
             if ('title' in bloc) $structure.find('.bloc-html .bloc-title h4').text( bloc.title );  // TODO
-            if ('layout' in bloc) _parseJsonStructure(bloc.layout, $structure.find('.bloc-html .bloc-content'));
+            if ('layout' in bloc) _parseJsonStructure(bloc.layout, $structure.find('.bloc-html .bloc-layout'));
             if ('sources' in bloc) $structure.find('.bloc-html .bloc-sources p').html( bloc.sources );  // TODO
             
             // mise en place du bloc dans l'interface de composition
@@ -348,7 +348,7 @@ saver = (function () {
                 let bloc = (rb) ? rb.className.split(' ').pop() : 'b4-4-4';
                 div.setAttribute('data-bloc', bloc);
             });
-            composition.querySelectorAll('.bloc-content').forEach( function(div){
+            composition.querySelectorAll('.bloc-layout').forEach( function(div){
                 div.classList.add('layout-rows');
             });
             composition.querySelectorAll('div.row').forEach( function(div){

@@ -169,7 +169,7 @@
 }
 .builder #report-composition .bloc-title {
 }
-.builder #report-composition .bloc-content {
+.builder #report-composition .bloc-layout {
 }
 .builder #report-composition .bloc-sources {
   font-size: 12px;
@@ -221,7 +221,7 @@
   padding: 0.2rem 0.4rem;
 }
 
-.builder #report-composition .bloc-content:hover .layout-rows {
+.builder #report-composition .bloc-layout:hover .layout-rows {
   margin-top: 1.5rem;
 }
 
