@@ -437,27 +437,39 @@ composer = (function () {
      */
     var _textSelected = null;
 
+    var _getTextData = function (node) {
+        let isHTML  = (node.querySelector(':scope > :not(button)') !== null);
+        let style   = ""; for (let c of node.classList.values()) if (c.startsWith('style-')) style = c.slice(6);
+        let content = "";
+        if (isHTML) {
+            content = node.innerHTML.replaceAll(/<button.*<\/button>/gi, '').replaceAll(/<!--.*-->/gi, '').trim();
+        } else {
+            let texts = [], child = node.firstChild;
+            while (child) {
+                if (child.nodeType == Node.TEXT_NODE) texts.push( child.data.trim() );
+                child = child.nextSibling;
+            }
+            content = texts.filter(function(t){ return (t.length)>0 }).join("\n");
+        }
+        return { isHTML: isHTML, style: style, content: content }
+    };
+
     var _onTextEdit = function (evt) {
-        var source = evt.relatedTarget.closest('.editable-text');
+        let source = evt.relatedTarget.closest('.editable-text');
         if (! source) { console.warn("Aucun contexte source retrouvé pour l'édition d'un texte !"); return false; }
 
-        var content = source.innerHTML
-            .replaceAll(/<button.*<\/button>/gi, '')
-            .replaceAll(/<!--.*-->/gi, '')
-            .trim();
-        var styles = evt.target.querySelector("#text-edit-level");
-        var isHTML = (source.querySelector(':scope > :not(button)') !== null);
-
+        let curText = _getTextData(source);
         if (source.classList.contains('bloc-title')) {
+            evt.target.querySelector("#text-edit-level").disabled = false;
             evt.target.querySelector("input[value='text']").checked = true;
             evt.target.querySelector("input[value='html']").disabled = true;
-            if (styles) for (o of styles.options) { o.disabled = false; o.selected = source.classList.contains("style-" + o.value); }
         } else {
+            evt.target.querySelector("#text-edit-level").disabled = true;
             evt.target.querySelector("input[value='html']").disabled = false;
-            evt.target.querySelector("input[value='" + (isHTML ? "html" : "text") +"']").checked = true;
-            if (styles) for (o of styles.options) { if (o.value.startsWith('titre-')) { o.selected = false; o.disabled = true; } else { o.disabled = false; } }
+            evt.target.querySelector("input[value='" + (curText.isHTML ? "html" : "text") +"']").checked = true;
         }
-        evt.target.querySelector("#text-edit-value").value = content;
+        evt.target.querySelector("#text-edit-level").value = curText.style;
+        evt.target.querySelector("#text-edit-value").value = curText.content;
 
         _textSelected = source;
         return true;
@@ -644,7 +656,7 @@ composer = (function () {
         colsList.forEach(function(size) {
             $colsForm.append( _composerTemplates.grid_col_input.replace('{{VAL}}', size) );
         });
-        if (! colsDiv.classList.contains('layout-fixed')) {
+        if (! colsDiv.classList.contains('fixed-layout')) {
             $colsForm.append(_composerTemplates.grid_col_adder);
         }
     }
@@ -789,6 +801,7 @@ composer = (function () {
         },
 
         /* used by saver.js */
+        getTextData: _getTextData,
         makeDataviz: _makeDataviz,
         makeCell:    _makeCellLayout,
         loadBloc:    _loadBlocLayout,

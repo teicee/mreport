@@ -175,7 +175,7 @@
   font-size: 12px;
 }
 
-.builder #report-composition .layout-cols.layout-fixed > .layout-cell .cell-tools .cell-delete {
+.builder #report-composition .layout-cols.fixed-layout > .layout-cell .cell-tools .cell-delete {
   display: none;
 }
 
@@ -305,7 +305,7 @@
   margin: -1px 0.5em 0 -1px;
 }
 
-.builder #report-composition .layout-cols.layout-fixed > .layout-cell .cell-tools .cell-delete {
+.builder #report-composition .layout-cols.fixed-layout > .layout-cell .cell-tools .cell-delete {
   display: none;
 }
 
