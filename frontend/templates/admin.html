@@ -479,41 +479,43 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Edition</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">Édition du texte</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Fermer">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <form>
+                        <div class="form-group">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="typeedit" id="typeedit-1" value="text" checked>
+                                <label class="form-check-label" for="typeedit-1">Texte simple</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="typeedit" id="typeedit-2" value="html">
+                                <label class="form-check-label" for="typeedit-2">Format HTML</label>
+                            </div>
+                        </div>
                         <div class="input-group input-group-sm mb-3 text-config">
                             <textarea id="text-edit-value" class="form-control"></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="text-edit-level">Style</label>
+                            <label for="text-edit-level">Style prédéfini</label>
                             <select class="form-control" id="text-edit-level" name="text-level">
+                                <option value="">Aucun</option>
                                 <option value="titre-1">Titre 1</option>
                                 <option value="titre-2">Titre 2</option>
                                 <option value="titre-3">Titre 3</option>
                                 <option value="titre-4">Titre 4</option>
-                                <option value="undefined">Pas de style</option>
                             </select>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="typeedit" id="typeedit-1" value="text"
-                                checked>
-                            <label class="form-check-label" for="typeedit-1">texte</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="typeedit" id="typeedit-2"
-                                value="html">
-                            <label class="form-check-label" for="typeedit-2">html</label>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn mreport-primary-color-2-bg" data-dismiss="modal">Fermer</button>
-                    <button type="button" class="text-save btn mreport-primary-color-1-bg">Enregistrer</button>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn mreport-primary-color-2-bg" data-dismiss="modal"><i class="fas fa-times-circle"></i> Annuler</button>
+                        <button type="button" class="btn mreport-primary-color-1-bg" id="text-validate"><i class="fas fa-check"></i> Modifier</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -651,10 +653,10 @@
                     </form>
                 </div>
                 <div class="modal-footer btn-toolbar justify-content-between">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn mreport-primary-color-2-bg" data-dismiss="modal"><i class="fas fa-times-circle"></i> Fermer</button>
-                            <button type="button" class="text-save btn mreport-primary-color-1-bg" id="grid-validate"><i class="fas fa-check"></i> Valider</button>
-                        </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn mreport-primary-color-2-bg" data-dismiss="modal"><i class="fas fa-times-circle"></i> Fermer</button>
+                        <button type="button" class="btn mreport-primary-color-1-bg" id="grid-validate"><i class="fas fa-check"></i> Valider</button>
+                    </div>
                 </div>
             </div>
         </div>

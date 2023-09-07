@@ -448,6 +448,14 @@
   display: block;
 }
 
+.style-titre-1:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "I"; }
+.style-titre-2:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "II"; }
+.style-titre-3:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "III"; }
+.style-titre-4:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "IV"; }
+.style-titre-1 { font-size: 40px; font-weight: 700; }
+.style-titre-2 { font-size: 24px; font-weight: 600; }
+.style-titre-3 { font-size: 20px; font-weight: 500; }
+.style-titre-4 { font-size: 16px; font-weight: 400; }
 
 /*
 .card.dataviz-bloc:not(.used) .card-footer {
@@ -505,43 +513,6 @@
 }
 .report-figure-chiffre {
     padding-top: 40px !important;
-}
-
-.editable-text:before {
-    color: #fff;
-    margin: 10px;
-    background: #000000;
-    text-align: center;
-    padding-right: 10px;
-    padding-left: 10px;
-}
-.editable-text.titre-1:before {
-    content: "I";
-}
-.editable-text.titre-2:before {
-    content: "II";
-}
-.editable-text.titre-3:before {
-    content: "III";
-}
-.editable-text.titre-4:before {
-    content: "IV";
-}
-.editable-text.titre-1 {
-    font-size: 40px;
-    font-weight: 700;
-}
-.editable-text.titre-2 {
-    font-size: 24px;
-    font-weight: 600;
-}
-.editable-text.titre-3 {
-    font-size: 20px;
-    font-weight: 500;
-}
-.editable-text.titre-4 {
-    font-size: 16px;
-    font-weight: 400px;
 }
 
 span.designed-dataviz {

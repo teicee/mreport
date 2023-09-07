@@ -298,9 +298,6 @@ composer = (function () {
             if (report_id) saver.saveJsonReport(report_id, document.getElementById("report-composition"));
         });
 
-        // configure modal to edit text
-        $('#text-edit').on('show.bs.modal', _onTextEdit);
-
         // remove/empty actions
         $('#report-composition').on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
             const $bloc = $(e.currentTarget).closest(".structure-bloc, .element-bloc, .dataviz-bloc");
@@ -362,6 +359,10 @@ composer = (function () {
         $('#composer_grid_form').on('show.bs.modal', _gridOpenForm);
         $('#grid-columns-size').on('click', '#grid-add-col', _gridAddNewCol);
         $('#grid-validate').on('click', _gridValidate);
+
+        // configure modal to edit text
+        $('#text-edit').on('show.bs.modal', _onTextEdit);
+        $('#text-validate').on('click', _textValidate);
 
         // configure #structure-models to allow drag with clone option
         new Sortable(document.getElementById("structure-models"), {
@@ -433,157 +434,58 @@ composer = (function () {
 
     /*
      * _onTextEdit. method linked to #text-edit modal show event to configure modal
-     * TODO
      */
-    var _onTextEdit = function (a) {
-        var source;
-        var content;
-        var oldtext;
-        var oldtype;
-        var cas = 0;
+    var _textSelected = null;
 
+    var _onTextEdit = function (evt) {
+        var source = evt.relatedTarget.closest('.editable-text');
+        if (! source) { console.warn("Aucun contexte source retrouvé pour l'édition d'un texte !"); return false; }
 
-        if (a.relatedTarget.parentNode.classList.contains("bloc-title")) {
-            //Cad 1 Titles
-            cas = 1;
-            source = a.relatedTarget.parentNode;
-            if (source.firstChild.nodeType === Node.TEXT_NODE) {
-                content = source.firstChild;
-            } else if  (source.firstChild.nodeType === Node.COMMENT_NODE) {
-                source.firstChild.remove();
-                if (source.firstChild.nodeType !== Node.TEXT_NODE) {
-                    var txt = document.createTextNode("Title");
-                    source.insertBefore(txt,source.firstElementChild);
-                }
+        var content = source.innerHTML
+            .replaceAll(/<button.*<\/button>/gi, '')
+            .replaceAll(/<!--.*-->/gi, '')
+            .trim();
+        var styles = evt.target.querySelector("#text-edit-level");
+        var isHTML = (source.querySelector(':scope > :not(button)') !== null);
 
-            }
-            content = source.firstChild;
-            try {
-                oldtext = content.nodeValue.trim();
-            } catch (error) {
-                console.log(error);
-            }
-            oldtype = "text";
-            //content = source.querySelector("p.text-htm");
-            //Désactivation html
-            document.querySelector("#text-edit input[value='html']").disabled = true;
-            document.querySelector("#text-edit input[value='text']").checked = true;
-
-        } else if (a.relatedTarget.parentNode.closest(".text-edit-content")) {
-            //Cas 2 sources nouveau template
-            cas = 2;
-            document.querySelector("#text-edit input[value='html']").disabled = false;
-            source = a.relatedTarget.parentNode.closest(".text-edit-content");
-            content = source.querySelector("p.text-htm");
-            if (content.classList.contains("html")) {
-                //HTMLcontent
-                oldtext = content.innerHTML;
-                oldtype = "html";
-
-            } else if (content.classList.contains("text")) {
-                //TEXT CONTENT
-                oldtext = content.firstChild.nodeValue.trim();
-                oldtype = "text";
-            }
+        if (source.classList.contains('bloc-title')) {
+            evt.target.querySelector("input[value='text']").checked = true;
+            evt.target.querySelector("input[value='html']").disabled = true;
+            if (styles) for (o of styles.options) { o.disabled = false; o.selected = source.classList.contains("style-" + o.value); }
         } else {
-            //cas3 sources ancien template
-            cas = 3;
-            source = a.relatedTarget.parentNode;
-            document.querySelector("#text-edit input[value='html']").disabled = false;
-            oldtext = source.parentElement.textContent.trim().split("\n")[0];
-            oldtype = "text";
+            evt.target.querySelector("input[value='html']").disabled = false;
+            evt.target.querySelector("input[value='" + (isHTML ? "html" : "text") +"']").checked = true;
+            if (styles) for (o of styles.options) { if (o.value.startsWith('titre-')) { o.selected = false; o.disabled = true; } else { o.disabled = false; } }
         }
+        evt.target.querySelector("#text-edit-value").value = content;
 
-        document.querySelector("#text-edit input[value='"+oldtype+"']").checked = true
-        $("#text-edit-value").val(oldtext);
+        _textSelected = source;
+        return true;
+    };
 
-        var getStyle = function () {
-            let style = "undefined";
-            source.classList.forEach(function (cls) {
-                if (cls.indexOf("titre-")>=0) {
-                    style = cls;
-                }
-            })
-            return style;
-        }
+    var _textValidate = function (evt) {
+        var input, modal = evt.target.closest('.modal');
+        if (! modal) { console.warn("Impossible de retrouver le contexte du bouton !"); return false; }
+        if (_textSelected) {
+            input = modal.querySelector("[name='typeedit']:checked");
+            var isHTML = (input && input.value == "html");
+            if (_textSelected.classList.contains('bloc-title')) isHTML = false;
 
-        //store old style
-        var oldstyle = getStyle();
-
-        var setStyle = function (style) {
-            if (style !== oldstyle) {
-                source.classList.remove(oldstyle);
-                if (style && style !== 'undefined') {
-                    source.classList.add(style);
-                }
+            input = modal.querySelector('#text-edit-value');
+            if (input) {
+                if (isHTML) _textSelected.innerHTML = input.value;
+                else        _textSelected.innerText = input.value;
             }
 
+            input = modal.querySelector('#text-edit-level');
+            var style = (input && input.value) ? "style-" + input.value : "";
+            for (let c of _textSelected.classList.values()) if (c.startsWith('style-')) _textSelected.classList.remove(c);
+            if (style) _textSelected.classList.add(style);
+
+            $(_textSelected).prepend(_composerTemplates.editable_element);
         }
-        //Get selected text element
-
-        //get style value or Set default style
-        $("#text-edit-level").val(getStyle());
-        //Get save button and remove existing handlers
-        var btn = $(a.currentTarget).find(".text-save").off("click");
-        //Add new handler to save button
-        $(btn).click(function (e) {
-            //get new text value and store it in composition
-            var text = $("#text-edit-value").val();
-            //Get style
-            var newstyle = $("#text-edit-level").val();
-            //get type content (text or html)
-            var type = $('#text-edit input[name=typeedit]:checked').val();
-            if (type === "text") {
-                if (cas === 2)  {
-                    content.classList.remove("html");
-                    content.classList.add("text");
-                    content.innerHTML = "";
-                    var txt = document.createTextNode(text.trim());
-                    content.appendChild(txt);
-                } else if (cas === 1){
-                    content.nodeValue = text.trim();
-                } else {
-                    //cas 3
-                    //destroy old structure
-                    source.parentElement.innerHTML = `
-                        <div class="text-edit-content">
-                            <p class="text-htm text">${text.trim()}</p>
-                            <i class="editable-text">
-                            <span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit badge badge-warning"><i class="fas fa-edit"></i>edit                        </span>
-                            </i>
-                        </div>`
-                }
-
-
-                setStyle(newstyle);
-            } else if (type === "html") {
-                if (cas === 2)  {
-                    content.classList.remove("text");
-                    content.classList.add("html");
-                    content.innerHTML = text;
-
-                } else if (cas === 3) {
-                    //destroy old structure
-                    if (source.parentElement.closest("div")) {
-                        source.parentElement.closest("div").innerHTML = `
-                        <div class="text-edit-content">
-                            <p class="text-htm html">${text.trim()}</p>
-                            <i class="editable-text">
-                            <span data-toggle="modal" data-target="#text-edit" class="to-remove text-edit badge badge-warning"><i class="fas fa-edit"></i>edit                        </span>
-                            </i>
-                        </div>`
-                    content = source.querySelector("p");
-                    } else {
-                        console.log ("cas non géré")
-                        return;
-                    }
-
-                }
-
-            }
-            //close modal
-            $("#text-edit").modal("hide");
-        });
+        //close modal
+        $(modal).modal('hide');
     };
 
 
