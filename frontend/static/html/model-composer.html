@@ -7,24 +7,36 @@
         </div>
     </template>
 
-    <template class="report-bloc" id="btitle">
-        <div class="report-bloc" data-label="Titre" data-description="Bloc titre">
+    <template class="report-structure" id="btitle">
+        <div class="bloc-structure" data-label="Bloc titre" data-description="Bloc titre (autoconfig)">
             <div class="bloc-content container-fluid layout-data">
-                <ul class="dataviz-container list-group dvz-title"><!--dataviz component is injected here --></ul>
+                <ul class="component-container list-group dataviz-autoconfig"><!--dataviz|element component is injected here --></ul>
+            </div>
+        </div>
+    </template>
+
+    <template class="report-structure" id="bsimple">
+        <div class="bloc-structure" data-label="Bloc simple" data-description="Bloc contenu uniquement">
+            <div class="bloc-content container-fluid layout-rows">
+                <div class="row layout-cols layout-fixed">
+                    <div class="col-12 layout-cell">
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                    </div>
+                </div>
             </div>
         </div>
     </template>
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
-    <template class="report-bloc" id="b12">
-        <div class="report-bloc" data-label="1 colonne" data-description="Bloc 100%">
+    <template class="report-structure" id="b12">
+        <div class="bloc-structure" data-label="1 colonne" data-description="Bloc 100%">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
             <div class="bloc-content container-fluid layout-rows">
                 <div class="row layout-cols layout-fixed">
                     <div class="col-12 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                 </div>
             </div>
@@ -35,18 +47,18 @@
     </template>
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
-    <template class="report-bloc" id="b6-6">
-        <div class="report-bloc" data-label="2 colonnes" data-description="Bloc 50%/50%">
+    <template class="report-structure" id="b6-6">
+        <div class="bloc-structure" data-label="2 colonnes" data-description="Bloc 50%/50%">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
             <div class="bloc-content container-fluid layout-rows">
                 <div class="row layout-cols layout-fixed">
                     <div class="col-6 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                     <div class="col-6 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                 </div>
             </div>
@@ -57,21 +69,21 @@
     </template>
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
-    <template class="report-bloc" id="b4-4-4">
-        <div class="report-bloc" data-label="3 colonnes" data-description="Bloc 33%/33%/33%">
+    <template class="report-structure" id="b4-4-4">
+        <div class="bloc-structure" data-label="3 colonnes" data-description="Bloc 33%/33%/33%">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
             <div class="bloc-content container-fluid layout-rows">
                 <div class="row layout-cols layout-fixed">
                     <div class="col-4 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                     <div class="col-4 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                     <div class="col-4 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                 </div>
             </div>
@@ -82,28 +94,28 @@
     </template>
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
-    <template class="report-bloc" id="b4-4-4_2">
-        <div class="report-bloc" data-label="3 colonnes + 2" data-description="Bloc 33%/33%/33%x2">
+    <template class="report-structure" id="b4-4-4_2">
+        <div class="bloc-structure" data-label="3 colonnes + 2" data-description="Bloc 33%/33%/33%x2">
             <div class="bloc-title editable-text">
                 <h4><!-- this text is editable in composer -->Titre du bloc</h4>
             </div>
             <div class="bloc-content container-fluid layout-rows">
                 <div class="row layout-cols layout-fixed">
                     <div class="col-4 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                     <div class="col-4 layout-cell">
-                        <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                     </div>
                     <div class="col-4 layout-rows">
                         <div class="row layout-cols layout-fixed">
                             <div class="col-12 layout-cell">
-                                <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                                <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                             </div>
                         </div>
                         <div class="row layout-cols layout-fixed">
                             <div class="col-12 layout-cell">
-                                <ul class="dataviz-container list-group"><!--dataviz component is injected here --></ul>
+                                <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
                             </div>
                         </div>
                     </div>
@@ -115,14 +127,24 @@
         </div>
     </template>
 
+
+    <template class="report-element" id="btexte">
+        <div class="bloc-element" data-label="Composant texte" data-description="Bloc texte">
+            <div class="bloc-content editable-text">
+                <!-- this text is editable in composer -->Texte de l'élément
+            </div>
+        </div>
+    </template>
+
+
     <!-- REQUERY title component -->
-    <template class="report-component report-title">
+    <template class="report-component dataviz" id="dvz-title" data-ref="title">
         <div class="report-component.title">
             <h1 id="{{dataviz}}" class="dataviz report-title"></h1>
         </div>
     </template>
     <!-- REQUERY figure component -->
-    <template class="report-component report-figure">
+    <template class="report-component dataviz" id="dvz-figure" data-ref="figure">
         <div class="report-component.figure card-body">
             <div id="{{dataviz}}" class="dataviz report-figure custom-icon icon-default">
                 <figure>
@@ -133,7 +155,7 @@
         </div>
     </template>
     <!-- REQUERY chart component -->
-    <template class="report-component report-chart">
+    <template class="report-component dataviz" id="dvz-chart" data-ref="chart">
         <div class="report-component.chart full-width">
             <div class="report-dataviz-title" >Titre</div>
             <div id="{{dataviz}}" data-title="Titre" data-description="Description" class="dataviz report-chart"></div>
@@ -141,7 +163,7 @@
         </div>
     </template>
     <!-- REQUERY table component -->
-    <template class="report-component report-table">
+    <template class="report-component dataviz" id="dvz-table" data-ref="table">
         <div class="report-component.chart card-body">
             <div class="report-dataviz-title" >Titre</div>
             <div id="{{dataviz}}" class="dataviz report-table"></div>
@@ -149,7 +171,7 @@
         </div>
     </template>
     <!-- REQUERY text component -->
-    <template class="report-component report-text">
+    <template class="report-component dataviz" id="dvz-text" data-ref="text">
         <div class="report-component.text card-body">
             <div id="{{dataviz}}" class="dataviz report-text">
                 <h3 class="report-text-title"></h3>
@@ -158,7 +180,7 @@
         </div>
     </template>
     <!-- REQUERY image component -->
-    <template class="report-component report-image">
+    <template class="report-component dataviz" id="dvz-image" data-ref="image">
         <div class="report-component.image card-body">
             <div id="{{dataviz}}" class="dataviz report-image">
                 <img src="" class="img-fluid" alt="" />
@@ -166,13 +188,13 @@
         </div>
     </template>
     <!-- REQUERY map component -->
-    <template class="report-component report-map">
+    <template class="report-component dataviz" id="dvz-map" data-ref="map">
         <div class="report-component.map card-body">
             <div id="{{dataviz}}" class="dataviz report-map"></div>
         </div>
     </template>
     <!-- REQUERY iframe component -->
-    <template class="report-component report-iframe">
+    <template class="report-component dataviz" id="dvz-iframe" data-ref="iframe">
         <div class="report-component.iframe card-body">
             <div id="{{dataviz}}" class="dataviz report-iframe .hidden-md-down embed-responsive embed-responsive-16by9">
             </div>

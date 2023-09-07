@@ -98,7 +98,7 @@ saver = (function () {
         } else {
             // recherche des dataviz listées dans le conteneur d'un layout-cell
             structure.data = [];
-            node.querySelectorAll(".dataviz-container .dataviz").forEach(function (dvz) {
+            node.querySelectorAll(".component-container .dataviz").forEach(function (dvz) {
                 try {
                     const dvzCode = dvz.querySelector('code.dataviz-definition').textContent;
                     const dvzJson = (dvzCode) ? JSON.parse(dvzCode) : { properties: { id: dvz.dataset.dataviz } };
@@ -127,13 +127,13 @@ saver = (function () {
                 result = child.className.match(/structure-(bloc|element)/);
                 if (result) jsonBloc.type    = result[1];
                 
-                result = child.querySelector(".structure-html .bloc-title h4");
+                result = child.querySelector(".bloc-html .bloc-title h4");
                 if (result) jsonBloc.title   = result.textContent;
                 
-                result = child.querySelector(".structure-html .bloc-content");
+                result = child.querySelector(".bloc-html .bloc-content");
                 if (result) jsonBloc.layout  = _parseHtmlLayout(result);
                 
-                result = child.querySelector(".structure-html .bloc-sources p");
+                result = child.querySelector(".bloc-html .bloc-sources p");
                 if (result) jsonBloc.sources = result.innerHtml;
                 
                 jsonReport.blocs.push(jsonBloc);
@@ -189,7 +189,7 @@ saver = (function () {
                 case "BlocTitle": // { 'type': b.type, 'title': b.title }
                     //create model container
                     // bad way. Need to update. Not sure that first element template is title
-                    // Caution with composer.templates.blockTemplate
+                    // Caution with composer.templates.structureTemplate
                     _composer_template = composer.models()[model].elements[0];
                     //add dataviz template to container
                     //Same than composer.js
@@ -212,7 +212,7 @@ saver = (function () {
     var _parseJsonStructure = function (layout, $node) {
         // traitement d'un noeud "data" avec sa liste de dataviz
         if (layout.type == 'data') {
-            let $container = $node.find('.dataviz-container').first();
+            let $container = $node.find('.component-container').first();
             if (layout.data) layout.data.forEach(function (dvzData) {
                 const $dataviz = composer.makeDataviz(dvzData);
                 if (! $dataviz) return;
@@ -278,12 +278,12 @@ saver = (function () {
             
             // nettoyage des conteneurs non-structurant de la composition
             $structure.find('.cols-tools, .cell-tools, .text-edit').remove();
-            $structure.find('.layout-cell .dataviz-container').remove();
+            $structure.find('.layout-cell .component-container').remove();
             
             // intégration des données du JSON dans le DOM du composer
-            if ('title' in bloc) $structure.find('.structure-html .bloc-title h4').text( bloc.title );  // TODO
-            if ('layout' in bloc) _parseJsonStructure(bloc.layout, $structure.find('.structure-html .bloc-content'));
-            if ('sources' in bloc) $structure.find('.structure-html .bloc-sources p').html( bloc.sources );  // TODO
+            if ('title' in bloc) $structure.find('.bloc-html .bloc-title h4').text( bloc.title );  // TODO
+            if ('layout' in bloc) _parseJsonStructure(bloc.layout, $structure.find('.bloc-html .bloc-content'));
+            if ('sources' in bloc) $structure.find('.bloc-html .bloc-sources p').html( bloc.sources );  // TODO
             
             // mise en place du bloc dans l'interface de composition
             console.debug("Contenu HTML du bloc fabriqué à partir de l'objet Report :", $structure.first());

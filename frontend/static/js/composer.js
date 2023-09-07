@@ -10,36 +10,37 @@ composer = (function () {
      * _composerTemplates - {object}. This var store html templates to render composer structure and actions buttons.
      */
     var _composerTemplates = {
-        // HTML used to construct bloc elements and append it to dom with selected HTMLTemplate
-        blockTemplate: [
+        // HTML used to construct structural blocks and append it to dom in #structure-models list
+        structureTemplate: [
             '<li class="structure-bloc list-group-item handle" data-bloc="{{REF}}">',
               '<div class="bloc-tools btn-group btn-group-sm">',
                 '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
                 '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
               '</div>',
-              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>',
-              '<div class="structure-html">{{HTML}}</div>',
+              '<span class="bloc-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>',
+              '<div class="bloc-html">{{HTML}}</div>',
             '</li>'
         ].join(""),
-        // HTML used to construct extra elements and append it to dom with selected HTMLTemplate
-        extraElementTemplate: [
-            '<li class="structure-element list-group-item handle" data-bloc="{{REF}}">',
-              '<div class="bloc-tools btn-group btn-group-sm">',
-                '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
+        // HTML used to construct elements components and append it to dom in #element-models list
+        elementTemplate: [
+            '<li class="element-bloc list-group-item handle" data-bloc="{{REF}}">',
+              '<div class="data-tools btn-group btn-group-sm">',
+//              '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
                 '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
               '</div>',
-              '<span class="structure-description"><i class="fas fa-arrows-alt"></i> {{TEXT}}</span>',
-              '<div class="structure-html"><span class="editable-text {{CLASS}}">{{TEXT}}</span></div>',
+              '<span class="bloc-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>',
+              '<div class="bloc-html">{{HTML}}</div>',
             '</li>'
         ].join(""),
-        // HTML used to construct dataviz items and append them to dom in #dataviz-items list
+        // HTML used to construct dataviz components and append them to dom in #dataviz-items list
         datavizTemplate: [
-            '<li data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}" class="dataviz list-group-item handle">',
-              '<div class="data-tools btn-group-sm">',
-                '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
+            '<li class="dataviz-bloc list-group-item handle" data-dataviz="{{id}}" title="{{dvz}}" data-report="{{reportId}}">',
+              '<div class="data-tools btn-group btn-group-sm">',
+//              '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
                 '<button class="btn btn-warning edit" data-toggle="modal" data-component="report" data-related-id="{{id}}" data-target="#wizard-panel"><i class="fas fa-cog"></i> <b>éditer</b></button>',
+                '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
               '</div>',
-              '<span class="dataviz-description"><i class="dvz-icon {{icon}}" title="{{id}}"></i> {{dvz}}</span>',
+              '<span class="dataviz-label"><i class="dvz-icon {{icon}}" title="{{id}}"></i> {{dvz}}</span>',
               '<code class="dataviz-definition"></code>',
             '</li>'
         ].join(""),
@@ -74,7 +75,7 @@ composer = (function () {
         // HTML used to add a new child column inside a structure block
         layout_cell: [
             '<div class="col-{{SIZE}} layout-cell">',
-              '<ul class="dataviz-container list-group"></ul>',
+              '<ul class="component-container list-group"></ul>',
             '</div>'
         ].join(""),
         // HTML used to add a new input for colunm size in the division form
@@ -145,33 +146,72 @@ composer = (function () {
         //get main template div
         var page_layout = $(html).find("template.report").get(0).content.firstElementChild.outerHTML;
         
-        //get all report-bloc
-        var structure_elements = {};
-        $(html).find("template.report-bloc").each(function (id, template) {
-            structure_elements[ template.id ] = $(template).prop('content').firstElementChild;
+        //get all report-structure & report-element blocs
+        var structure_blocs = {};
+        $(html).find("template.report-structure").each(function (id, template) {
+            structure_blocs[ template.id ] = $(template).prop('content').firstElementChild;
         });
+        var element_blocs = {};
+        $(html).find("template.report-element").each(function (id, template) {
+            element_blocs[ template.id ] = $(template).prop('content').firstElementChild;
+        });
+        
         //Retrieve all dataviz components
         var dataviz_components = {};
-        ["figure", "chart", "table", "title", "text", "iframe", "image", "map"].forEach(function (component) {
-            var element = $(html).find("template.report-component.report-" + component).prop('content').firstElementChild;
-            dataviz_components[component] = $.trim(element.outerHTML);
+        $(html).find("template.report-component.dataviz").each(function (id, template) {
+            let bloc = $(template).prop('content').firstElementChild;
+            dataviz_components[ template.dataset.ref ] = $(template).prop('content').firstElementChild.outerHTML;
         });
+        
         //Populate _HTMLTemplates with object
         _HTMLTemplates[templateId] = {
             id:                 templateId,
             parameters:         parameters,
             style:              page_style,
             page:               page_layout,
-            structure_elements: structure_elements,
+            structure_blocs:    structure_blocs,
+            element_blocs:      element_blocs,
             dataviz_components: dataviz_components
         };
     };
 
     /*
-     * _addComposerElements - Add composer action buttons to the edited structures
+     * _initComposerBlocks - Update structure elements choice in composer page
+     */
+    var _initComposerBlocks = function () {
+        const $structures = $("#structure-models").remove('.list-group-item');
+        const $elements   = $("#element-models").remove('.list-group-item');
+        
+        // generate structures blocks from composer template
+        for (var ref in _HTMLTemplates['composer'].structure_blocs) {
+            const bloc = _HTMLTemplates['composer'].structure_blocs[ref];
+            $structures.append(
+                _composerTemplates.structureTemplate
+                .replaceAll("{{LABEL}}", bloc.getAttribute("data-label"))
+                .replaceAll("{{HTML}}",  bloc.outerHTML)
+                .replaceAll("{{REF}}",   ref)
+            );
+        };
+        _initComposerTools($structures);
+        
+        // generate elements blocks from composer template
+        for (var ref in _HTMLTemplates['composer'].element_blocs) {
+            const bloc = _HTMLTemplates['composer'].element_blocs[ref];
+            $elements.append(
+                _composerTemplates.elementTemplate
+                .replaceAll("{{LABEL}}", bloc.getAttribute("data-label"))
+                .replaceAll("{{HTML}}",  bloc.outerHTML)
+                .replaceAll("{{REF}}",   ref)
+            );
+        };
+        _initComposerTools($elements);
+    };
+
+    /*
+     * _initComposerTools - Add composer action buttons to the edited structures
      * NOTE: à appliquer après l'insertion dans le composer (pour le check de profondeur)
      */
-    var _addComposerElements = function ($el) {
+    var _initComposerTools = function ($el) {
         // boutons d'action sur textes éditables
         $el.find(".editable-text").addBack(".editable-text").prepend(_composerTemplates.editable_element);
         // boutons d'action sur groupe de colonnes
@@ -186,65 +226,37 @@ composer = (function () {
     };
 
     /*
-     * _initComposerBlocks - Update structure elements choice in composer page
+     * _initComponentContainer - Configure container to be able to receive and configure dataviz.
      */
-    var _initComposerBlocks = function () {
-        const $structures = $("#structure-models").remove('.list-group-item');
-        const $elements = $("#element-models").remove('.list-group-item');
-        
-        // generate structures blocks from composer template
-        for (var ref in _HTMLTemplates['composer'].structure_elements) {
-            const elem = _HTMLTemplates['composer'].structure_elements[ref];
-            $structures.append(
-                _composerTemplates.blockTemplate
-                .replaceAll("{{LABEL}}", elem.getAttribute("data-label"))
-                .replaceAll("{{HTML}}", elem.outerHTML)
-                .replaceAll("{{REF}}", ref)
-            );
-        };
-        _addComposerElements($structures);
-        
-        // generate elements blocks from composer template
-        ["Texte"].forEach(function (elem) {
-            $elements.append(
-                _composerTemplates.extraElementTemplate
-                .replaceAll("{{CLASS}}", "")
-                .replaceAll("{{TEXT}}", elem)
-                .replaceAll("{{REF}}", "extra-" + elem.toLowerCase())
-            );
-        });
-        _addComposerElements($elements);
-    };
-
-    /*
-     * _initDatavizContainer - Configure container to be able to receive and configure dataviz.
-     */
-    var _initDatavizContainer = function ($el, noempty) {
-        $el.find(".dataviz-container").each(function(i) {
+    var _initComponentContainer = function ($el, noempty) {
+        $el.find(".component-container").each(function(i) {
             if (! noempty) $(this).empty();
-            // drop dataviz behaviors
+            // drop component behaviors (dataviz or element)
             new Sortable(this, {
-                group: 'dataviz',
-                filter: '.btn.edit',
+                group: 'component',
+                filter: '.btn:not(.drag)',
                 onAdd: function (evt) {
                     let $item = $(evt.item);
-                    // Test if title component
-                    if ($item.closest(".dataviz-container").hasClass("dvz-title")) {
-                        // No wizard needed. autoconfig this dataviz & deactivate wizard for this dataviz
-                        var dataviz = $item.closest(".dataviz").attr("data-dataviz");
-                        // Inject dataviz definition directly
-                        $item.find("code.dataviz-definition").text('{ "type": "title", "properties": {"id": "'+ dataviz +'"} }');
-                        // Set title icon & deactivate wizard button
-                        $item.find(".dataviz-description .dvz-icon").attr("class", "dvz-icon fas fa-heading");
-                        $item.find(".data-tools .btn.edit").hide();
-                    } else {
-                        $item.find(".data-tools .btn.edit").show();
+                    // mise en place d'un component dataviz
+                    if ($item.hasClass("dataviz-bloc")) {
+                        // Test if title component
+                        if ($item.closest(".component-container").hasClass("dataviz-autoconfig")) {
+                            // No wizard needed. autoconfig this dataviz & deactivate wizard for this dataviz
+                            var dataviz = $item.closest(".dataviz-bloc").attr("data-dataviz");
+                            // Inject dataviz definition directly
+                            $item.find("code.dataviz-definition").text('{ "type": "title", "properties": {"id": "'+ dataviz +'"} }');
+                            // Set title icon & deactivate wizard button
+                            $item.find(".dataviz-label .dvz-icon").attr("class", "dvz-icon fas fa-heading");
+                            $item.find(".data-tools .btn.edit").hide();
+                        } else {
+                            $item.find(".data-tools .btn.edit").show();
+                        }
                     }
                 }
             });
             // init existing dataviz for wizard
-            for (let dvz of this.getElementsByClassName("dataviz")) wizard.getSampleData(dvz.dataset['dataviz']);
-            if ($(this).hasClass("dvz-title")) $(this).find(".data-tools .btn.edit").hide();
+            for (let dvz of this.getElementsByClassName("dataviz-bloc")) wizard.getSampleData(dvz.dataset['dataviz']);
+            if ($(this).hasClass("dataviz-autoconfig")) $(this).find(".data-tools .btn.edit").hide();
         });
         return $el;
     };
@@ -290,21 +302,21 @@ composer = (function () {
         $('#text-edit').on('show.bs.modal', _onTextEdit);
 
         // remove/empty actions
-        $('#report-composition').on('click', '.bloc-tools .bloc-remove', function(e){
-            const $bloc = $(e.currentTarget).closest(".structure-bloc");
-//          $bloc.find(".dataviz").appendTo("#dataviz-items");
+        $('#report-composition').on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
+            const $bloc = $(e.currentTarget).closest(".structure-bloc, .element-bloc, .dataviz-bloc");
+//          $bloc.find(".dataviz-bloc").appendTo("#dataviz-items");
             $bloc.remove();
         });
         $('#report-composition').on('click', '.cell-tools .cell-empty', function(e){
-            const $data = $(e.currentTarget).closest(".layout-cell").find('.dataviz-container');
-//          $data.find(".dataviz").appendTo("#dataviz-items");
+            const $data = $(e.currentTarget).closest(".layout-cell").find('.component-container');
+//          $data.find(".dataviz-bloc").appendTo("#dataviz-items");
             $data.empty();
         });
         $('#report-composition').on('click', '.cell-tools .cell-delete', function(e){
             const $cell = $(e.currentTarget).closest(".layout-cell");
             const $cols = $cell.closest(".layout-cols");
             const $rows = $cols.closest(".layout-rows");
-//          $cell.find(".dataviz").appendTo("#dataviz-items");
+//          $cell.find(".dataviz-bloc").appendTo("#dataviz-items");
             $cell.remove();
             
             // ajustements sur le layout-cols selon son nombre d'enfants (layout-cell ou layout-rows)
@@ -338,11 +350,11 @@ composer = (function () {
                 $cell.removeClass("layout-cell").addClass("layout-rows");
                 $cell.find(".cell-tools").remove();
                 $cell.wrapInner('<div class="row layout-cols"><div class="col-12 layout-cell"></div></div>');
-                $cell.append(_initDatavizContainer($cell.find(".layout-cols").clone()));
-                _addComposerElements($cell);
+                $cell.append(_initComponentContainer($cell.find(".layout-cols").clone()));
+                _initComposerTools($cell);
             } else {
                 $cell.removeClass("col-12").addClass("col-6");
-                $cell.after(_initDatavizContainer($cell.clone()));
+                $cell.after(_initComponentContainer($cell.clone()));
             }
         });
 
@@ -357,17 +369,17 @@ composer = (function () {
         });
         // configure #element-models to allow drag with clone option
         new Sortable(document.getElementById("element-models"), {
-            group: { name: 'structure', pull: 'clone', put: false },
+            group: { name: 'component', pull: 'clone', put: false },
         });
         // configure #dataviz-items to allow drag
         new Sortable(document.getElementById("dataviz-items"), {
-            group: { name: 'dataviz', pull: 'clone', put: false },
+            group: { name: 'component', pull: 'clone', put: false },
         });
         // configure #report-composition to accept drag & drop from structure elements
         new Sortable(document.getElementById("report-composition"), {
             handle: '.drag',
             group: { name: 'structure' },
-            onAdd: function (evt) { _initDatavizContainer($(evt.item)); }
+            onAdd: function (evt) { _initComponentContainer($(evt.item)); }
         });
     };
 
@@ -610,15 +622,15 @@ composer = (function () {
                 let style = textedit.getTextStyle(tmp_bloc[0]);
                 tmp_bloc[0] = textedit.applyTextStyle(tmp_bloc[0], style);
             } else {
-                // loop on dataviz-container
-                $(tmp_bloc).find(".dataviz-container").each(function (id, container) {
+                // loop on component-container
+                $(tmp_bloc).find(".component-container").each(function (id, container) {
                     var pre_content = [];
                     var main_content = [];
                     var post_content = [];
                     //loop on elements and dataviz
                     $(container).find(".list-group-item").each(function (idx, item) {
                         var main_position = 0;
-                        if ($(item).hasClass("dataviz")) {
+                        if ($(item).hasClass("dataviz-bloc")) {
                             var dvz = $(item).find("code.dataviz-definition").text();
                             main_content.push(dvz);
                             main_position = idx;
@@ -785,11 +797,11 @@ composer = (function () {
         }
         // génération des nouvelles colonnes
         while (inputIdx < $inputs.length) {
-            var $cell = _initDatavizContainer(
+            var $cell = _initComponentContainer(
                 $( _composerTemplates.layout_cell.replace('{{SIZE}}', $inputs[inputIdx++].value) )
             );
             $cell.appendTo(colsDiv);
-            _addComposerElements($cell);
+            _initComposerTools($cell);
         }
 
         $(this).closest('.modal').modal('hide');
@@ -807,7 +819,7 @@ composer = (function () {
         // traitement des définitions de dataviz à intégrer
         if (dvzList) dvzList.forEach(function (dvzData) {
             const $dataviz = _makeDataviz(dvzData);
-            if ($dataviz) $cell.find('.dataviz-container').append($dataviz);
+            if ($dataviz) $cell.find('.component-container').append($dataviz);
         });
         
         return $cell;
@@ -824,7 +836,7 @@ composer = (function () {
         }
         // génération du HTML de la dataviz en clonant l'élément disponible dans la sidebar
         let datavizId = dvzData.properties.id;
-        let $dataviz = $('#dataviz-items .dataviz[data-dataviz="'+ datavizId +'"]').clone();
+        let $dataviz = $('#dataviz-items .dataviz-bloc[data-dataviz="'+ datavizId +'"]').clone();
         if (! $dataviz.length) {
             console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ datavizId +")");
             return;
@@ -842,8 +854,8 @@ composer = (function () {
      */
     var _loadBlocLayout = function ($bloc) {
         $("#report-composition").append( $bloc );
-        _addComposerElements( $bloc );
-        _initDatavizContainer( $bloc, true );
+        _initComposerTools( $bloc );
+        _initComponentContainer( $bloc, true );
     };
 
 
