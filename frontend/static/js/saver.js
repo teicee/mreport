@@ -6,96 +6,173 @@ saver = (function () {
     const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
 
+    /*
+     * Représentation JSON de la composition d'un rapport (constitué d'une suite de JsonBloc)
+     */
     class JsonReport {
-        constructor(node) {
+        title = "";
+        theme = "";
+        blocs = [];
+        
+        constructor(data) {
+            if (data instanceof HTMLElement)  this.parseNode(data);
+            else if (data)                    this.loadJson(data);
+        }
+        // 
+        loadJson(json) {
+            if (json.title) this.title = json.title;
+            if (json.theme) this.theme = json.theme;
+            if (json.blocs) json.blocs.forEach((data) => {
+                this.blocs.push( new JsonBloc(data) );
+            });
+        }
+        // 
+        parseNode(node) {
             this.title = $("#composer-report-title").text(),
             this.theme = composer.activeModel().id;
-            this.blocs = [];
-            if (node) this.parseNode(node);
-        }
-        parseNode(node) {
-            for (let i = 0; i < node.childElementCount; i++) {
-                const child = node.children[i];
-                const blocRef = child.dataset.bloc;
-                if (blocRef) this.blocs.push(new JsonBloc(blocRef, child));
-            }
+            node.querySelectorAll(".structure-bloc").forEach((data) => {
+                this.blocs.push( new JsonBloc(data) );
+            });
         }
     }
 
+    /*
+     * Représentation JSON d'un bloc composant un rapport (constitué de JsonLayout récursifs)
+     */
     class JsonBloc {
-        constructor(ref, node) {
-            this.ref     = ref;
-            this.title   = "";
-            this.layout  = {};
-            this.sources = "";
-            if (node) this.parseNode(node);
+        ref     = "";
+        title   = "";
+        layout  = {};
+        sources = "";
+        
+        constructor(data) {
+            if (data instanceof HTMLElement)  this.parseNode(data);
+            else if (data)                    this.loadJson(data);
         }
+        // 
+        loadJson(json) {
+            if (json.ref)     this.ref     = json.ref;
+            if (json.title)   this.title   = json.title;
+            if (json.layout)  this.layout  = new JsonLayout(json.layout);
+            if (json.sources) this.sources = json.sources;
+        }
+        // 
         parseNode(node) {
             var elem;
+            this.ref = node.dataset.bloc;
             if (elem = node.querySelector(".bloc-html .bloc-title"))   this.title   = composer.getTextData(elem);
             if (elem = node.querySelector(".bloc-html .bloc-layout"))  this.layout  = new JsonLayout(elem);
             if (elem = node.querySelector(".bloc-html .bloc-sources")) this.sources = composer.getTextData(elem);
         }
     }
 
+    /*
+     * Représentation JSON d'une structure de bloc dans un rapport (de type rows, cols, cell ou data)
+     */
     class JsonLayout {
-        constructor(node) {
-            this.type    = "none";
-            this.size    = null;
-            this.node    = null;
-            this.data    = null;
-            if (node) this.parseNode(node);
+        type = "none";
+        size = null;
+        node = null;
+        data = null;
+        
+        constructor(data) {
+            if (data instanceof HTMLElement)  this.parseNode(data);
+            else if (data)                    this.loadJson(data);
         }
+        // 
+        loadJson(json) {
+            if (json.type) this.type = json.type;
+            if (json.size) this.size = json.size;
+            switch (this.type) {
+                case 'rows':
+                case 'cols':
+                    this.node = [];
+                    if (json.node) json.node.forEach((item) => {
+                        this.node.push( new JsonLayout(item) );
+                    });
+                break;
+                case 'cell':
+                case 'data':
+                    this.data = [];
+                    if (json.data) json.data.forEach((item) => {
+                        this.data.push( new JsonComponent(item) );
+                    });
+                break;
+            }
+        }
+        // 
         parseNode(node) {
             var result;
-            // ignore les nodes qui n'ont pas de classe "layout-*"
-            if (result = node.className.match(_reType)) this.type = result[2];
-            // récupération de la taille depuis une classe "col-*"
-            if (result = node.className.match(_reSize)) this.size = result[2];
-            // récursion sur les structures enfants d'un "layout-rows" ou "layout-cols"
+            if (result = node.className.match(_reType)) this.type = result[2];  // type depuis classe "layout-*"
+            if (result = node.className.match(_reSize)) this.size = result[2];  // type depuis classe "col-*"
             switch (this.type) {
-                case 'none': return;
+                // récursion sur les structures enfants d'un "layout-rows" ou "layout-cols"
                 case 'rows':
-                case 'cols': return this.parseNodeLayout(node);
-                default    : return this.parseNodeComponents(node);
+                case 'cols':
+                    this.node = [];
+                    for (var i = 0; i < node.childElementCount; i++) {
+                        let child = new JsonLayout(node.children[i]);
+                        if (child && child.type != "none") this.node.push(child);
+                    }
+                break;
+                // recherche des "components" (dataviz|element) listés dans le conteneur d'un layout-cell
+                case 'cell':
+                case 'data':
+                    this.data = [];
+                    node.querySelectorAll(".component-container .list-group-item").forEach((item) => {
+                        let child = new JsonComponent(item);
+                        if (child && child.type != "none") this.data.push(child);
+                    });
+                break;
+                // sinon forcer le type "none" qui permettra d'ignorer ce bloc
+                default: this.type = "none";
             }
         }
-        parseNodeLayout(node) {
-            this.node = [];
-            for (var i = 0; i < node.childElementCount; i++) {
-                let child = new JsonLayout(node.children[i]);
-                if (child && child.type != "none") this.node.push(child);
-            }
+    }
+
+    /*
+     * Représentation JSON d'un composant listé dans la structure d'un rapport (dataviz ou element)
+     */
+    class JsonComponent {
+        type = "none";
+        ref  = "";
+        opts = {};
+        
+        constructor(data) {
+            if (data instanceof HTMLElement)  this.parseNode(data);
+            else if (data)                    this.loadJson(data);
         }
-        // recherche des "components" (dataviz|element) listés dans le conteneur d'un layout-cell
-        parseNodeComponents(node) {
-            this.data = [];
-            node.querySelectorAll(".component-container .list-group-item").forEach((item) => {
-                if      (item.classList.contains('dataviz-bloc')) this.parseNodeComponentsDataviz(node);
-                else if (item.classList.contains('element-bloc')) this.parseNodeComponentsElement(node);
-            });
+        // 
+        loadJson(json) {
+            if (json.type) this.type = json.type;
+            if (json.ref)  this.ref  = json.ref;
+            if (json.opts) this.opts = json.opts;
+        }
+        // 
+        parseNode(node) {
+            if      (node.classList.contains('dataviz-bloc')) this.parseNodeDataviz(node);
+            else if (node.classList.contains('element-bloc')) this.parseNodeElement(node);
         }
         // extraction des données d'un dataviz
-        parseNodeComponentsDataviz(item) {
-            let dvzCode, dvzJson;
+        parseNodeDataviz(item) {
+            this.type = "dataviz";
+            this.ref  = item.dataset.dataviz;
+            let code = item.querySelector('code.dataviz-definition');
             try {
-                dvzCode = item.querySelector('code.dataviz-definition').textContent;
-                dvzJson = (dvzCode) ? JSON.parse(dvzCode) : { properties: { id: item.dataset.dataviz } };
-                this.data.push( dvzJson );
+                if (code.textContent.length) this.opts = JSON.parse( code.textContent )
             } catch (e) {
-                console.error(e, dvzCode);
+                console.error("Configuration du dataviz inutilisable !\n", code, e);
             }
+//          if (! this.opts) this.opts = { 'properties': { 'id': ref } };
         }
         // extraction des données d'un element
-        parseNodeComponentsElement(item) {
-            let txtBloc, txtJson;
-            try {
-                txtBloc = item.querySelector('.bloc-html .bloc-element .bloc-content');
-                txtJson = composer.getTextData(txtBloc);
-                txtJson.ref = item.dataset.bloc;
-                this.data.push( txtJson );
-            } catch (e) {
-                console.error(e, "Invalid text element !");
+        parseNodeElement(item) {
+            this.type = "element";
+            this.ref  = item.dataset.bloc;
+            switch (this.ref) {
+                case "btexte":
+                    this.opts = composer.getTextData( item.querySelector('.bloc-html .bloc-element .bloc-content') );
+                break;
             }
         }
     }
@@ -103,10 +180,10 @@ saver = (function () {
     /**
      * _saveJsonReport : Send report JSON definition to the server (store a new version in database).
      */
-    var _saveJsonReport = function (report_id, composition) {
+    var _saveJsonReport = function (report_id, composition, callback) {
         // Export composition DOM structures and components
         const report_data = new JsonReport(composition);
-        console.debug("Export JSON de la composition :", report_data);
+        console.debug("Export JSON de la composition :\n", report_data);
         
         // Request save new report backup data
         $.ajax({
@@ -117,19 +194,21 @@ saver = (function () {
             url: [report.getAppConfiguration().api, "backup", report_id].join("/")
         })
         .done(function (data, status, xhr) {
-            console.debug(data);
+            console.debug("Résultat de l'enregistrement :\n", data);
             if (data.response === "success") {
                 Swal.fire(
                     "Sauvegardé",
                     "Enregistrement de la définition du rapport : " + report_id,
                     'success',
                 );
+                if (callback) callback(true);
             } else {
                 Swal.fire(
                     "Une erreur s'est produite",
                     "La définition du rapport n'a pas pu être enregistrée :<br>" + (data.error || data.response),
                     'error'
                 );
+                if (callback) callback(false);
             }
         })
         .fail(function (xhr, status, error) {
@@ -138,121 +217,14 @@ saver = (function () {
                 "L'API ne réponds pas :<br>" + _parseError(xhr.responseText),
                 'error'
             );
-        });
-    };
-
-
-/*
-    var _json2composition = function (jsonReport) {
-                case "BlocTitle": // { 'type': b.type, 'title': b.title }
-                    //create model container
-                    // bad way. Need to update. Not sure that first element template is title
-                    // Caution with composer.templates.structureTemplate
-                    _composer_template = composer.models()[model].elements[0];
-                    //add dataviz template to container
-                    //Same than composer.js
-                    let dvz = jsonReport.configuration[bloc.title];
-                    let dvztpl = composer.templates.datavizTemplate.join("");
-                    dvztpl = dvztpl.replace(/{{dvz}}/g, bloc.title);
-                    dvztpl = dvztpl.replace(/{{id}}/g, bloc.title);
-                    //dvztpl = dvztpl.replace(/{{reportId}}/g, reportId);
-                    dvztpl = dvztpl.replace(/{{type}}/g, dvz.dataviz_class);
-                    dvztpl = dvztpl.replace(/{{icon}}/g, composer.getDatavizTypeIcon(dvz.dataviz_class));
-                    //Create Element based on composer dataviz template
-                    let dvzConfig = parser.parseFromString(dvztpl, "text/html").querySelector("li");
-                    //Populate dataviz-definition with dataviz outerHTML element
-                    let dvzElement = parser.parseFromString(composer.models()[model].dataviz_components.title.replace("{{dataviz}}",bloc.title), "text/html").querySelector("div");
-*/
-
-    /**
-     * _parseJsonStructure: 
-     */
-    var _parseJsonStructure = function (layout, $node) {
-        // traitement d'un noeud "data" avec sa liste de dataviz
-        if (layout.type == 'data') {
-            let $container = $node.find('.component-container').first();
-            if (layout.data) layout.data.forEach(function (dvzData) {
-                const $dataviz = composer.makeDataviz(dvzData);
-                if (! $dataviz) return;
-                if (! $container.length) console.warn("Aucun conteneur pour dataviz");
-                $container.append($dataviz);
-            });
-            return;
-        }
-        // traitement d'un noeud "rows" ou "cols" avec sa liste d'enfants
-        if (layout.type == 'rows' || layout.type == 'cols') {
-            let $children = $node.children('.layout-rows, .layout-cols, .layout-cell, .layout-data');
-            let childIdx = 0;
-            if (layout.node) layout.node.forEach(function (child) {
-                let $child = (childIdx < $children.length) ? $( $children[childIdx++] ) : $('<div>').appendTo( $node );
-                
-                // nettoyage des classes ('col-#', 'layout-#' et 'row')
-                let nodeCsize = child.size || 1;
-                let nodeClass = $child.attr('class') || '';
-                $child.attr('class', nodeClass.replace(_reSize, '$1$3').replace(_reType, '$1$3')).removeClass('col row');
-                
-                if ('type' in child) switch(child.type) {
-                    case 'rows':
-                        $child.addClass('layout-rows col-' + nodeCsize);
-                        _parseJsonStructure(child, $child);
-                    break;
-                    case 'cols':
-                        $child.addClass('layout-cols row');
-                        _parseJsonStructure(child, $child);
-                    break;
-                    case 'data':
-                        $child.addClass('layout-data');
-                        _parseJsonStructure(child, $child);
-                    break;
-                    case 'cell':
-                        $child.replaceWith( composer.makeCell(nodeCsize, child.data) );
-                        if (child.node) console.warn("Layout invalide: présence d'enfants dans un noeud terminal (ignorés)", child.node);
-                    break;
-                    default:
-                        console.warn("Layout invalide: type de conteneur non reconnu (ignoré)", child.type);
-                }
-            });
-            return;
-        }
-        console.warn("Layout invalide: type de conteneur non reconnu (ignoré)", layout.type);
-    };
-
-    /**
-     * _json2composition : Import JSON report data to composition DOM structures.
-     */
-    var _json2composition = function (jsonReport) {
-        // sélection dans le composer du thème enregistré
-        if (jsonReport.theme) {
-            $("#selectedModelComposer").val( jsonReport.theme ).trigger('change');
-        }
-        // traitement des blocs définis pour génération du DOM de composition
-        if (jsonReport.blocs) jsonReport.blocs.forEach( function (bloc) {
-            const blocType = bloc.type || '';  // TODO gestion du type "element"
-            const blocRef  = bloc.ref  || '';
-            
-            // génération du HTML du bloc structurant en clonant l'élément disponible dans la sidebar
-            var $structure = $('#structure-models .structure-bloc[data-bloc="' + blocRef + '"]').clone();
-            if (! $structure.length) return console.warn("Bloc invalide: aucun bloc disponible correspondant (ignoré)", blocRef);
-            
-            // nettoyage des conteneurs non-structurant de la composition
-            $structure.find('.cols-tools, .cell-tools, .text-edit').remove();
-            $structure.find('.layout-cell .component-container').remove();
-            
-            // intégration des données du JSON dans le DOM du composer
-            if ('title' in bloc) $structure.find('.bloc-html .bloc-title h4').text( bloc.title );  // TODO
-            if ('layout' in bloc) _parseJsonStructure(bloc.layout, $structure.find('.bloc-html .bloc-layout'));
-            if ('sources' in bloc) $structure.find('.bloc-html .bloc-sources p').html( bloc.sources );  // TODO
-            
-            // mise en place du bloc dans l'interface de composition
-            console.debug("Contenu HTML du bloc fabriqué à partir de l'objet Report :", $structure.first());
-            composer.loadBloc( $structure );
+            if (callback) callback(false);
         });
     };
 
     /**
      * _loadJsonReport : Load report JSON definition from the server (last version if available).
      */
-    var _loadJsonReport = function (report_id) {
+    var _loadJsonReport = function (report_id, callback) {
         // Request last report backup data
         $.ajax({
             type: "GET",
@@ -260,19 +232,22 @@ saver = (function () {
             url: [report.getAppConfiguration().api, "backup", report_id, "last"].join("/")
         })
         .done(function (data, status, xhr) {
-            console.debug(data);
+            console.debug("Résultat du téléchargement JSON :\n", data);
             if (status === 'nocontent') {
                 // No database version, try to import from old HTML composer
-                _loadHtmlReport(report_id);
+                _loadHtmlReport(report_id, callback);
             } else if (data.response === "success" && data.report_backups) {
                 // Load composition from JSON
-                _json2composition(data.report_backups);
+                let report_data = new JsonReport(data.report_backups);
+                console.debug("Import JSON de la composition :\n", report_data);
+                if (callback) callback(true, report_data);
             } else {
                 Swal.fire(
                     "Une erreur s'est produite",
                     "La définition du rapport n'a pas pu être chargée :<br>" + (data.error || data.response),
                     'error'
                 );
+                if (callback) callback(false);
             }
         })
         .fail(function (xhr, status, err) {
@@ -281,22 +256,27 @@ saver = (function () {
                 "L'API ne réponds pas :<br>" + _parseError(xhr.responseText),
                 'error'
             );
+            if (callback) callback(false);
         });
     };
 
     /**
      * _loadHtmlReport : Load report HTML composer version from the server (old save format).
      */
-    var _loadHtmlReport = function (report_id) {
+    var _loadHtmlReport = function (report_id, callback) {
         // Request composer report file
         $.ajax({
             type: "GET",
             url: [report.getAppConfiguration().location, report_id, "report_composer.html?dc=" + Date.now()].join("/")
         })
         .done(function (html, status, xhr) {
-            console.debug(html);
-            if (! html) return;
-            
+            console.debug("Résultat du téléchargement HTML :\n", html);
+            if (! html) {
+                if (callback) callback(false);
+                return;
+            }
+            // TODO
+            /*
             // Alter HTML for compatibility with the new composition parser
             let composition = document.createRange().createContextualFragment(
                 html.replaceAll('col-md', 'col')
@@ -322,8 +302,10 @@ saver = (function () {
             });
             console.debug(composition);
             
+//                console.debug("Import HTML de la composition :\n", report_data);
             // Save composition to JSON and load it
             _json2composition(_composition2json(composition));
+            */
         })
         .fail(function (xhr, status, err) {
             Swal.fire(
@@ -333,7 +315,6 @@ saver = (function () {
             );
         });
     };
-
 
     /*
      * Public
