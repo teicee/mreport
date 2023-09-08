@@ -575,6 +575,7 @@ composer = (function () {
      * _getTextData - retourne les données en cours d'un texte éditable (contenu text/html et classe de style)
      */
     var _getTextData = function (node) {
+        if (! node.classList.contains('editable-text')) node = node.querySelector('.editable-text');
         let isHTML  = (node.querySelector(':scope > :not(button)') !== null);
         let style   = ""; for (let c of node.classList.values()) if (c.startsWith('style-')) style = c.slice(6);
         let content = "";

@@ -15,8 +15,8 @@ saver = (function () {
         blocs = [];
         
         constructor(data) {
-            if (data instanceof HTMLElement)  this.parseNode(data);
-            else if (data)                    this.loadJson(data);
+            if (data instanceof Node)  this.parseNode(data);
+            else if (data)             this.loadJson(data);
         }
         // 
         loadJson(json) {
@@ -46,8 +46,8 @@ saver = (function () {
         sources = "";
         
         constructor(data) {
-            if (data instanceof HTMLElement)  this.parseNode(data);
-            else if (data)                    this.loadJson(data);
+            if (data instanceof Node)  this.parseNode(data);
+            else if (data)             this.loadJson(data);
         }
         // 
         loadJson(json) {
@@ -76,8 +76,8 @@ saver = (function () {
         data = null;
         
         constructor(data) {
-            if (data instanceof HTMLElement)  this.parseNode(data);
-            else if (data)                    this.loadJson(data);
+            if (data instanceof Node)  this.parseNode(data);
+            else if (data)             this.loadJson(data);
         }
         // 
         loadJson(json) {
@@ -139,8 +139,8 @@ saver = (function () {
         opts = {};
         
         constructor(data) {
-            if (data instanceof HTMLElement)  this.parseNode(data);
-            else if (data)                    this.loadJson(data);
+            if (data instanceof Node)  this.parseNode(data);
+            else if (data)             this.loadJson(data);
         }
         // 
         loadJson(json) {
@@ -275,37 +275,51 @@ saver = (function () {
                 if (callback) callback(false);
                 return;
             }
-            // TODO
-            /*
             // Alter HTML for compatibility with the new composition parser
             let composition = document.createRange().createContextualFragment(
-                html.replaceAll('col-md', 'col')
+                html.replaceAll('col-md', 'col').replaceAll('editable-text titre-', 'editable-text style-titre-')
             );
-            composition.querySelectorAll('.structure-bloc').forEach( function(div){
-                let rb = div.querySelector('.report-bloc');
-                let bloc = (rb) ? rb.className.split(' ').pop() : 'b4-4-4';
-                div.setAttribute('data-bloc', bloc);
+            composition.querySelectorAll('.structure-bloc').forEach((bloc) => {
+                let rb  = bloc.querySelector('.report-bloc');
+                let rbt = bloc.querySelector('.report-bloc-title');
+                let ref = (rbt) ? 'btitle' : ((rb) ? rb.className.split(' ').pop() : 'b4-4-4');
+                bloc.setAttribute('data-bloc', ref);
             });
-            composition.querySelectorAll('.bloc-layout').forEach( function(div){
+            composition.querySelectorAll('.structure-html').forEach((div) => {
+                div.classList.add('bloc-html');
+            });
+            composition.querySelectorAll('.report-bloc-title').forEach((div) => {
+                div.classList.add('bloc-layout');
+                div.classList.add('layout-data');
+            });
+            composition.querySelectorAll('.bloc-content').forEach((div) => {
+                div.classList.add('bloc-layout');
                 div.classList.add('layout-rows');
             });
-            composition.querySelectorAll('div.row').forEach( function(div){
+            composition.querySelectorAll('div.row').forEach((div) => {
                 div.classList.add('layout-cols');
             });
-            composition.querySelectorAll('.customBaseColumn').forEach( function(div){
+            composition.querySelectorAll('.customBaseColumn').forEach((div) => {
                 div.classList.add('layout-cell');
             });
-            composition.querySelectorAll('code.dataviz-definition').forEach( function(div){
+            composition.querySelectorAll('.dataviz-container').forEach((div) => {
+                div.classList.add('component-container');
+            });
+            composition.querySelectorAll('.dataviz').forEach((div) => {
+                div.classList.add('dataviz-bloc');
+            });
+            composition.querySelectorAll('code.dataviz-definition').forEach((div) => {
                 let dvzCode = document.createElement('div');
                 dvzCode.innerHTML = div.textContent;
                 div.textContent = wizard.html2json( dvzCode.querySelector('.dataviz') );
             });
-            console.debug(composition);
+            composition.querySelectorAll('.text-edit').forEach(el => el.remove());
+            console.debug("Import HTML de la composition :\n", composition);
             
-//                console.debug("Import HTML de la composition :\n", report_data);
-            // Save composition to JSON and load it
-            _json2composition(_composition2json(composition));
-            */
+            // Load composition from HTML
+            let report_data = new JsonReport(composition);
+            console.debug("Import JSON de la composition :\n", report_data);
+            if (callback) callback(true, report_data);
         })
         .fail(function (xhr, status, err) {
             Swal.fire(

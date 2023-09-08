@@ -554,7 +554,7 @@ wizard = (function () {
         $(e.currentTarget).find(".modal-title").text(datavizId);
 
         // Store dataviz DOM element edited from the composer
-        _composer_dataviz = $(e.relatedTarget).closest(".dataviz");
+        _composer_dataviz = $(e.relatedTarget).closest(".dataviz-bloc");
 
         //clear wizard form;
         _clean();
