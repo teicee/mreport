@@ -3,6 +3,8 @@ composer = (function () {
      * Private
      */
 
+    var debug = false;
+
     const _reTest = new RegExp('^(.* )?layout-(cell|rows)( .*)?$');
     const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
@@ -159,7 +161,7 @@ composer = (function () {
         if (page_style) page_style = page_style.outerHTML;
         
         //get main template div
-        var page_layout = $(html).find("template.report").get(0).content.firstElementChild.outerHTML;
+        var page_layout = $(html).find("template.report-main").first().prop('content').children;
         
         //get all report-structure & report-element blocs
         var structure_blocs = {};
@@ -392,12 +394,6 @@ composer = (function () {
         new Sortable(document.getElementById("dataviz-items"), {
             group: { name: 'component', pull: 'clone', put: false },
         });
-        // configure #report-composition to accept drag & drop from structure elements
-        new Sortable(document.getElementById("report-composition"), {
-            handle: '.drag',
-            group: { name: 'structure' },
-            onAdd: function (evt) { _initComponentContainer($(evt.item)); }
-        });
     };
 
     /*
@@ -408,16 +404,15 @@ composer = (function () {
         var reportId = $(this).val();
         
         // clear composition
-        var $composition  = $("#report-composition").empty();
-        var $dvzContainer = $("#dataviz-items").empty();
+        let $dvzContainer = $("#dataviz-items").empty();
+        let $mainComposer = $("#composer .main").empty();
         
         // check report exists
         var reportData = admin.getReportData(reportId);
-        $("#composer-report-title").text( reportData.title );
         if (! reportData) return _alert("Rapport sélectionné non disponible !", "danger", true);
         
         // add available dataviz items in menu list
-        reportData.dataviz.forEach(function (dvz) {
+        reportData.dataviz.forEach((dvz) => {
             $dvzContainer.append(
                 _composerTemplates.datavizTemplate
                 .replace(/{{REF}}/g,      dvz.id)
@@ -430,15 +425,23 @@ composer = (function () {
         // load the last report definition from database (async)
         saver.loadJsonReport(reportId, function(success, report_data) {
             if (! success) return;
-            // sélection dans le composer du thème enregistré
+            // initialisation des éléments du composer dans la page
+            let composition = $mainComposer.append( $(_HTMLTemplates['composer'].page).clone() ).find('#report-composition')[0];
+            $("#composer-report-title").text( reportData.title );
             $("#selectedModelComposer").val( report_data.theme ).trigger('change');
             // application dans le composer des blocs chargés
             report_data.blocs.forEach((bloc) => {
                 var $bloc = _makeReportBloc(bloc);
                 if (! $bloc) return;
-                $("#report-composition").append( $bloc );
                 _initComposerTools( $bloc );
                 _initComponentContainer( $bloc, true );
+                $bloc.appendTo(composition);
+            });
+            // configure #report-composition to accept drag & drop from structure elements
+            new Sortable(composition, {
+                handle: '.drag',
+                group: { name: 'structure' },
+                onAdd: function (evt) { _initComponentContainer($(evt.item)); }
             });
         });
     };
@@ -465,7 +468,7 @@ composer = (function () {
         if ('layout'  in jsonBloc) _makeReportLayout( jsonBloc.layout, $structure.find('.bloc-html .bloc-layout') );
         
         // retourne la structure HTML du bloc à ajouter dans l'interface de composition
-        console.debug("Bloc HTML généré du JSON :\n", $structure.html());
+        if (debug) console.debug("Bloc HTML généré du JSON :\n", $structure.html());
         return $structure;
     };
 
@@ -514,7 +517,6 @@ composer = (function () {
      */
     var _makeReportComponent = function (jsonComponent, $node) {
         if (! $node.length) return console.warn("Aucun conteneur pour composants (dataviz|element)");
-        console.log(jsonComponent);
         let $item;
         switch (jsonComponent.type) {
             case 'dataviz': $item = _makeDataviz(jsonComponent.ref, jsonComponent.opts); break;

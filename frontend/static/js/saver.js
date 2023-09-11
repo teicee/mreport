@@ -3,6 +3,8 @@ saver = (function () {
      * Private
      */
 
+    var debug = true;
+
     const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
 
@@ -183,7 +185,7 @@ saver = (function () {
     var _saveJsonReport = function (report_id, composition, callback) {
         // Export composition DOM structures and components
         const report_data = new JsonReport(composition);
-        console.debug("Export JSON de la composition :\n", report_data);
+        if (debug) console.debug("Export JSON de la composition :\n", report_data);
         
         // Request save new report backup data
         $.ajax({
@@ -194,7 +196,7 @@ saver = (function () {
             url: [report.getAppConfiguration().api, "backup", report_id].join("/")
         })
         .done(function (data, status, xhr) {
-            console.debug("Résultat de l'enregistrement :\n", data);
+            if (debug) console.debug("Résultat de l'enregistrement :\n", data);
             if (data.response === "success") {
                 Swal.fire(
                     "Sauvegardé",
@@ -232,14 +234,14 @@ saver = (function () {
             url: [report.getAppConfiguration().api, "backup", report_id, "last"].join("/")
         })
         .done(function (data, status, xhr) {
-            console.debug("Résultat du téléchargement JSON :\n", data);
+            if (debug) console.debug("Résultat du téléchargement JSON :\n", data);
             if (status === 'nocontent') {
                 // No database version, try to import from old HTML composer
                 _loadHtmlReport(report_id, callback);
             } else if (data.response === "success" && data.report_backups) {
                 // Load composition from JSON
                 let report_data = new JsonReport(data.report_backups);
-                console.debug("Import JSON de la composition :\n", report_data);
+                if (debug) console.debug("Import JSON de la composition :\n", report_data);
                 if (callback) callback(true, report_data);
             } else {
                 Swal.fire(
@@ -270,7 +272,7 @@ saver = (function () {
             url: [report.getAppConfiguration().location, report_id, "report_composer.html?dc=" + Date.now()].join("/")
         })
         .done(function (html, status, xhr) {
-            console.debug("Résultat du téléchargement HTML :\n", html);
+            if (debug) console.debug("Résultat du téléchargement HTML :\n", html);
             if (! html) {
                 if (callback) callback(false);
                 return;
@@ -314,11 +316,11 @@ saver = (function () {
                 div.textContent = wizard.html2json( dvzCode.querySelector('.dataviz') );
             });
             composition.querySelectorAll('.text-edit').forEach(el => el.remove());
-            console.debug("Import HTML de la composition :\n", composition);
+            if (debug) console.debug("Import HTML de la composition :\n", composition);
             
             // Load composition from HTML
             let report_data = new JsonReport(composition);
-            console.debug("Import JSON de la composition :\n", report_data);
+            if (debug) console.debug("Import JSON de la composition :\n", report_data);
             if (callback) callback(true, report_data);
         })
         .fail(function (xhr, status, err) {

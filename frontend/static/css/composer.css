@@ -135,13 +135,11 @@
   word-wrap: break-word;
 }
 
-.builder.edit #report-composition:empty:after {
-  content: "Sélectionner le rapport à éditer.\APuis déposer ici les blocs et dataviz.";
-  white-space: pre-wrap;
-  position: absolute;
-  top: 50%;
-  left:50%;
-  transform:translate(-50%,-50%);
+#composer .composer-empty {
+  width: 100%;
+  min-height: 250px;
+  padding-top: 75px;
+  border: 2px dashed grey;
   text-align: center;
   font-size:20px;
   font-weight:700;
