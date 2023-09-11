@@ -72,11 +72,12 @@
   box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
 
-.builder .sidenav .dataviz-bloc.list-group-item {
+.builder .sidenav .dataviz-item.list-group-item {
   font-size: 0.75rem;
   line-height: 1rem;
 }
-.builder .sidenav .bloc-label {
+.builder .sidenav .structure-label,
+.builder .sidenav .element-label {
   font-size: small;
 }
 
@@ -85,7 +86,8 @@
 .builder .sidenav .list-group-item .cell-tools,
 .builder .sidenav .list-group-item .data-tools,
 .builder .sidenav .list-group-item .text-edit,
-.builder .sidenav .list-group-item .bloc-html,
+.builder .sidenav .list-group-item .structure-html,
+.builder .sidenav .list-group-item .element-html,
 .builder .sidenav .list-group-item .dataviz-definition {
   display: none;
 }
@@ -98,7 +100,8 @@
   width: 400px;
   background-color: #ffe;
 }
-.builder .sidenav .sortable-drag .bloc-html {
+.builder .sidenav .sortable-drag .structure-html,
+.builder .sidenav .sortable-drag .element-html {
   display: block;
 }
 .builder .sidenav .sortable-drag .layout-cell {
@@ -152,8 +155,9 @@
 
 /* --------------------------------------------------------- Blocs de composition */
 
-.builder #report-composition .structure-bloc {
+.builder #report-composition .structure-item {
   position: relative;
+  padding-top: 1.5rem;
 }
 
 .builder #report-composition .bloc-tools {
@@ -162,7 +166,8 @@
   right: 0;
 }
 
-.builder #report-composition .bloc-label {
+.builder #report-composition .structure-label,
+.builder #report-composition .element-label {
   display: none;
 }
 .builder #report-composition .bloc-title {
@@ -184,17 +189,17 @@
 .builder #report-composition > li.sortable-chosen .cell-tools,
 .builder #report-composition > li.sortable-chosen .text-edit,
 .builder #report-composition > li.sortable-chosen .list-group-item,
-.builder #report-composition > li.sortable-chosen .component-container:empty:after,
+.builder #report-composition > li.sortable-chosen .components-container:empty:after,
 .builder #report-composition > li.sortable-chosen:hover .cols-tools,
 .builder #report-composition > li.sortable-chosen:hover .cell-tools,
 .builder #report-composition > li.sortable-chosen:hover .text-edit,
 .builder #report-composition > li.sortable-chosen:hover .list-group-item,
-.builder #report-composition > li.sortable-chosen:hover .component-container:empty:after {
+.builder #report-composition > li.sortable-chosen:hover .components-container:empty:after {
   display: none;
 }
 
 /*.builder #report-composition .sortable-chosen .layout-cell,*/
-.builder #report-composition > li.sortable-chosen .component-container {
+.builder #report-composition > li.sortable-chosen .components-container {
   min-height: 2em;
   background: #ccc;
 }
@@ -309,14 +314,14 @@
 
 /* --------------------------------------------------------- Component containers */
 
-.builder #report-composition .component-container {
+.builder #report-composition .components-container {
   border: 1px solid #bbb;
   min-height: 6.5rem;
   height: 100%;
   font-size: 1rem;
   padding: 10px;
 }
-.builder #report-composition .component-container:empty:after {
+.builder #report-composition .components-container:empty:after {
   content: "glisser-déposer\Aune donnée ici";
   white-space: pre-wrap;
   margin-top: 0.5rem;
@@ -326,109 +331,109 @@
   color: #bbb;
 }
 
-.builder #report-composition .component-container .dataviz-bloc {
+.builder #report-composition .components-container .dataviz-item {
   position: relative;
   background-color: #BFE4EA; /* from colors.css : .mreport-primary-color-3-bg */
   color: #006878;
 }
-.builder #report-composition .component-container .element-bloc {
+.builder #report-composition .components-container .element-item {
   position: relative;
   background-color: #e9ecef; /* from colors.css : .mreport-grey6-bg */
   color: #333;
 }
 
-.builder #report-composition .component-container .data-tools {
+.builder #report-composition .components-container .data-tools {
   position: absolute;
   bottom: 0;
   right: 0;
   z-index: 50;
 }
-.builder #report-composition .component-container .data-tools .btn.drag,
-.builder #report-composition .component-container .data-tools .btn b {
+.builder #report-composition .components-container .data-tools .btn.drag,
+.builder #report-composition .components-container .data-tools .btn b {
   display: none;
 }
-.builder #report-composition .component-container .dataviz-bloc.configured .data-tools .btn.edit {
+.builder #report-composition .components-container .dataviz-item.configured .data-tools .btn.edit {
   background-color: #28a745;
   color: #ffffff;
 }
 
-.builder #report-composition .component-container .dataviz-bloc .dataviz-label {
+.builder #report-composition .components-container .dataviz-item .dataviz-label {
   display: flex;
   justify-content: flex-start;
   align-items: center;
 }
-.builder #report-composition .component-container .dataviz-bloc .dataviz-label .dvz-icon {
+.builder #report-composition .components-container .dataviz-item .dataviz-label .dvz-icon {
   flex-grow: 0;
   font-size: 2rem;
   margin-right: 0.5em;
 }
 
-.builder #report-composition .component-container .dataviz-bloc .dataviz-definition {
+.builder #report-composition .components-container .dataviz-item .dataviz-definition {
   font-size: 0.75em;
   line-height: 1em;
   display: none;
 }
 
-.builder #report-composition .component-container .list-group-item:hover {
+.builder #report-composition .components-container .list-group-item:hover {
   box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
-.builder #report-composition .component-container .list-group-item:hover .data-tools .btn b {
+.builder #report-composition .components-container .list-group-item:hover .data-tools .btn b {
   display: inline;
 }
-.builder #report-composition .component-container .list-group-item:hover .data-tools {
+.builder #report-composition .components-container .list-group-item:hover .data-tools {
   filter: alpha(opacity=100);
   opacity: 1;
   transition: 0.5s;
 }
-.builder #report-composition .component-container .list-group-item .data-tools {
+.builder #report-composition .components-container .list-group-item .data-tools {
   filter: alpha(opacity=50);
   opacity: 0.5;
 }
 
-.builder.edit #report-composition .component-container .list-group-item.sortable-chosen {
+.builder.edit #report-composition .components-container .list-group-item.sortable-chosen {
   background-color: transparent;
 }
-.builder.edit #report-composition .component-container .list-group-item.sortable-chosen .data-tools {
+.builder.edit #report-composition .components-container .list-group-item.sortable-chosen .data-tools {
   display: none;
 }
 
-.builder.edit #report-composition .component-container .list-group-item.sortable-drag {
+.builder.edit #report-composition .components-container .list-group-item.sortable-drag {
   font-size: 1.2rem;
   line-height: 1.5rem;
   padding: 15px;
   height: auto;
 }
-.builder.edit #report-composition .component-container .dataviz-bloc.sortable-drag {
+.builder.edit #report-composition .components-container .dataviz-item.sortable-drag {
   background-color: #BFE4EA; /* from colors.css : .mreport-primary-color-3-bg */
 }
-.builder.edit #report-composition .component-container .element-bloc.sortable-drag {
+.builder.edit #report-composition .components-container .element-item.sortable-drag {
   background-color: #e9ecef; /* from colors.css : .mreport-grey6-bg */
 }
-.builder.edit #report-composition .component-container .list-group-item.sortable-drag .data-tools,
-.builder.edit #report-composition .component-container .list-group-item.sortable-drag .text-edit {
+.builder.edit #report-composition .components-container .list-group-item.sortable-drag .data-tools,
+.builder.edit #report-composition .components-container .list-group-item.sortable-drag .text-edit {
   display: none;
 }
 
-.builder #report-composition .component-container .list-group-item {
+.builder #report-composition .components-container .list-group-item {
   cursor: grab;
 }
 
 /* --------------------------------------------------------- Special title block */
 
-.builder #report-composition .component-container.dataviz-autoconfig {
+.builder #report-composition .dataviz-autoconfig .components-container {
   min-height: 5rem;
   flex-direction: row;
   justify-content: space-between;
   border: 5px ridge #bbb;
 }
-.builder #report-composition .component-container.dataviz-autoconfig:empty:after {
+.builder #report-composition .dataviz-autoconfig .components-container:empty:after {
   white-space: normal;
   line-height: 2rem;
   margin-top: 0.5rem;
   width: 100%;
 }
 
-.builder #report-composition .component-container.dataviz-autoconfig .list-group-item {
+.builder #report-composition .dataviz-autoconfig .components-container .list-group-item {
   flex-grow: 1;
 }
 
@@ -456,7 +461,7 @@
 .style-titre-4 { font-size: 16px; font-weight: 400; }
 
 /*
-.card.dataviz-bloc:not(.used) .card-footer {
+.card.dataviz-item:not(.used) .card-footer {
     display: none;
 }
 

@@ -1,15 +1,72 @@
 <div id="model-composer" data-colors="#005a66,#0094ab,#b0252e,#cf7a26,#e3c213,#9fb935,#2f476c,#b0006b,#555555,#999999">
 
-    <!-- REQUERY template report is the main report div -->
-    <template class="report-main">
-        <h2 id="composer-report-title"><!-- title is injected here --> </h2>
-        <ul id="report-composition" class="list-group"><!-- blocs are injected here --></ul>
+    <!-- HTML wrapper used to construct the main report container in the composer interface -->
+    <template class="report-layout" id="wmain">
+        <h2 id="composer-report-title">
+            <!-- title is injected here -->
+        </h2>
+        <ul id="report-composition" class="list-group">
+            <!-- blocs are injected here -->
+        </ul>
     </template>
+
+    <!-- HTML wrapper used to construct structural blocks and append it to dom in #structure-models list -->
+    <template class="report-layout" id="wstructure">
+        <li class="structure-item list-group-item handle" data-bloc="{{REF}}">
+            <div class="bloc-tools btn-group btn-group-sm">
+                <button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>
+                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
+            </div>
+            <span class="structure-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>
+            <div class="structure-html">{{HTML}}<!-- report-structure template is injected here --></div>
+        </li>
+    </template>
+
+    <!-- HTML wrapper used to construct elements components and append it to dom in #element-models list -->
+    <template class="report-layout" id="welement">
+        <li class="element-item list-group-item handle" data-bloc="{{REF}}">
+            <div class="data-tools btn-group btn-group-sm">
+                <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button-->
+                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
+            </div>
+            <span class="element-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>
+            <div class="element-html">{{HTML}}<!-- report-element template is injected here --></div>
+        </li>
+    </template>
+
+    <!-- HTML wrapper used to construct dataviz components and append them to dom in #dataviz-items list -->
+    <template class="report-layout" id="wdataviz">
+        <li class="dataviz-item list-group-item handle" data-dataviz="{{REF}}" data-type="{{TYPE}}" title="{{REF}}">
+            <div class="data-tools btn-group btn-group-sm">
+                <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button-->
+                <button class="btn btn-warning edit" data-toggle="modal" data-component="report" data-related-id="{{REF}}" data-target="#wizard-panel"><i class="fas fa-cog"></i> <b>éditer</b></button>
+                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
+            </div>
+        <span class="dataviz-label"><i class="dvz-icon {{ICON}}" title="{{TYPE}}"></i> {{LABEL}}</span>
+        <code class="dataviz-definition"></code>
+    </template>
+
+    <!-- HTML wrapper used to add a new child column inside a structure block -->
+    <template class="report-layout" id="wcell">
+        <div class="col-{{SIZE}} layout-cell">
+            <ul class="components-container list-group">
+                <!-- dataviz|element components are injected here -->
+            </ul>
+        </div>
+    </template>
+
+    <template class="report-layout" id="wdata">
+        <ul class="components-container list-group">
+            <!-- dataviz|element components are injected here -->
+        </ul>
+    </template>
+
+
 
     <template class="report-structure" id="btitle">
         <div class="bloc-structure" data-label="Bloc titre" data-description="Bloc titre (autoconfig)">
-            <div class="bloc-layout container-fluid layout-data">
-                <ul class="component-container list-group dataviz-autoconfig"><!--dataviz|element component is injected here --></ul>
+            <div class="bloc-layout container-fluid layout-data dataviz-autoconfig">
+                <!-- dataviz|element components are injected here -->
             </div>
         </div>
     </template>
@@ -19,7 +76,7 @@
             <div class="bloc-layout container-fluid layout-rows">
                 <div class="row layout-cols fixed-layout">
                     <div class="col-12 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                 </div>
             </div>
@@ -35,7 +92,7 @@
             <div class="bloc-layout container-fluid layout-rows">
                 <div class="row layout-cols fixed-layout">
                     <div class="col-12 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                 </div>
             </div>
@@ -54,10 +111,10 @@
             <div class="bloc-layout container-fluid layout-rows">
                 <div class="row layout-cols fixed-layout">
                     <div class="col-6 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                     <div class="col-6 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                 </div>
             </div>
@@ -76,13 +133,13 @@
             <div class="bloc-layout container-fluid layout-rows">
                 <div class="row layout-cols fixed-layout">
                     <div class="col-4 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                     <div class="col-4 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                     <div class="col-4 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                 </div>
             </div>
@@ -101,20 +158,20 @@
             <div class="bloc-layout container-fluid layout-rows">
                 <div class="row layout-cols fixed-layout">
                     <div class="col-4 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                     <div class="col-4 layout-cell">
-                        <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                        <!-- dataviz|element components are injected here -->
                     </div>
                     <div class="col-4 layout-rows">
                         <div class="row layout-cols fixed-layout">
                             <div class="col-12 layout-cell">
-                                <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                                <!-- dataviz|element components are injected here -->
                             </div>
                         </div>
                         <div class="row layout-cols fixed-layout">
                             <div class="col-12 layout-cell">
-                                <ul class="component-container list-group"><!--dataviz|element component is injected here --></ul>
+                                <!-- dataviz|element components are injected here -->
                             </div>
                         </div>
                     </div>

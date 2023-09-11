@@ -32,7 +32,7 @@ saver = (function () {
         parseNode(node) {
             this.title = $("#composer-report-title").text(),
             this.theme = composer.activeModel().id;
-            node.querySelectorAll(".structure-bloc").forEach((data) => {
+            node.querySelectorAll(".structure-item").forEach((data) => {
                 this.blocs.push( new JsonBloc(data) );
             });
         }
@@ -62,9 +62,9 @@ saver = (function () {
         parseNode(node) {
             var elem;
             this.ref = node.dataset.bloc;
-            if (elem = node.querySelector(".bloc-html .bloc-title"))   this.title   = composer.getTextData(elem);
-            if (elem = node.querySelector(".bloc-html .bloc-layout"))  this.layout  = new JsonLayout(elem);
-            if (elem = node.querySelector(".bloc-html .bloc-sources")) this.sources = composer.getTextData(elem);
+            if (elem = node.querySelector(".structure-html .bloc-title"))   this.title   = composer.getTextData(elem);
+            if (elem = node.querySelector(".structure-html .bloc-layout"))  this.layout  = new JsonLayout(elem);
+            if (elem = node.querySelector(".structure-html .bloc-sources")) this.sources = composer.getTextData(elem);
         }
     }
 
@@ -106,7 +106,7 @@ saver = (function () {
         parseNode(node) {
             var result;
             if (result = node.className.match(_reType)) this.type = result[2];  // type depuis classe "layout-*"
-            if (result = node.className.match(_reSize)) this.size = result[2];  // type depuis classe "col-*"
+            if (result = node.className.match(_reSize)) this.size = result[2];  // size depuis classe "col-*"
             switch (this.type) {
                 // récursion sur les structures enfants d'un "layout-rows" ou "layout-cols"
                 case 'rows':
@@ -121,7 +121,7 @@ saver = (function () {
                 case 'cell':
                 case 'data':
                     this.data = [];
-                    node.querySelectorAll(".component-container .list-group-item").forEach((item) => {
+                    node.querySelectorAll(".components-container .list-group-item").forEach((item) => {
                         let child = new JsonComponent(item);
                         if (child && child.type != "none") this.data.push(child);
                     });
@@ -152,8 +152,8 @@ saver = (function () {
         }
         // 
         parseNode(node) {
-            if      (node.classList.contains('dataviz-bloc')) this.parseNodeDataviz(node);
-            else if (node.classList.contains('element-bloc')) this.parseNodeElement(node);
+            if      (node.classList.contains('dataviz-item')) this.parseNodeDataviz(node);
+            else if (node.classList.contains('element-item')) this.parseNodeElement(node);
         }
         // extraction des données d'un dataviz
         parseNodeDataviz(item) {
@@ -173,7 +173,7 @@ saver = (function () {
             this.ref  = item.dataset.bloc;
             switch (this.ref) {
                 case "btexte":
-                    this.opts = composer.getTextData( item.querySelector('.bloc-html .bloc-element .bloc-content') );
+                    this.opts = composer.getTextData( item.querySelector('.structure-html .bloc-element .bloc-content') );
                 break;
             }
         }
@@ -286,15 +286,15 @@ saver = (function () {
                 let rbt = bloc.querySelector('.report-bloc-title');
                 let ref = (rbt) ? 'btitle' : ((rb) ? rb.className.split(' ').pop() : 'b4-4-4');
                 bloc.setAttribute('data-bloc', ref);
-            });
-            composition.querySelectorAll('.structure-html').forEach((div) => {
-                div.classList.add('bloc-html');
+                bloc.classList.add('structure-item');
+                bloc.classList.remove('structure-bloc');
             });
             composition.querySelectorAll('.report-bloc-title').forEach((div) => {
                 div.classList.add('bloc-layout');
                 div.classList.add('layout-data');
             });
             composition.querySelectorAll('.bloc-content').forEach((div) => {
+                div.classList.remove('bloc-content');
                 div.classList.add('bloc-layout');
                 div.classList.add('layout-rows');
             });
@@ -305,10 +305,10 @@ saver = (function () {
                 div.classList.add('layout-cell');
             });
             composition.querySelectorAll('.dataviz-container').forEach((div) => {
-                div.classList.add('component-container');
+                div.classList.add('components-container');
             });
             composition.querySelectorAll('.dataviz').forEach((div) => {
-                div.classList.add('dataviz-bloc');
+                div.classList.add('dataviz-item');
             });
             composition.querySelectorAll('code.dataviz-definition').forEach((div) => {
                 let dvzCode = document.createElement('div');

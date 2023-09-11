@@ -13,41 +13,6 @@ composer = (function () {
      * _composerTemplates - {object}. This var store html templates to render composer structure and actions buttons.
      */
     var _composerTemplates = {
-        // HTML used to construct structural blocks and append it to dom in #structure-models list
-        structureTemplate: [
-            '<li class="structure-bloc list-group-item handle" data-bloc="{{REF}}">',
-              '<div class="bloc-tools btn-group btn-group-sm">',
-                '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
-                '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
-              '</div>',
-              '<span class="bloc-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>',
-              '<div class="bloc-html">{{HTML}}</div>',
-            '</li>'
-        ].join(""),
-        // HTML used to construct elements components and append it to dom in #element-models list
-        elementTemplate: [
-            '<li class="element-bloc list-group-item handle" data-bloc="{{REF}}">',
-              '<div class="data-tools btn-group btn-group-sm">',
-//              '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
-                '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
-              '</div>',
-              '<span class="bloc-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>',
-              '<div class="bloc-html">{{HTML}}</div>',
-            '</li>'
-        ].join(""),
-        // HTML used to construct dataviz components and append them to dom in #dataviz-items list
-        datavizTemplate: [
-            '<li class="dataviz-bloc list-group-item handle" data-dataviz="{{REF}}" data-type="{{TYPE}}" title="{{REF}}">',
-              '<div class="data-tools btn-group btn-group-sm">',
-//              '<button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>',
-                '<button class="btn btn-warning edit" data-toggle="modal" data-component="report" data-related-id="{{REF}}" data-target="#wizard-panel"><i class="fas fa-cog"></i> <b>éditer</b></button>',
-                '<button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>',
-              '</div>',
-              '<span class="dataviz-label"><i class="dvz-icon {{ICON}}" title="{{TYPE}}"></i> {{LABEL}}</span>',
-              '<code class="dataviz-definition"></code>',
-            '</li>'
-        ].join(""),
-        
         // HTML used to add action buttons to divided cells
         cols_tools: [
             '<div class="cols-tools btn-group btn-group-sm">',
@@ -70,16 +35,10 @@ composer = (function () {
             '</div>',
         ].join(""),
         // HTML used to add action buttons to editable texts
-        editable_element: [
+        text_tools: [
             '<button data-toggle="modal" data-target="#text-edit" class="btn btn-sm btn-warning text-edit">',
               '<i class="fas fa-edit"></i> <b>éditer</b>',
             '</button>'
-        ].join(""),
-        // HTML used to add a new child column inside a structure block
-        layout_cell: [
-            '<div class="col-{{SIZE}} layout-cell">',
-              '<ul class="component-container list-group"></ul>',
-            '</div>'
         ].join(""),
         // HTML used to add a new input for colunm size in the division form
         grid_col_input: [
@@ -160,11 +119,14 @@ composer = (function () {
         var page_style = $(html).find("style")[0];
         if (page_style) page_style = page_style.outerHTML;
         
-        // get composition main container
-        var page_layout = Array.prototype.map.call(
-            $(html).find("template.report-main").first().prop('content').children,
-            (child) => { return child.outerHTML; }
-        ).join("\n");
+        // get composition wrapper containers
+        var page_layouts = {};
+        $(html).find("template.report-layout").each(function (id, template) {
+            page_layouts[ template.id ] = Array.prototype.map.call(
+                $(template).prop('content').children,
+                (child) => { return child.outerHTML; }
+            ).join("\n");
+        });
         
         //get all report-structure & report-element blocs
         var structure_blocs = {};
@@ -188,7 +150,7 @@ composer = (function () {
             id:                 templateId,
             parameters:         parameters,
             style:              page_style,
-            page:               page_layout,
+            page_layouts:       page_layouts,
             structure_blocs:    structure_blocs,
             element_blocs:      element_blocs,
             dataviz_components: dataviz_components
@@ -206,9 +168,19 @@ composer = (function () {
         
         // generate structures blocks from composer template
         for (var ref in _HTMLTemplates['composer'].structure_blocs) {
-            const bloc = _HTMLTemplates['composer'].structure_blocs[ref];
+            let bloc = _HTMLTemplates['composer'].structure_blocs[ref];
+            // remplacement des nodes "layout-cell" avec le code du template
+            bloc.querySelectorAll('.layout-cell').forEach((node) => {
+                let csize = (result = node.className.match(_reSize)) ? result[2] : 1;  // size depuis classe "col-*"
+                $(node).replaceWith( _HTMLTemplates['composer'].page_layouts['wcell'].replace('{{SIZE}}', csize) );
+            });
+            // contenu des nodes "layout-data" avec le code du template
+            bloc.querySelectorAll('.layout-data').forEach((node) => {
+                $(node).html( _HTMLTemplates['composer'].page_layouts['wdata'] );
+            });
+            // HTML used to construct structural blocks and append it to dom in #structure-models list
             $structures.append(
-                _composerTemplates.structureTemplate
+                _HTMLTemplates['composer'].page_layouts['wstructure']
                 .replaceAll("{{LABEL}}", bloc.getAttribute("data-label"))
                 .replaceAll("{{HTML}}",  bloc.outerHTML)
                 .replaceAll("{{REF}}",   ref)
@@ -220,7 +192,7 @@ composer = (function () {
         for (var ref in _HTMLTemplates['composer'].element_blocs) {
             const bloc = _HTMLTemplates['composer'].element_blocs[ref];
             $elements.append(
-                _composerTemplates.elementTemplate
+                _HTMLTemplates['composer'].page_layouts['welement']
                 .replaceAll("{{LABEL}}", bloc.getAttribute("data-label"))
                 .replaceAll("{{HTML}}",  bloc.outerHTML)
                 .replaceAll("{{REF}}",   ref)
@@ -235,7 +207,7 @@ composer = (function () {
      */
     var _initComposerTools = function ($el) {
         // boutons d'action sur textes éditables
-        $el.find(".editable-text").addBack(".editable-text").prepend(_composerTemplates.editable_element);
+        $el.find(".editable-text").addBack(".editable-text").prepend(_composerTemplates.text_tools);
         // boutons d'action sur groupe de colonnes
         $el.find(".layout-cols").addBack(".layout-cols").prepend(_composerTemplates.cols_tools);
         // boutons d'action sur colonnes finales (cellules)
@@ -248,10 +220,10 @@ composer = (function () {
     };
 
     /*
-     * _initComponentContainer - Configure container to be able to receive dataviz|element.
+     * _initComponentsContainer - Configure container to be able to receive list of dataviz|element components.
      */
-    var _initComponentContainer = function ($el, noempty) {
-        $el.find(".component-container").each(function(i) {
+    var _initComponentsContainer = function ($el, noempty) {
+        $el.find(".components-container").each(function(i) {
             if (! noempty) $(this).empty();
             // drop component behaviors (dataviz or element)
             new Sortable(this, {
@@ -260,11 +232,11 @@ composer = (function () {
                 onAdd: function (evt) {
                     let $item = $(evt.item);
                     // mise en place d'un component dataviz
-                    if ($item.hasClass("dataviz-bloc")) {
+                    if ($item.hasClass("dataviz-item")) {
                         // Test if title component
-                        if ($item.closest(".component-container").hasClass("dataviz-autoconfig")) {
+                        if ($item.closest(".dataviz-autoconfig").length) {
                             // No wizard needed. autoconfig this dataviz & deactivate wizard for this dataviz
-                            var dataviz = $item.closest(".dataviz-bloc").attr("data-dataviz");
+                            var dataviz = $item.closest(".dataviz-item").attr("data-dataviz");
                             // Inject dataviz definition directly
                             $item.find("code.dataviz-definition").text('{ "type": "title", "properties": {"id": "'+ dataviz +'"} }');
                             // Set title icon & deactivate wizard button
@@ -277,8 +249,8 @@ composer = (function () {
                 }
             });
             // init existing dataviz for wizard
-            for (let dvz of this.getElementsByClassName("dataviz-bloc")) wizard.getSampleData(dvz.dataset['dataviz']);
-            if ($(this).hasClass("dataviz-autoconfig")) $(this).find(".data-tools .btn.edit").hide();
+            for (let dvz of this.getElementsByClassName("dataviz-item")) wizard.getSampleData(dvz.dataset['dataviz']);
+            if ($(this).closest(".dataviz-autoconfig").length) $(this).find(".data-tools .btn.edit").hide();
         });
         return $el;
     };
@@ -321,20 +293,20 @@ composer = (function () {
 
         // remove/empty actions
         $('#composer .main').on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
-            const $bloc = $(e.currentTarget).closest(".structure-bloc, .element-bloc, .dataviz-bloc");
-//          $bloc.find(".dataviz-bloc").appendTo("#dataviz-items");
+            const $bloc = $(e.currentTarget).closest(".structure-item, .element-item, .dataviz-item");
+//          $bloc.find(".dataviz-item").appendTo("#dataviz-items");
             $bloc.remove();
         });
         $('#composer .main').on('click', '.cell-tools .cell-empty', function(e){
-            const $data = $(e.currentTarget).closest(".layout-cell").find('.component-container');
-//          $data.find(".dataviz-bloc").appendTo("#dataviz-items");
+            const $data = $(e.currentTarget).closest(".layout-cell").find('.components-container');
+//          $data.find(".dataviz-item").appendTo("#dataviz-items");
             $data.empty();
         });
         $('#composer .main').on('click', '.cell-tools .cell-delete', function(e){
             const $cell = $(e.currentTarget).closest(".layout-cell");
             const $cols = $cell.closest(".layout-cols");
             const $rows = $cols.closest(".layout-rows");
-//          $cell.find(".dataviz-bloc").appendTo("#dataviz-items");
+//          $cell.find(".dataviz-item").appendTo("#dataviz-items");
             $cell.remove();
             
             // ajustements sur le layout-cols selon son nombre d'enfants (layout-cell ou layout-rows)
@@ -368,11 +340,11 @@ composer = (function () {
                 $cell.removeClass("layout-cell").addClass("layout-rows");
                 $cell.find(".cell-tools").remove();
                 $cell.wrapInner('<div class="row layout-cols"><div class="col-12 layout-cell"></div></div>');
-                $cell.append(_initComponentContainer($cell.find(".layout-cols").clone()));
+                $cell.append(_initComponentsContainer($cell.find(".layout-cols").clone()));
                 _initComposerTools($cell);
             } else {
                 $cell.removeClass("col-12").addClass("col-6");
-                $cell.after(_initComponentContainer($cell.clone()));
+                $cell.after(_initComponentsContainer($cell.clone()));
             }
         });
 
@@ -417,7 +389,7 @@ composer = (function () {
         // add available dataviz items in menu list
         reportData.dataviz.forEach((dvz) => {
             $dvzContainer.append(
-                _composerTemplates.datavizTemplate
+                _HTMLTemplates['composer'].page_layouts['wdataviz']
                 .replace(/{{REF}}/g,      dvz.id)
                 .replace(/{{LABEL}}/g,    dvz.title)
                 .replace(/{{TYPE}}/g,     dvz.type)
@@ -429,7 +401,8 @@ composer = (function () {
         saver.loadJsonReport(reportId, function(success, report_data) {
             if (! success) return;
             // initialisation des éléments du composer dans la page
-            let composition = $mainComposer.append( _HTMLTemplates['composer'].page ).find('#report-composition')[0];
+            let template = _HTMLTemplates['composer'].page_layouts['wmain'];
+            let composition = $mainComposer.append( template ).find('#report-composition')[0];
             $("#composer-report-title").text( reportData.title || report_data.title );
             $("#selectedModelComposer").val( report_data.theme ).trigger('change');
             // application dans le composer des blocs chargés
@@ -437,14 +410,14 @@ composer = (function () {
                 var $bloc = _makeReportBloc(bloc);
                 if (! $bloc) return;
                 _initComposerTools( $bloc );
-                _initComponentContainer( $bloc, true );
+                _initComponentsContainer( $bloc, true );
                 $bloc.appendTo(composition);
             });
             // configure #report-composition to accept drag & drop from structure elements
             new Sortable(composition, {
                 handle: '.drag',
                 group: { name: 'structure' },
-                onAdd: function (evt) { _initComponentContainer($(evt.item)); }
+                onAdd: function (evt) { _initComponentsContainer($(evt.item)); }
             });
         });
     };
@@ -458,17 +431,17 @@ composer = (function () {
         let ref = jsonBloc.ref || '-';
         
         // génération du HTML du bloc structurant en clonant l'élément disponible dans la sidebar
-        let $structure = $('#structure-models .structure-bloc[data-bloc="' + ref + '"]').clone();
+        let $structure = $('#structure-models .structure-item[data-bloc="' + ref + '"]').clone();
         if (! $structure.length) { console.warn("Bloc invalide: aucun bloc disponible correspondant (ignoré)", ref); return; }
         
         // nettoyage des conteneurs non-structurant de la composition
         $structure.find('.cols-tools, .cell-tools, .text-edit').remove();
-        $structure.find('.layout-cell .component-container').remove();
+        $structure.find('.layout-cell .components-container').remove();
         
         // intégration des données du JSON dans le DOM du composer
-        if ('title'   in jsonBloc) _setTextData( jsonBloc.title,   $structure.find('.bloc-html .bloc-title')[0] );
-        if ('sources' in jsonBloc) _setTextData( jsonBloc.sources, $structure.find('.bloc-html .bloc-sources')[0] );
-        if ('layout'  in jsonBloc) _makeReportLayout( jsonBloc.layout, $structure.find('.bloc-html .bloc-layout') );
+        if ('title'   in jsonBloc) _setTextData( jsonBloc.title,   $structure.find('.structure-html .bloc-title')[0] );
+        if ('sources' in jsonBloc) _setTextData( jsonBloc.sources, $structure.find('.structure-html .bloc-sources')[0] );
+        if ('layout'  in jsonBloc) _makeReportLayout( jsonBloc.layout, $structure.find('.structure-html .bloc-layout') );
         
         // retourne la structure HTML du bloc à ajouter dans l'interface de composition
         if (debug) console.debug("Bloc HTML généré du JSON :\n", $structure.html());
@@ -481,15 +454,15 @@ composer = (function () {
     var _makeReportLayout = function (jsonLayout, $node) {
         // traitement d'un noeud "cell" avec sa liste de composants (dataviz|element)
         if (jsonLayout.type == 'cell') {
-            let $cell = $( _composerTemplates.layout_cell.replace('{{SIZE}}', jsonLayout.size || 1) );
-            if (jsonLayout.data) jsonLayout.data.forEach((data) => _makeReportComponent(data, $cell.find('.component-container')));
+            let $cell = $( _HTMLTemplates['composer'].page_layouts['wcell'].replace('{{SIZE}}', jsonLayout.size || 1) );
+            if (jsonLayout.data) jsonLayout.data.forEach((data) => _makeReportComponent(data, $cell.find('.components-container')));
             if (jsonLayout.node) console.warn("Layout invalide: présence d'enfants dans un noeud terminal (ignorés)", jsonLayout.node);
             $node.replaceWith( $cell );
             return;
         }
         // traitement d'un noeud "data" avec sa liste de composants (dataviz|element)
         if (jsonLayout.type == 'data') {
-            if (jsonLayout.data) jsonLayout.data.forEach((data) => _makeReportComponent(data, $node.find('.component-container')));
+            if (jsonLayout.data) jsonLayout.data.forEach((data) => _makeReportComponent(data, $node.find('.components-container')));
             if (jsonLayout.node) console.warn("Layout invalide: présence d'enfants dans un noeud terminal (ignorés)", jsonLayout.node);
             return;
         }
@@ -519,7 +492,7 @@ composer = (function () {
      * _makeReportComponent : génération et ajout du code HTML d'un composant (dataviz|element) d'un rapport
      */
     var _makeReportComponent = function (jsonComponent, $node) {
-        if (! $node.length) return console.warn("Aucun conteneur pour composants (dataviz|element)");
+        if (! $node.length) return console.warn("Aucun conteneur pour composants (dataviz|element)", $node);
         let $item;
         switch (jsonComponent.type) {
             case 'dataviz': $item = _makeDataviz(jsonComponent.ref, jsonComponent.opts); break;
@@ -535,7 +508,7 @@ composer = (function () {
         let dvzId = (opts.properties && opts.properties.id) ? opts.properties.id : ref;
         
         // génération du HTML de la dataviz en clonant l'élément disponible dans la sidebar
-        let $item = $('#dataviz-items .dataviz-bloc[data-dataviz="'+ dvzId +'"]').clone();
+        let $item = $('#dataviz-items .dataviz-item[data-dataviz="'+ dvzId +'"]').clone();
         if (! $item.length) { console.warn("Dataviz invalide: aucune dataviz disponible correspondant (ignoré)", dvzId); return; }
         
         // si présence du type dans la définition, alors la dataviz a été configurée
@@ -553,7 +526,7 @@ composer = (function () {
         if (! ref) return;
         
         // génération du HTML du bloc composant en clonant l'élément disponible dans la sidebar
-        let $item = $('#element-models .element-bloc[data-bloc="'+ ref +'"]').clone();
+        let $item = $('#element-models .element-item[data-bloc="'+ ref +'"]').clone();
         if (! $item.length) { console.warn("Bloc invalide: aucun bloc disponible correspondant (ignoré)", ref); return; }
         
         // nettoyage des conteneurs non-structurant de la composition
@@ -563,7 +536,7 @@ composer = (function () {
         switch (ref) {
             case "btexte":
                 if (opts) {
-                    let $elem = $item.find('.bloc-html .bloc-element .bloc-content');
+                    let $elem = $item.find('.element-html .bloc-element .bloc-content');
                     if (opts.style)   $elem.addClass("style-" + opts.style);
                     if (opts.content) $elem.html(opts.content);
                 }
@@ -736,8 +709,8 @@ composer = (function () {
         }
         // génération des nouvelles colonnes
         while (inputIdx < $inputs.length) {
-            var $cell = _initComponentContainer(
-                $( _composerTemplates.layout_cell.replace('{{SIZE}}', $inputs[inputIdx++].value) )
+            var $cell = _initComponentsContainer(
+                $( _HTMLTemplates['composer'].page_layouts['wcell'].replace('{{SIZE}}', $inputs[inputIdx++].value) )
             );
             $cell.appendTo(colsDiv);
             _initComposerTools($cell);
