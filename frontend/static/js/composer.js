@@ -156,12 +156,15 @@ composer = (function () {
         var parameters = $(html).data(); /* eg data-colors... */
         if (parameters.colors) parameters.colors = parameters.colors.split(",");
         
-        //get style
+        // get style
         var page_style = $(html).find("style")[0];
         if (page_style) page_style = page_style.outerHTML;
         
-        //get main template div
-        var page_layout = $(html).find("template.report-main").first().prop('content').children;
+        // get composition main container
+        var page_layout = Array.prototype.map.call(
+            $(html).find("template.report-main").first().prop('content').children,
+            (child) => { return child.outerHTML; }
+        ).join("\n");
         
         //get all report-structure & report-element blocs
         var structure_blocs = {};
@@ -426,7 +429,7 @@ composer = (function () {
         saver.loadJsonReport(reportId, function(success, report_data) {
             if (! success) return;
             // initialisation des éléments du composer dans la page
-            let composition = $mainComposer.append( $(_HTMLTemplates['composer'].page).clone() ).find('#report-composition')[0];
+            let composition = $mainComposer.append( _HTMLTemplates['composer'].page ).find('#report-composition')[0];
             $("#composer-report-title").text( reportData.title );
             $("#selectedModelComposer").val( report_data.theme ).trigger('change');
             // application dans le composer des blocs chargés
