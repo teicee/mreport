@@ -320,17 +320,17 @@ composer = (function () {
         });
 
         // remove/empty actions
-        $('#report-composition').on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
+        $('#composer .main').on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
             const $bloc = $(e.currentTarget).closest(".structure-bloc, .element-bloc, .dataviz-bloc");
 //          $bloc.find(".dataviz-bloc").appendTo("#dataviz-items");
             $bloc.remove();
         });
-        $('#report-composition').on('click', '.cell-tools .cell-empty', function(e){
+        $('#composer .main').on('click', '.cell-tools .cell-empty', function(e){
             const $data = $(e.currentTarget).closest(".layout-cell").find('.component-container');
 //          $data.find(".dataviz-bloc").appendTo("#dataviz-items");
             $data.empty();
         });
-        $('#report-composition').on('click', '.cell-tools .cell-delete', function(e){
+        $('#composer .main').on('click', '.cell-tools .cell-delete', function(e){
             const $cell = $(e.currentTarget).closest(".layout-cell");
             const $cols = $cell.closest(".layout-cols");
             const $rows = $cols.closest(".layout-rows");
@@ -362,7 +362,7 @@ composer = (function () {
          * - soit ajout d'une row (layout-cols) plutôt que split du layout-cell
          * - soit split vertical du layout-cell, càd ajout d'une col (layout-cell) => choix le plus attendu
          */
-        $('#report-composition').on('click', '.cell-tools .cell-divide', function(e){
+        $('#composer .main').on('click', '.cell-tools .cell-divide', function(e){
             const $cell = $(e.currentTarget).closest(".layout-cell");
             if ($cell.siblings('.layout-cell, .layout-rows').length) {
                 $cell.removeClass("layout-cell").addClass("layout-rows");
@@ -430,7 +430,7 @@ composer = (function () {
             if (! success) return;
             // initialisation des éléments du composer dans la page
             let composition = $mainComposer.append( _HTMLTemplates['composer'].page ).find('#report-composition')[0];
-            $("#composer-report-title").text( reportData.title );
+            $("#composer-report-title").text( reportData.title || report_data.title );
             $("#selectedModelComposer").val( report_data.theme ).trigger('change');
             // application dans le composer des blocs chargés
             report_data.blocs.forEach((bloc) => {
