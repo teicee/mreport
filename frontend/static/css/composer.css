@@ -122,6 +122,7 @@
 }
 
 .builder #composer-report-title {
+  font-size: 1rem;
   margin: 0;
   margin-bottom: 1em;
   text-align: center;
@@ -139,6 +140,7 @@
 }
 
 #composer .composer-empty {
+  margin-top: 2rem;
   width: 100%;
   min-height: 250px;
   padding-top: 75px;
@@ -329,6 +331,14 @@
   line-height: 2rem;
   text-align: center;
   color: #bbb;
+}
+
+.builder #report-composition .components-container .dataviz-proxy {
+/*display: none;*/
+  font-size: 0.75em
+  height: 5em;
+  overflow: hidden;
+  background: #ccc;
 }
 
 .builder #report-composition .components-container .dataviz-item {
