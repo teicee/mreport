@@ -83,15 +83,15 @@ admin = (function () {
     var _setDatavizUsed = function (reports) {
         if (document.querySelectorAll("#dataviz-cards .dataviz").length > 0 &&
             document.querySelectorAll("#dataviz-cards .dataviz.used").length === 0) {
-            for (const [key, report] of Object.entries(reports)) {
-                if (report && report.dataviz && report.dataviz.length > 0) {
-                    report.dataviz.forEach(function(dataviz) {
+            for (const [key, oreport] of Object.entries(reports)) {
+                if (oreport && oreport.dataviz && oreport.dataviz.length > 0) {
+                    oreport.dataviz.forEach(function(dataviz) {
                         let element = document.querySelector("#dataviz-cards .dataviz[data-dataviz-id='"+dataviz.id+"']");
                         if (element && element.classList) {
                             element.classList.add("used");
                             let span = document.createElement("SPAN");
                             span.className = "badge mreport-primary-color-3-bg";
-                            span.textContent = report.title;
+                            span.textContent = oreport.title;
                             element.querySelector(".card-footer").append(span);
                         }
                     })
@@ -1321,10 +1321,14 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
     };
 
     var _visualizeDataviz = function () {
-        var viz = JSON.parse(visualization.value);
-        var dataviz = wizard.json2html(viz);
         let element = document.getElementById("xviz");
         element.innerHTML = '';
+
+        let viz = JSON.parse(visualization.value);
+        let dataviz = wizard.json2html(viz);
+        if (! (dataviz instanceof Node)) {
+            element.innerText = "ERROR: " + dataviz; return;
+        }
         element.appendChild(dataviz);
         report.testViz(viz.data, viz.type, viz.properties);
         //Hack to avoid many div with the same id

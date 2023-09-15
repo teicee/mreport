@@ -3,6 +3,8 @@ wizard = (function () {
      * Private
      */
 
+    var _debug = true;
+
     /*
      * _initialized: flag true when wizard init is done
      */
@@ -287,7 +289,7 @@ wizard = (function () {
         var datavizId = _dataviz_infos.dataviz;
         var _data = _storeData[datavizId]
         let modelId = document.getElementById("selectedModelWizard").value;
-        var colors = composer.models()[modelId].parameters.colors || ["#e55039", "#60a3bc", "#78e08f", "#fad390"];
+        var colors = composer.getTemplates().getColorsList() || ["#e55039", "#60a3bc", "#78e08f", "#fad390"];
         var unit = _dataviz_infos.unit;
         $("#w_unit").val(unit);
         //significative label if is true, allow chart and extra column in table
@@ -456,23 +458,15 @@ wizard = (function () {
      * _configureDataviz. This method copy paste dataviz html code between  wizard result and composition
      * @param  {string} datavizId
      */
-    var _configureDataviz = function (datavizId) {
-        var dvzElem = (datavizId) ? $("[data-dataviz='"+datavizId+"']") : _composer_dataviz;
-
+    var _configureDataviz = function () {
+        if (! _composer_dataviz) return console.error("Dataviz en cours d'édition à configurer non disponible");
         //copy paste generated code in <code> element
-        var dvzCode = document.createElement('div');
-        dvzCode.innerHTML = document.getElementById('wizard-code').textContent;
-        dvzElem.find('code.dataviz-definition').text(
-            _html2json( dvzCode.querySelector('.dataviz') )
-        );
-
+        _composer_dataviz.find('code.dataviz-definition').text( JSON.stringify(_dataviz_definition) );
         //update dataviz element icon (chart for chart, table for table...)
-        var dvzIcon = $("#w_dataviz_type option:selected").attr("data-icon");
-        dvzElem.find('.dvz-icon').prop('class', 'dvz-icon ' + dvzIcon);
-
+        var ico = $("#w_dataviz_type option:selected").attr("data-icon");
+        _composer_dataviz.find('.dvz-icon').prop('class', 'dvz-icon ' + ico);
         //Tag dataviz element as yet configured
-        dvzElem.addClass("configured");
-
+        _composer_dataviz.addClass("configured");
         //Reset and hide wizard modal
         $("#wizard-result div").remove();
         $("#wizard-code").text("");
@@ -533,10 +527,11 @@ wizard = (function () {
         } else {
             document.getElementById("wizard_add").classList.remove("hidden");
             document.getElementById("selectedModelWizard").disabled = true;
-            //Use activeModel
-            let model = composer.activeModel();
+            //TODO: Use activeModel
+//          let model = composer.activeModel();
+            let model = composer.getTemplates();
             if (model) {
-                document.getElementById("selectedModelWizard").value = model.id;
+                document.getElementById("selectedModelWizard").value = model.model;
                 _updateIconList(model);
                 _updateStyle(model);
             } else {
@@ -568,12 +563,14 @@ wizard = (function () {
             //Occurs when wizard is called from store
             var viz = JSON.parse(_dataviz_infos.viz);
 
-            //Enable the model if defined
-            let modelId = viz.properties.model || document.getElementById("selectedModelWizard").value || "composer";
-            let model = (modelId) ? composer.models()[modelId] : "";
+            //TODO: Enable the model if defined
+//          let modelId = viz.properties.model || document.getElementById("selectedModelWizard").value || "composer";
+            let modelId = composer.getModelId();
+//          let model = (modelId) ? composer.models()[modelId] : "";
+            let model = composer.getTemplates();
             if (model) {
                 document.getElementById("selectedModelWizard").value = modelId;
-                wizard.updateIconList(model);
+                _updateIconList(model);
             } else {
                 document.getElementById("selectedModelWizard").value = "";
             }
@@ -618,7 +615,7 @@ wizard = (function () {
      * @param  {object} model
      */
     var _updateIconList = function (model) {
-        if (model.iconstyle) { return; }
+        if (model.icon_styles) { return; }
         //update icon store in wizard modal
         var style = "";
         folders = {};
@@ -678,7 +675,7 @@ wizard = (function () {
                     $("#w_icon").val(icon);
                     document.querySelector(".card-container").classList.toggle('backcard');
                 })
-                model.iconstyle = style;
+                model.icon_styles = style;
                 _updateStyle(model);
             },
             error: function (xhr, status, error) {
@@ -692,10 +689,13 @@ wizard = (function () {
      * @param  {string} modelId
      */
     var _onChangeModel = function (modelId) {
-        let model = composer.models()[modelId];
-        _updateIconList(model);
-        _updateStyle(model);
-
+        // load the composer theme
+        themes.load( modelId, function(success, data){
+            if (_debug) console.debug("Récupération des données du thème sélectionné :\n", data);
+            if (! success) return;
+            _updateIconList(data);
+            _updateStyle(data);
+        });
     };
 
     /**
@@ -706,9 +706,9 @@ wizard = (function () {
         //Update style in wizard modal
         var _css = [
             //get current/default style
-            model.style.match(/(?<=\<style\>)(.|\n)*?(?=\<\/style\>)/g)[0].trim(),
+            model.page_styles,
             //add icon style
-            model.iconstyle,
+            model.icon_styles,
         ]. join(" ");
         document.getElementById("wizard-view").querySelector("STYLE").innerHTML = _css;
     };
@@ -734,51 +734,45 @@ wizard = (function () {
      * @param  {object} viz
      */
     var _json2html = function (viz) {
-        var modelId = viz.model || "b";
-        var model = composer.models()[modelId];
-        var style = model.style;
-        //TODO Refactore this
-        var component = $.parseHTML(model.dataviz_components[viz.type].replace("{{dataviz}}", viz.properties.id))[0];
+        if (_debug) console.debug("Définition JSON de la dataviz à générer en HTML :\n", viz);
+        
+        let model = composer.getTemplates();
+        if (! model.dataviz_components[ viz.type ]) return '[DATAVIZ NOT FOUND: '+ viz.type +']';
+
+        let template = document.createElement('template');
+        template.innerHTML = model.dataviz_components[ viz.type ].replace("{{dataviz}}", viz.properties.id).trim();
+        let component = template.content.firstChild;
+        
+        let style = document.createElement("style");
+        style.innerText = model.page_styles;
+        
         //set icon class from icon attribute for figures components
         if (viz.properties.icon && viz.type === "figure") {
             var figure = component.querySelector(".dataviz");
             //remove existing icon class eg icon-default
             figure.classList.forEach(className => {
-                if (className.startsWith('icon-')) {
-                    figure.classList.remove(className);
-                }
+                if (className.startsWith('icon-')) figure.classList.remove(className);
             });
             //add icon class
             figure.classList.add(viz.properties.icon);
-            if (viz.properties.iconposition) {
-                var pos = viz.properties.iconposition;
-                if (pos === "custom-icon-left") {
-                    figure.classList.add("custom-icon-left");
-                } else if (pos === "custom-icon-right") {
-                    figure.classList.add("custom-icon-right");
-                }
-                figure.classList.add("custom-icon");
-
-            } else {
-                figure.classList.add("custom-icon");
+            figure.classList.add("custom-icon");
+            if (viz.properties.iconposition) switch (viz.properties.iconposition) {
+                case "custom-icon-left"  : figure.classList.add("custom-icon-left");  break;
+                case "custom-icon-right" : figure.classList.add("custom-icon-right"); break;
             }
-
         }
-
+        
         var container = document.createElement("div");
-        container.innerHTML = style;
+        container.appendChild(style);
         container.id = "yviz";
         container.className = "col";
         container.style.border = "solid";
         let dataviz = component.querySelector(".dataviz");
         for (const [attribute, value] of Object.entries(viz.properties)) {
-            if (attribute !== "id") {
-                dataviz.dataset[attribute] = value;
-            }
+            if (attribute !== "id") dataviz.dataset[attribute] = value;
         }
         container.appendChild(component);
         return container;
-
     }
 
     /**
@@ -872,8 +866,10 @@ wizard = (function () {
      */
     var _onValidateConfig = function () {
         var viz = _form2json();
-        var modelId = viz.properties.model || document.getElementById("selectedModelWizard").value || "composer";
-        var model = (modelId) ? composer.models()[modelId] : "";
+//      var modelId = document.getElementById("selectedModelWizard").value || "composer";
+//      var model = composer.models()[modelId] : "";
+        var model = composer.getTemplates();
+
         if (viz.type && viz.data && viz.properties) {
             //Get dataviz component herited from template and set attributes with properties object
             var elem = $.parseHTML(model.dataviz_components[viz.type].replace("{{dataviz}}", viz.id || viz.properties.id));
@@ -942,7 +938,8 @@ wizard = (function () {
     var _updateColorPicker = function (saved, e) {
         var colorbtn = _colorbtnId += 1;
         var modelId = document.getElementById("selectedModelWizard").value;
-        var model = (modelId) ? composer.models()[modelId] : "";
+//      var model = (modelId) ? composer.models()[modelId] : "";
+        var model = composer.getTemplates();
         /*if (typeof saved.datasets === "undefined") {
             saved.datasets = _data.dataset.length;
         }*/
@@ -955,7 +952,7 @@ wizard = (function () {
             $(".chosecolors").append('<div class="available_colors color-picker' + colorbtn + '"></div>');
             if (! model) return;
 
-            var pk = new Piklor(".color-picker" + colorbtn, model.parameters.colors, {
+            var pk = new Piklor(".color-picker" + colorbtn, model.getColorsList(), {
                 open: ".picker-wrapper .colorbtn" + colorbtn,
                 closeOnBlur: true,
                 manualSelect: true,
@@ -996,6 +993,7 @@ wizard = (function () {
      * this method initializes wizard
      */
     var _init = function () {
+        if (_debug) console.debug("wizard init");
         Chart.plugins.unregister(ChartDataLabels);
         //load wizard html dynamicly and append it admin.html
         $.ajax({
@@ -1012,7 +1010,7 @@ wizard = (function () {
                     admin.saveVisualization(_dataviz_definition);
                 });
                 $("#wizard_add").click(function (e) {
-                    wizard.configureDataviz();
+                    _configureDataviz();
                 });
                 $("#addColor").on("click", function (e) {
                     _updateColorPicker({}, e)
@@ -1025,25 +1023,28 @@ wizard = (function () {
     };
 
 
-
-
     /*
      * Public
      */
-
     return {
-
-        init: _init,
-        ready: function(){ return _initialized; },
-        configureDataviz: _configureDataviz,
-        json2html: _json2html,
-        html2json: _html2json,
-        rgb2hex: _rgb2hex,
-        updateIconList: _updateIconList,
-        getSampleData: _getSampleData,
-        onChangeModel: _onChangeModel,
-        updateStyle: _updateStyle,
-        onRemoveColor:_onRemoveColor
-    }; // fin return
+        /* used by report & composer.js */
+        init:               _init,
+        /* used by composer.js */
+        ready:              function(){ return _initialized; },
+        updateStyle:        _updateStyle,
+        updateIconList:     _updateIconList,
+        getSampleData:      _getSampleData,
+        /* used by admin.js (catalog > edit > #dataviz-modal-form > visualizeDataviz) */
+        json2html:          _json2html,
+        /* used by saver.js */
+        html2json:          _html2json,
+        /* used by textConfiguration.js & extLibs/piklor.js */
+        rgb2hex:            _rgb2hex,
+        /* used by extLibs/piklor.js */
+        onRemoveColor:      _onRemoveColor,
+        /* used by wizard.html */
+        onChangeModel:      _onChangeModel,
+        configureDataviz:   _configureDataviz,
+    };
 
 })();

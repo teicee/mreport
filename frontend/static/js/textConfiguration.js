@@ -123,7 +123,7 @@ textedit = (function () {
         _applyTextStyle(modalText, editedStyle);
 
         // Create color picker for the Modal
-        var pk = new Piklor(".text-color-picker", composer.activeModel().parameters.colors, {
+        var pk = new Piklor(".text-color-picker", composer.getTemplates().colors, {
                 open: ".textcolor-config-wrapper .btn"
             }),
             input = pk.getElm(".textcolor-config-wrapper .input");

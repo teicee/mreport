@@ -3,7 +3,7 @@ saver = (function () {
      * Private
      */
 
-    var _debug = true;
+    var _debug = false;
 
     const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
@@ -170,7 +170,7 @@ saver = (function () {
      */
     var _saveJsonReport = function (report_id, composition, callback) {
         // Export composition DOM structures and components
-        const report_json = new JsonReport(composition, $("#selectedModelComposer").val());
+        const report_json = new JsonReport(composition, composer.getModelId());
         if (_debug) console.debug("Export JSON de la composition :\n", report_json);
         
         // Request save new report backup data
@@ -278,7 +278,7 @@ saver = (function () {
             });
             composition.querySelectorAll('code.dataviz-definition').forEach((div) => {
                 let dvzCode = document.createElement('div');
-                dvzCode.innerHTML = div.textContent;
+                dvzCode.innerHTML = div.innerText;
                 div.textContent = wizard.html2json( dvzCode.querySelector('.dataviz') );
             });
             composition.querySelectorAll('.text-edit').forEach(el => el.remove());
@@ -298,7 +298,9 @@ saver = (function () {
      * Public
      */
     return {
+        /* used by composer.js */
         saveJsonReport: _saveJsonReport,
+        /* used by composer.js & report.js */
         loadJsonReport: _loadJsonReport,
     };
 

@@ -35,7 +35,7 @@ themes = (function () {
         // sinon analyse du fichier contenant les templates sur le serveur
         $.ajax({
             url: "/static/html/model-" + model_name + ".html",
-            dataType: "xml"
+            dataType: "html" //"xml"
         })
         .fail(function (xhr, status, err) {
             console.error("Erreur au chargement du fichier html/model-" + model_name + ".html :\n", err);
@@ -43,7 +43,8 @@ themes = (function () {
         })
         .done(function (data, status, xhr) {
             if (_debug) console.debug("Chargement du fichier html du thème '" + model_name + "' :\n", data);
-            _cache[ model_name ] = _parseHtml(data);
+            const parser = new DOMParser();
+            _cache[ model_name ] = _parseHtml( parser.parseFromString(data, "text/html") );
             if (_debug) console.debug("Récupération des données du thème '" + model_name + "' :\n", _cache[ model_name ]);
             if (callback) callback(true, _cache[ model_name ]);
         })
@@ -59,11 +60,13 @@ themes = (function () {
             
             // retrieve color palette
             data.colors = {};
-            html.querySelectorAll("template.report-params [type='color']").forEach(color => {
-                data.colors[ color.id ] = {
-                    'label': color.getAttribute('name'),
-                    'value': color.getAttribute('value')
-                };
+            html.querySelectorAll("template.report-params").forEach(template => {
+                template.content.querySelectorAll("[type='color']").forEach(color => {
+                    data.colors[ color.id ] = {
+                        'label': color.getAttribute('name'),
+                        'value': color.getAttribute('value')
+                    };
+                });
             });
             
             // retrieve specific CSS
@@ -103,15 +106,22 @@ themes = (function () {
     /*
      * _readHtml : Method used to read all HTML code inside a template Node
      */
-    var _readHtml = function(template, mode = 'clean') {
+    var _readHtml = function(template, mode = 'tclean') {
         try {
             switch (mode) {
                case 'all'   : return template.innerHTML.trim();
                case 'node'  : return template.firstElementChild.innerHTML.trim();
+               case 'tnode'  : return template.content.firstElementChild.innerHTML.trim();
                case 'nodes' : return Array.prototype.map.call( template.children,
                    (child) => { return child.outerHTML.trim(); }
                ).join("\n").trim();
+               case 'tnodes' : return Array.prototype.map.call( template.content.children,
+                   (child) => { return child.outerHTML.trim(); }
+               ).join("\n").trim();
                case 'clean' : return Array.prototype.map.call( template.children,
+                   (child) => { return child.outerHTML.replace(/<!--.*-->/g, "").replace(/>\s+</g, "><").trim(); }
+               ).join("\n").trim();
+               case 'tclean' : return Array.prototype.map.call( template.content.children,
                    (child) => { return child.outerHTML.replace(/<!--.*-->/g, "").replace(/>\s+</g, "><").trim(); }
                ).join("\n").trim();
             }
@@ -265,13 +275,21 @@ themes = (function () {
     };
 
     /*
+     * getColorsList: Retourne une simple liste des codes hexa des couleurs du thème
+     */
+    ModelData.prototype.getColorsList = function () {
+        return Object.getOwnPropertyNames( this.colors ).map(color => color.value);
+    };
+
+    /*
      * Public
      */
     return {
-        load:       _loadModel,
-        data:       function(model_name) { return _cache[model_name]; },
-        exists:     function(model_name) { if (model_name in _cache) return (_cache[model_name]) ? true : false; },
-        debug:      function(){ console.log(_cache); },
+        /* used by composer.js & report.js */
+        load:   _loadModel,
+        /* unused */
+        data:   function(model_name) { return _cache[model_name]; },
+        exists: function(model_name) { if (model_name in _cache) return (_cache[model_name]) ? true : false; },
     };
 
 })();

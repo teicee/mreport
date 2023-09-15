@@ -9,6 +9,20 @@ composer = (function () {
     const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
 
+    var _getDatavizTypeIcon  = function (type) {
+        switch (type) {
+            case "chart":  return "fas fa-chart-bar";
+            case "table":  return "fas fa-table";
+            case "figure": return "fas fa-sort-numeric-down";
+            case "title":  return "fas fa-heading";
+            case "map":    return "fas fa-map-marker-alt";
+            case "image":  return "fas fa-image";
+            case "iframe": return "fas fa-external-link-alt";
+            case "text":   return "fas fa-comment";
+        }
+        return 'fas fa-arrows-alt';
+    };
+
     /*
      * _composerTemplates - {object}. This var store html templates to render composer structure and actions buttons.
      */
@@ -54,54 +68,41 @@ composer = (function () {
         ].join(""),
     };
 
-    var _getDatavizTypeIcon  = function (type) {
-        switch (type) {
-            case "chart":  return "fas fa-chart-bar";
-            case "table":  return "fas fa-table";
-            case "figure": return "fas fa-sort-numeric-down";
-            case "title":  return "fas fa-heading";
-            case "map":    return "fas fa-map-marker-alt";
-            case "image":  return "fas fa-image";
-            case "iframe": return "fas fa-external-link-alt";
-            case "text":   return "fas fa-comment";
-        }
-        return 'fas fa-arrows-alt';
-    };
-
     /*
-     * _HTMLTemplates - {object}. This var store structured html blocks issued
-     * from html template selected
+     * _HTMLTemplates - {object} Store structured html blocks and parameters
+     * issued from special HTML model for the composer ("model-composer.html")
      */
-    var _HTMLTemplates = {};
+    var _HTMLTemplates = {}; // ModelData (from themes.js)
 
     /*
-     * _listTemplates - {object}. List available templates.
+     * _listModels - {object} List available models for the final front rendering.
      * TODO use config file (ask the backend?)
      */
-    var _listTemplates = {
+    var _listModels = {
         "a":        "Modèle A",
         "b":        "Modèle B",
     };
 
     /*
-     * _activeHTMLTemplate - string. This var store template selected id
+     * _selectedModel - {string} Store the selected render model id
      */
-    var _activeHTMLTemplate = "";
+    var _selectedModel = "";
 
     /*
-     * _onSelectTemplate: Update style and icons store derived from selected template
+     * _onSelectModel: Update style and icons store derived from selected render model
      * method linked to #selectedModelComposer change event
+     * TODO
      */
-    var _onSelectTemplate = function (e) {
-        _activeHTMLTemplate = $(this).val();
+    var _onSelectModel = function (e) {
+        _selectedModel = this.value;
         /*
         // NOTE inutilisé pour ne charger les css du template que lorsque le wizard est ouvert
         // NOTE wizard peut ne pas encore être initialisé et fonctionnel !
-        if (_activeHTMLTemplate && wizard.ready()) {
+        if (_selectedModel && wizard.ready()) {
             // update style in wizard modal
-            wizard.updateStyle(_HTMLTemplates[_activeHTMLTemplate]);
+            wizard.updateStyle(_HTMLTemplates[_selectedModel]);
             // update icon store in wizard modal
-            wizard.updateIconList(_HTMLTemplates[_activeHTMLTemplate]);
+            wizard.updateIconList(_HTMLTemplates[_selectedModel]);
         }
         */
     };
@@ -109,9 +110,9 @@ composer = (function () {
 // ============================================================================= Initialisation du composer
 
     /*
-     * _initComposer. This method initializes composer by loading html templates.
+     * _init - This method initializes composer by loading HTML templates.
      */
-    var _initComposer = function () {
+    var _init = function () {
         let $composerMain   = $('#composer .main');
         let $modelSelector  = $('#selectedModelComposer');
         let $reportSelector = $('#selectedReportComposer');
@@ -119,11 +120,11 @@ composer = (function () {
         // init render models selector
         if ($modelSelector) {
             $modelSelector.empty();
-            $modelSelector.on('change', _onSelectTemplate);
-            for (const templateId in _listTemplates) {
-                $modelSelector.append('<option value="' + templateId + '">' + _listTemplates[templateId] + '</option>');
+            $modelSelector.on('change', _onSelectModel);
+            for (const modelId in _listModels) {
+                $modelSelector.append('<option value="' + modelId + '">' + _listModels[modelId] + '</option>');
                 // auto-select the first loaded model
-                if (! _activeHTMLTemplate) $modelSelector.val(templateId).trigger('change');
+                if (! _selectedModel) $modelSelector.val(modelId).trigger('change');
             }
             $modelSelector.prop("disabled", false);
         }
@@ -297,7 +298,7 @@ composer = (function () {
     };
 
     /*
-     * _renderDataviz : Display dataviz component for the composer
+     * _renderDataviz - Display dataviz component for the composer
      */
     var _renderDataviz = function ($node) {
         $node.find('.components-container .dataviz-proxy').each( function(){
@@ -315,8 +316,8 @@ composer = (function () {
     };
 
     /*
-     * _onSelectReport. This method is linked to #selectedReportComposer -event change-
-     * to update dataviz items linked to selected report
+     * _onSelectReport - This method is linked to #selectedReportComposer -event change-
+     * to update dataviz items linked to selected report and load the report composition
      */
     var _onSelectReport = function (e) {
         let reportId = $(this).val();
@@ -545,38 +546,25 @@ composer = (function () {
      * Public
      */
     return {
-        initComposer: _initComposer,
-
+        /* used by composer.js */
+        init:           _init,
         /* used by admin.js */
-        compose: function(reportId) {
-            // show composer page
-            $("#btn-composer").click();
-            // set report select value
-            $('#selectedReportComposer').val(reportId).trigger("change");
+        compose:        function(reportId) {
+            $("#btn-composer").click(); // show composer page
+            $('#selectedReportComposer').val(reportId).trigger("change"); // set report select value
         },
-
-        /* used by wizard.js */
-        models: function() {
-            return _HTMLTemplates;
-        },
-
-        /* used by wizard.js & textConfiguration.js */
-        activeModel: function() {
-            if (! _activeHTMLTemplate) return;
-            if (! _activeHTMLTemplate in _HTMLTemplates) return;
-            return _HTMLTemplates[_activeHTMLTemplate];
-        },
-
         /* used by saver.js */
-        getTextData: _getTextData,
-
-        getDatavizTypeIcon: _getDatavizTypeIcon
-    }; // fin return
+        getTextData:    _getTextData,
+        /* used by saver.js & wizard.js */
+        getModelId:     function() { return _selectedModel; },
+        /* used by wizard.js & textConfiguration.js */
+        getTemplates:   function() { return _HTMLTemplates; },
+    };
 
 })();
 
 $(document).ready(function () {
-    composer.initComposer();
+    composer.init();
     wizard.init();
 //  textedit.init();
 });
