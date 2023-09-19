@@ -12,6 +12,8 @@ report = (function () {
      * Private
      */
 
+    var _debug = true;
+
     var _appConf = {
         "location": "/mreport",
         "api": "/api",
@@ -31,6 +33,12 @@ report = (function () {
     var errors = false;
 
     var _data;
+
+    /*
+     * _HTMLTemplates - {object} Store structured html blocks and parameters
+     * issued from HTML model selected for this report ("model-*.html")
+     */
+    var _HTMLTemplates = {}; // ModelData (from themes.js)
 
     accounting.settings = {
         currency: {
@@ -369,16 +377,82 @@ report = (function () {
 
     };
 
-
+    /*
+     * TODO
+     */
     var _getDom = function () {
+//      _getDomFromHtml();
+        _getDomFromJson();
+    };
+
+    var _getDomFromJson = function () {
+        // chargement de la définition JSON du rapport
+        saver.loadJsonReport(_reportName, function(success, reportJson) {
+            if (! success) return;
+            _rawReport = {
+                "name": _reportName,
+                "json": reportJson,
+                "html": null //html
+            };
+            // chargement du modèle utilisé par le rapport
+            themes.load( reportJson.theme || "b", function(success, data) {
+                if (_debug) console.debug("Récupération des données du thème de rendu :\n", data);
+                if (! success) return;
+                _HTMLTemplates = data;
+                // initialisation des éléments du composer dans la page
+                let composition = $("body").append( _HTMLTemplates.page_layouts['wmain'] ).find('#report-composition')[0];
+                if (! composition) return _alert("L'interface du composeur n'est pas valide", 'error', true);
+                // application dans le composer des blocs chargés
+                reportJson.blocs.forEach((bloc) => {
+                    let $bloc = _HTMLTemplates.buildReportBloc(bloc);
+                    if ($bloc) {
+                        _renderDataviz( $bloc );
+                        $bloc.appendTo(composition);
+                    }
+                });
+                _printDate();
+                _print();
+                //append _config
+                _merge_config();
+                _getData();
+            });
+        });
+    };
+
+    var _renderDataviz = function ($node) {
+        $node.find('.components-container .dataviz-proxy').each( function(){
+            let viz = JSON.parse(this.innerText);
+            
+            // get dataviz component herited from template
+            let tpl = _HTMLTemplates.dataviz_components[ viz.type ];
+            if (! tpl) return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ viz.type +")");
+            
+            // set attributes with properties object
+            let $dvz = $( tpl.replace("{{dataviz}}", viz.properties.id).trim() );
+            for (const [attribute, value] of Object.entries(viz.properties)) switch (attribute) {
+                case "id": break;
+                case "title":        $dvz.find(".report-dataviz-title").text(value); break;
+                case "description":  $dvz.find(".report-dataviz-description").html(value); break;
+                case "icon":         if (value) $dvz.find('.dataviz').addClass(value).addClass("custom-icon"); break;
+                case "iconposition": if (value) $dvz.find('.dataviz').addClass(value); break;
+                default:             $dvz.find('.dataviz').attr('data-' + attribute, value);
+            }
+            this.replaceWith( $dvz[0] );
+        });
+        return $node;
+    };
+
+
+
+    var _getDomFromHtml = function () {
         const dc = Date.parse(new Date());
-	// TODO: load JSON report from API
         $.ajax({
             url: _getReportRessource("report.html?dc=" + dc),
             dataType: "text",
             success: function (html) {
                 _rawReport = {
                     "name": _reportName,
+                    "json": null,
                     "html": html
                 };
                 if (APIRequest.dataviz && $(html).find("#" + APIRequest.dataviz).length > 0) {
@@ -598,9 +672,9 @@ report = (function () {
                     _data = data;
 
                     if (data && typeof data === 'object' && Object.getOwnPropertyNames(data).length > 0) {
-                        report.drawViz(data);
+                        _drawViz(data);
                         if (_config.title && data[_config.title.id]) {
-                            report.setTitle(data[_config.title.id].label);
+                            _setTitle(data[_config.title.id].label);
                         }
                     } else {
                         var msg = "absence de données " + _config.data_url + " : " + request_parameters[_config.dataid];
@@ -1202,23 +1276,22 @@ report = (function () {
 
     };
 
+
     /*
      * Public
      */
-
     return {
-
-        drawViz: _drawViz,
-        testViz: _testViz,
-        setTitle: _setTitle,
-        getReport: function () {
-            return _rawReport;
-        },
-        getAppConfiguration: function () {
-            return _appConf;
-        },
-        init: _init
-        /*,addTitleOrDescription: _addTitleOrDescription*/
-    }; // fin return
+        /* used by index.html */
+        init:                  _init,
+        /* used by admin.js, wizard.js, composer.js, import.js, report.js */
+        getAppConfiguration:   function() { return _appConf; },
+        /* used by admin.js, wizard.js */
+        testViz:               _testViz,
+        /* unused */
+//      drawViz:               _drawViz,
+//      setTitle:              _setTitle,
+//      addTitleOrDescription: _addTitleOrDescription,
+//      getReport:             function() { return _rawReport; },
+    };
 
 })();

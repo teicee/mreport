@@ -106,24 +106,28 @@ themes = (function () {
     /*
      * _readHtml : Method used to read all HTML code inside a template Node
      */
-    var _readHtml = function(template, mode = 'tclean') {
+    var _readHtml = function(template, mode = '') {
         try {
             switch (mode) {
                case 'all'   : return template.innerHTML.trim();
                case 'node'  : return template.firstElementChild.innerHTML.trim();
                case 'tnode'  : return template.content.firstElementChild.innerHTML.trim();
-               case 'nodes' : return Array.prototype.map.call( template.children,
-                   (child) => { return child.outerHTML.trim(); }
-               ).join("\n").trim();
-               case 'tnodes' : return Array.prototype.map.call( template.content.children,
-                   (child) => { return child.outerHTML.trim(); }
-               ).join("\n").trim();
-               case 'clean' : return Array.prototype.map.call( template.children,
-                   (child) => { return child.outerHTML.replace(/<!--.*-->/g, "").replace(/>\s+</g, "><").trim(); }
-               ).join("\n").trim();
-               case 'tclean' : return Array.prototype.map.call( template.content.children,
-                   (child) => { return child.outerHTML.replace(/<!--.*-->/g, "").replace(/>\s+</g, "><").trim(); }
-               ).join("\n").trim();
+               case 'nodes' : return Array.prototype.map.call( template.children, (child) => { 
+                   return child.outerHTML.trim();
+               }).join("\n").trim();
+               case 'tnodes' : return Array.prototype.map.call( template.content.children, (child) => { 
+                   return child.outerHTML.trim();
+               }).join("\n").trim();
+               case 'clean' : return Array.prototype.map.call( template.children, (child) => { 
+                   return child.outerHTML.replace(/<!--.*-->/g, "").replace(/>\s+</g, "><").trim();
+               }).join("\n").trim();
+               case 'tclean' : return Array.prototype.map.call( template.content.children, (child) => { 
+                   return child.outerHTML.replace(/<!--.*-->/g, "").replace(/>\s+</g, "><").trim();
+               }).join("\n").trim();
+               default : return Array.prototype.map.call( template.content.childNodes, (child) => { 
+                   if (child.nodeType == Node.TEXT_NODE) return child.nodeValue.trim();
+                   if (child.nodeType == Node.ELEMENT_NODE) return child.outerHTML.replace(/<!--.*-->/g, "").replace(/>\s+</g, "><").trim();
+               }).join("\n").trim();
             }
         } catch (error) {
             console.error("Impossible de récupérer le contenu HTML du template :\n", template, error);
@@ -137,7 +141,7 @@ themes = (function () {
         
         let $bloc = $( this.structure_blocs[ref] ).find('.bloc-structure').addBack('.bloc-structure');
         return this.page_layouts['wstructure']
-            .replaceAll("{{LABEL}}", $bloc.data('label'))
+            .replaceAll("{{LABEL}}", ($bloc) ? $bloc.data('label') : "")
             .replaceAll("{{HTML}}",  this.structure_blocs[ref])
             .replaceAll("{{REF}}",   ref)
         ;
@@ -150,7 +154,7 @@ themes = (function () {
         
         let $bloc = $( this.element_blocs[ref] ).find('.bloc-element').addBack('.bloc-element');
         return this.page_layouts['welement']
-            .replaceAll("{{LABEL}}", $bloc.data("label"))
+            .replaceAll("{{LABEL}}", ($bloc) ? $bloc.data("label") : "")
             .replaceAll("{{HTML}}",  this.element_blocs[ref])
             .replaceAll("{{REF}}",   ref)
         ;
@@ -180,9 +184,9 @@ themes = (function () {
         if (! $structure.length) { console.warn("Bloc invalide: aucun bloc structurant disponible correspondant (ignoré)", ref); return; }
         
         // intégration des données du JSON dans le DOM du composer
-        if ('title'   in jsonBloc) this.setTextData( jsonBloc.title,   $structure.find('.structure-html .bloc-title')[0] ); //TODO tester si [0] inexistant
-        if ('sources' in jsonBloc) this.setTextData( jsonBloc.sources, $structure.find('.structure-html .bloc-sources')[0] ); //TODO tester si [0] inexistant
-        if ('layout'  in jsonBloc) this.buildReportLayout( jsonBloc.layout, $structure.find('.structure-html .bloc-layout') );
+        if ('title'   in jsonBloc) this.setTextData( jsonBloc.title,   $structure.find('.bloc-title')[0] ); //TODO tester si [0] inexistant
+        if ('sources' in jsonBloc) this.setTextData( jsonBloc.sources, $structure.find('.bloc-sources')[0] ); //TODO tester si [0] inexistant
+        if ('layout'  in jsonBloc) this.buildReportLayout( jsonBloc.layout, $structure.find('.bloc-layout') );
         
         // retourne la structure HTML du bloc à ajouter dans l'interface de composition
         if (_debug) console.debug("Bloc HTML généré du JSON :\n", $structure);
@@ -193,7 +197,7 @@ themes = (function () {
      * buildReportLayout : génération et ajout du code HTML du layout (récursif) d'un bloc structurant
      */
     ModelData.prototype.buildReportLayout = function(jsonLayout, $node) {
-        if (! $node.length) return console.warn("Layout invalide: aucun conteneur disponible pour les donnnées", jsonLayout);
+        if (! $node.length) return console.warn("Layout invalide: aucun conteneur disponible pour les données", jsonLayout);
         
         // traitement d'un noeud "rows" ou "cols" avec sa liste d'enfants
         if (jsonLayout.type == 'rows' || jsonLayout.type == 'cols') {
@@ -218,8 +222,11 @@ themes = (function () {
         
         // traitement d'un noeud "data" ou "cell" avec sa liste de composants (dataviz|element)
         if (jsonLayout.type == 'cell' || jsonLayout.type == 'data') {
-            $node.append( this.page_layouts['wcell'] );
-            let $container = $node.find('.components-container').first();
+            let $container = $node.find('.components-container').addBack('.components-container').first();
+            if (! $container.length) {
+                $node.append( this.page_layouts['wcell'] );
+                $container = $node.find('.components-container').first();
+            }
             if (jsonLayout.data) jsonLayout.data.forEach((data) => this.buildReportComponent(data, $container));
             if (jsonLayout.node) console.warn("Layout invalide: présence d'enfants dans un noeud terminal (ignorés)", jsonLayout.node);
             return;
@@ -255,7 +262,7 @@ themes = (function () {
         switch (ref) {
             case "btexte":
                 if (opts) {
-                    let $elem = $item.find('.element-html .bloc-element .bloc-content');
+                    let $elem = $item.find('.bloc-content');
                     if (opts.style)   $elem.addClass("style-" + opts.style);
                     if (opts.content) $elem.html(opts.content);
                 }
