@@ -3,7 +3,7 @@ saver = (function () {
      * Private
      */
 
-    var _debug = false;
+    var _debug = true;
 
     const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
@@ -143,10 +143,10 @@ saver = (function () {
         // extraction des données d'un element
         if (node.classList.contains('element-item')) {
             this.type = "element";
-            this.ref  = item.dataset.bloc;
+            this.ref  = node.dataset.bloc;
             switch (this.ref) {
                 case "btexte":
-                    this.opts = composer.getTextData( item.querySelector('.structure-html .bloc-element .bloc-content') );
+                    this.opts = composer.getTextData( node.querySelector('.element-html .bloc-element .bloc-content') );
                 break;
             }
             return;
@@ -247,6 +247,7 @@ saver = (function () {
             let composition = document.createRange().createContextualFragment(
                 html.replaceAll('col-md', 'col').replaceAll('editable-text titre-', 'editable-text style-titre-')
             );
+            composition.querySelectorAll('.text-edit').forEach(el => el.remove());
             composition.querySelectorAll('.structure-bloc').forEach((bloc) => {
                 let rb  = bloc.querySelector('.report-bloc');
                 let rbt = bloc.querySelector('.report-bloc-title');
@@ -281,7 +282,19 @@ saver = (function () {
                 dvzCode.innerHTML = div.innerText;
                 div.textContent = wizard.html2json( dvzCode.querySelector('.dataviz') );
             });
-            composition.querySelectorAll('.text-edit').forEach(el => el.remove());
+            composition.querySelectorAll('.structure-element.titleBloc').forEach((bloc) => {
+                let text = bloc.querySelector('.editable-text').cloneNode(true);
+                text.classList.add('bloc-content');
+                let tpl = '<div class="structure-html">';
+                tpl+= '<div class="bloc-layout layout-rows"><div class="layout-cols"><div class="layout-cell col-12">';
+                tpl+= '<ul class="components-container"><li class="element-item list-group-item" data-bloc="btexte">';
+                tpl+= '<div class="element-html"><div class="bloc-element">';
+                tpl+= text.outerHTML;
+                tpl+= '</div></div></li></ul></div></div></div></div></div>';
+                bloc.classList.add('structure-item');
+                bloc.dataset.bloc = "bsimple";
+                bloc.innerHTML = tpl;
+            });
             if (_debug) console.debug("Import HTML de la composition :\n", composition);
             
             // Load composition from HTML

@@ -103,7 +103,8 @@ report = (function () {
     var _getCss = function () {
         const dc = Date.parse(new Date());
         $('head').prepend('<link rel="stylesheet" href="' + _getReportRessource("custom.css?dc=" + dc) + '" type="text/css" />');
-        $('head').prepend('<link rel="stylesheet" href="' + _getReportRessource("report.css?dc=" + dc) + '" type="text/css" />');
+//      $('head').prepend('<link rel="stylesheet" href="' + _getReportRessource("report.css?dc=" + dc) + '" type="text/css" />');
+        $('head').prepend('<style>' + _HTMLTemplates.page_styles + '</style>');
     };
 
     var _showAvailableReports = function () {
@@ -142,7 +143,6 @@ report = (function () {
                     }
                     _config.dataviz = APIRequest.dataviz;
                     _getDom();
-                    _getCss();
                 },
                 error: function (xhr, status, err) {
                     console.log(APIRequest.base_url);
@@ -414,6 +414,7 @@ report = (function () {
                 _print();
                 //append _config
                 _merge_config();
+                _getCss();
                 _getData();
             });
         });
@@ -426,6 +427,7 @@ report = (function () {
             // get dataviz component herited from template
             let tpl = _HTMLTemplates.dataviz_components[ viz.type ];
             if (! tpl) return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ viz.type +")");
+            if ('wdataviz' in _HTMLTemplates.page_layouts) tpl = _HTMLTemplates.page_layouts['wdataviz'].replaceAll("{{HTML}}", tpl);
             
             // set attributes with properties object
             let $dvz = $( tpl.replace("{{dataviz}}", viz.properties.id).trim() );
@@ -433,7 +435,7 @@ report = (function () {
                 case "id": break;
                 case "title":        $dvz.find(".report-dataviz-title").text(value); break;
                 case "description":  $dvz.find(".report-dataviz-description").html(value); break;
-                case "icon":         if (value) $dvz.find('.dataviz').addClass(value).addClass("custom-icon"); break;
+                case "icon":         if (value) $dvz.find('.dataviz').addClass(value).addClass("custom-icon").removeClass("icon-default"); break;
                 case "iconposition": if (value) $dvz.find('.dataviz').addClass(value); break;
                 default:             $dvz.find('.dataviz').attr('data-' + attribute, value);
             }
@@ -470,6 +472,7 @@ report = (function () {
                 }
                 //append _config
                 _merge_config();
+                _getCss();
                 _getData();
             },
             error: function (xhr, status, err) {

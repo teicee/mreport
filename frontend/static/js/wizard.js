@@ -993,7 +993,6 @@ wizard = (function () {
      * this method initializes wizard
      */
     var _init = function () {
-        if (_debug) console.debug("wizard init");
         Chart.plugins.unregister(ChartDataLabels);
         //load wizard html dynamicly and append it admin.html
         $.ajax({

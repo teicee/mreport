@@ -262,7 +262,7 @@ themes = (function () {
         switch (ref) {
             case "btexte":
                 if (opts) {
-                    let $elem = $item.find('.bloc-content');
+                    let $elem = $item.find('.bloc-content').addBack('.bloc-content');
                     if (opts.style)   $elem.addClass("style-" + opts.style);
                     if (opts.content) $elem.html(opts.content);
                 }

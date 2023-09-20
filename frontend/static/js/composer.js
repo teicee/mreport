@@ -350,7 +350,7 @@ composer = (function () {
             let composition = $rootContainer.append( _HTMLTemplates.page_layouts['wmain'] ).find('#report-composition')[0];
             if (! composition) return Swal.fire("Problème", "L'interface du composeur n'est pas valide", 'error');
             $("#composer-report-title").text( reportData.title );
-            $("#selectedModelComposer").val( reportJson.theme ).trigger('change');
+            if (reportJson.theme) $("#selectedModelComposer").val( reportJson.theme ).trigger('change');
             // application dans le composer des blocs chargés
             reportJson.blocs.forEach((bloc) => {
                 let $bloc = _HTMLTemplates.buildReportBloc(bloc);
@@ -415,11 +415,11 @@ composer = (function () {
 
         let curText = _getTextData(source);
         if (source.classList.contains('bloc-title')) {
-            evt.target.querySelector("#text-edit-level").disabled = false;
+//          evt.target.querySelector("#text-edit-level").disabled = false;
             evt.target.querySelector("input[value='text']").checked = true;
             evt.target.querySelector("input[value='html']").disabled = true;
         } else {
-            evt.target.querySelector("#text-edit-level").disabled = true;
+//          evt.target.querySelector("#text-edit-level").disabled = true;
             evt.target.querySelector("input[value='html']").disabled = false;
             evt.target.querySelector("input[value='" + (curText.isHTML ? "html" : "text") +"']").checked = true;
         }
