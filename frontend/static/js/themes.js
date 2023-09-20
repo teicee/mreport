@@ -136,7 +136,7 @@ themes = (function () {
 
     // retourne le code HTML d'un bloc structurant à partir des templates
     ModelData.prototype.makeStructureBloc = function(ref) {
-        if (! this.structure_blocs[ref]) return '[STRUCTURE NOT FOUND: '+ref+']';
+        if (! this.structure_blocs[ref]) return '<div>[STRUCTURE NOT FOUND: '+ref+']</div>';
         if (! ('wstructure' in this.page_layouts)) return this.structure_blocs[ref];
         
         let $bloc = $( this.structure_blocs[ref] ).find('.bloc-structure').addBack('.bloc-structure');
@@ -149,7 +149,7 @@ themes = (function () {
 
     // retourne le code HTML d'un bloc élémentaire à partir des templates
     ModelData.prototype.makeElementBloc = function(ref) {
-        if (! this.element_blocs[ref]) return '[ELEMENT NOT FOUND: '+ref+']';
+        if (! this.element_blocs[ref]) return '<div>[ELEMENT NOT FOUND: '+ref+']</div>';
         if (! ('welement' in this.page_layouts)) return this.element_blocs[ref];
         
         let $bloc = $( this.element_blocs[ref] ).find('.bloc-element').addBack('.bloc-element');

@@ -141,7 +141,6 @@ composer = (function () {
                 $structures.append( _HTMLTemplates.makeStructureBloc(ref) );
             }
             _configureComposerTools($structures);
-            _configureCellContainer($structures);
             
             // generate elements blocks in sidebar from composer template
             let $elements = $("#element-models").remove('.list-group-item');
@@ -363,7 +362,13 @@ composer = (function () {
             });
             // configure #report-composition to accept drag & drop from structure elements
             new Sortable(composition, {
-                group: { name: 'structure' }, handle: '.drag'
+                group: { name: 'structure' },
+                handle: '.drag',
+                onAdd: function (evt) {
+                    if (evt.item.classList.contains('structure-item')) {
+                        _configureCellContainer( $(evt.item) );
+                    }
+                }
             });
         });
     };
