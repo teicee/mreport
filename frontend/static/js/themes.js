@@ -136,12 +136,16 @@ themes = (function () {
 
     // retourne le code HTML d'un bloc structurant à partir des templates
     ModelData.prototype.makeStructureBloc = function(ref) {
-        if (! this.structure_blocs[ref]) return '<div>[STRUCTURE NOT FOUND: '+ref+']</div>';
+        if (! this.structure_blocs[ref]) {
+            if (this.structure_blocs['bcustom']) ref = 'bcustom';
+            else return;
+        }
         if (! ('wstructure' in this.page_layouts)) return this.structure_blocs[ref];
         
         let $bloc = $( this.structure_blocs[ref] ).find('.bloc-structure').addBack('.bloc-structure');
         return this.page_layouts['wstructure']
             .replaceAll("{{LABEL}}", ($bloc) ? $bloc.data('label') : "")
+            .replaceAll("{{DESC}}",  ($bloc) ? $bloc.data('description') : "")
             .replaceAll("{{HTML}}",  this.structure_blocs[ref])
             .replaceAll("{{REF}}",   ref)
         ;
@@ -149,12 +153,16 @@ themes = (function () {
 
     // retourne le code HTML d'un bloc élémentaire à partir des templates
     ModelData.prototype.makeElementBloc = function(ref) {
-        if (! this.element_blocs[ref]) return '<div>[ELEMENT NOT FOUND: '+ref+']</div>';
+        if (! this.element_blocs[ref]) {
+            if (this.element_blocs['btexte']) ref = 'btexte';
+            else return;
+        }
         if (! ('welement' in this.page_layouts)) return this.element_blocs[ref];
         
         let $bloc = $( this.element_blocs[ref] ).find('.bloc-element').addBack('.bloc-element');
         return this.page_layouts['welement']
-            .replaceAll("{{LABEL}}", ($bloc) ? $bloc.data("label") : "")
+            .replaceAll("{{LABEL}}", ($bloc) ? $bloc.data('label') : "")
+            .replaceAll("{{DESC}}",  ($bloc) ? $bloc.data('description') : "")
             .replaceAll("{{HTML}}",  this.element_blocs[ref])
             .replaceAll("{{REF}}",   ref)
         ;

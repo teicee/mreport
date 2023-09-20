@@ -26,7 +26,7 @@
 
     <!-- HTML wrapper used to construct structural blocks -->
     <template class="report-layout" id="wstructure">
-        <li class="structure-item list-group-item handle" data-bloc="{{REF}}">
+        <li class="structure-item list-group-item handle" data-bloc="{{REF}}" title="{{DESC}}">
             <div class="bloc-tools btn-group btn-group-sm">
                 <button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>
                 <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
@@ -38,7 +38,7 @@
 
     <!-- HTML wrapper used to construct elements components -->
     <template class="report-layout" id="welement">
-        <li class="element-item list-group-item handle" data-bloc="{{REF}}">
+        <li class="element-item list-group-item handle" data-bloc="{{REF}}" title="{{DESC}}">
             <div class="data-tools btn-group btn-group-sm">
                 <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button-->
                 <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
@@ -97,7 +97,7 @@
                 <!-- this text is editable in composer -->Titre du bloc
             </div>
             <div class="bloc-layout layout-rows container-fluid">
-                <div class="layout-cols row">
+                <div class="layout-cols fixed-layout row">
                     <div class="layout-cell col-12">
                         <!-- components container is injected here -->
                     </div>
@@ -181,6 +181,24 @@
                                 <!-- components container is injected here -->
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bloc-sources editable-text">
+                <!-- this text is editable in composer -->SOURCE: xxx
+            </div>
+        </div>
+    </template>
+
+    <template class="report-structure" id="bcustom">
+        <div class="bloc-structure" data-label="personnalisées <input type='text' class='form-control bcustom' placeholder='Ex: 6 6' />" data-description="Bloc multi-colonnes au choix">
+            <div class="bloc-title editable-text">
+                <!-- this text is editable in composer -->Titre du bloc
+            </div>
+            <div class="bloc-layout layout-rows container-fluid">
+                <div class="layout-cols row">
+                    <div class="layout-cell col-12">
+                        <!-- components container is injected here -->
                     </div>
                 </div>
             </div>

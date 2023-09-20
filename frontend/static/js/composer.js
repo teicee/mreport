@@ -141,6 +141,7 @@ composer = (function () {
                 $structures.append( _HTMLTemplates.makeStructureBloc(ref) );
             }
             _configureComposerTools($structures);
+            _configureCustomColumns($structures);
             
             // generate elements blocks in sidebar from composer template
             let $elements = $("#element-models").remove('.list-group-item');
@@ -188,7 +189,7 @@ composer = (function () {
         // cell division actions
         $composerMain.on('click', '.cell-tools .cell-divide', function(e){
             const $cell = $(e.currentTarget).closest(".layout-cell");
-            if ($cell.siblings('.layout-cell, .layout-rows').length) {
+            if ($cell.siblings('.layout-cell, .layout-rows').length || $cell.closest('.layout-cols').hasClass('fixed-layout')) {
                 // ajout d'un niveau de découpage à partir d'un layout-cell devenant un layout-rows (contenant 2 rows)
                 // note: valable uniquement pour un layout-cell ayant déjà des frères (layout-cell ou layout-rows)
                 $cell.removeClass("layout-cell").addClass("layout-rows");
@@ -222,7 +223,7 @@ composer = (function () {
         
         // configure #structure-models to allow drag with clone option
         new Sortable(document.getElementById("structure-models"), {
-            group: { name: 'structure', pull: 'clone', put: false },
+            group: { name: 'structure', pull: 'clone', put: false }, filter: 'input'
         });
         // configure #element-models to allow drag with clone option
         new Sortable(document.getElementById("element-models"), {
@@ -250,6 +251,33 @@ composer = (function () {
             if ($(this).parentsUntil('.bloc-layout', '.layout-cols').length > 2) $(this).find('.cell-divide').remove();
         });
         return $node;
+    };
+
+    /*
+     * _configureCustomColumns - Add events for the custom structure block (columns sizes input)
+     */
+    var _configureCustomColumns = function ($structures) {
+        let $bcustom = $structures.find('input.bcustom');
+        if (! $bcustom.length) return;
+        
+        $bcustom.on('change', function(evt){
+            let sum = 0; oks = [];
+            this.value.replaceAll(/[^0-9]/g, ' ').replace(/ +/, ' ').trim().split(' ').forEach((col) => {
+                col = Math.min(Math.max(col, 1), 12);
+                if (sum < 12) { oks.push(Math.min(col, 12 - sum)); sum+= col; }
+            });
+            this.value = oks.join(' ');
+            let $cols = $(this).closest('.structure-item').find('.structure-html .bloc-structure .layout-cols');
+            if ($cols.length) _gridResizer($cols[0], oks);
+        });
+        
+        $bcustom.on('keypress', function(evt){
+            let ASCIICode = (evt.which) ? evt.which : evt.keyCode;
+            if (ASCIICode <= 32) return true; // controles & espace
+            return (ASCIICode < 48 || ASCIICode > 57) ? false : true;
+        });
+        
+        $bcustom.on('pointerdown', function(evt){ evt.stopPropagation(); return true; });
     };
 
     /*
@@ -505,9 +533,9 @@ composer = (function () {
     var _gridCheckCols = function ($inputs) {
         var total = 0;
         $inputs.each( function(){
-            let n = Number.parseInt($(this).val(), 10);
+            let n = Number.parseInt(this.value, 10);
             n = isNaN(n) ? 1 : Math.max(1, Math.min(12, n));
-            $(this).val(n);
+            this.value = n;
             total+= n;
         });
         return total;
@@ -517,32 +545,40 @@ composer = (function () {
      * _gridValidate - Enregistrement du formulaire des dimensions pour application dans le composer.
      */
     var _gridValidate = function (evt) {
-        var colsDiv = _gridSelected;
-        var $form = $(this).closest('.modal').find('form');
-        var $inputs = $form.find('#grid-columns-size input');
-        var inputIdx = 0, curCol;
+        let $modal = $(this).closest('.modal');
+        let $inputs = $modal.find('form #grid-columns-size input');
         // vérification des dimensions horizontales (total 12 pour grid bs)
         if (_gridCheckCols($inputs) != 12) {
             alert("La somme des tailles des colonnes n'est pas égale à 12 !");
             return false;
         }
+        _gridResizer(_gridSelected, $inputs.map(function(){ return this.value; }).get(), true);
+        // fermeture de la modal
+        $modal.modal('hide');
+    }
+
+    /*
+     * _gridResizer - Création/modification/suppression des colonnes d'un conteneur.
+     */
+    var _gridResizer = function (node, sizes, doCellConfig = false) {
+        let idx = 0;
+        // suppression des colonnes en trop
+        while (node.childElementCount > sizes.length) node.lastElementChild.remove();
         // modification des colonnes existantes
-        for (let i = 0; i < colsDiv.childElementCount; i++) {
-            curCol = colsDiv.children[i];
+        for (let i = 0; i < node.childElementCount; i++) {
+            let curCol = node.children[i];
             // prendre uniquement les enfants ayant la classe "layout-cell" ou "layout-rows"
             if (! _reTest.test(curCol.className)) continue;
             // modifier les classes de largeur "col-##" selon les inputs du formulaire
-            curCol.className = curCol.className.replace(_reSize, '$1col-'+$inputs[inputIdx++].value+'$3');
+            curCol.className = curCol.className.replace(_reSize, '$1col-'+ sizes[idx++] +'$3');
         }
         // génération des nouvelles colonnes
-        while (inputIdx < $inputs.length) {
-            let $cell = $("<div>").addClass("layout-cell col-" + $inputs[inputIdx++].value);
+        while (idx < sizes.length) {
+            let $cell = $("<div>").addClass("layout-cell col-" + sizes[idx++]);
             _configureComposerTools($cell);
-            _configureCellContainer($cell);
-            $cell.appendTo(colsDiv);
+            if (doCellConfig) _configureCellContainer($cell);
+            $cell.appendTo(node);
         }
-        // fermeture de la modal
-        $(this).closest('.modal').modal('hide');
     }
 
 // =============================================================================
