@@ -1,4 +1,4 @@
-themes = (function () {
+models = (function () {
     /*
      * Private
      */
@@ -6,7 +6,7 @@ themes = (function () {
     var _debug = true;
 
     /*
-     * ModelData : Object definition to store templates and parameters for a theme
+     * ModelData : Object definition to store templates and parameters for a model
      */
     var ModelData = function() {
         this.model = "";
@@ -21,15 +21,15 @@ themes = (function () {
     };
 
     /*
-     * _cache : This var stores all data from already loaded theme file
+     * _cache : This var stores all data from already loaded model file
      */
     var _cache = {};
 
     /*
-     * _loadModel : Load HTML templates and parameters from server theme file
+     * _loadHtml : Load HTML templates and parameters from server model file
      */
-    var _loadModel = function (model_name, callback) {
-        // retourne directement les données du thème s'il a déjà été chargé
+    var _loadHtml = function (model_name, callback) {
+        // retourne directement les données du modèle s'il a déjà été chargé
         if (model_name in _cache) return (callback) ? callback(true, _cache[ model_name ]) : true;
         
         // sinon analyse du fichier contenant les templates sur le serveur
@@ -42,10 +42,10 @@ themes = (function () {
             _cache[ model_name ] = false;
         })
         .done(function (data, status, xhr) {
-            if (_debug) console.debug("Chargement du fichier html du thème '" + model_name + "' :\n", data);
+            if (_debug) console.debug("Chargement du fichier html du modèle '" + model_name + "' :\n", data);
             const parser = new DOMParser();
             _cache[ model_name ] = _parseHtml( parser.parseFromString(data, "text/html") );
-            if (_debug) console.debug("Récupération des données du thème '" + model_name + "' :\n", _cache[ model_name ]);
+            if (_debug) console.debug("Récupération des données du modèle '" + model_name + "' :\n", _cache[ model_name ]);
             if (callback) callback(true, _cache[ model_name ]);
         })
     };
@@ -97,7 +97,7 @@ themes = (function () {
                 data.dataviz_components[ template.getAttribute('data-ref') ] = _readHtml(template);
             });
         } catch (error) {
-            console.error("Impossible de récupérer les données du thème depuis le modèle :\n", html, error);
+            console.error("Impossible de récupérer les données depuis le modèle :\n", html, error);
             return false;
         }
         return data;
@@ -187,7 +187,7 @@ themes = (function () {
     ModelData.prototype.buildReportBloc = function(jsonBloc) {
         let ref = jsonBloc.ref || '-';
         
-        // génération du HTML du bloc structurant d'après les templates du thème (layout+structure)
+        // génération du HTML du bloc structurant d'après les templates du modèle (layout+structure)
         let $structure = $( this.makeStructureBloc(ref) );
         if (! $structure.length) { console.warn("Bloc invalide: aucun bloc structurant disponible correspondant (ignoré)", ref); return; }
         
@@ -262,7 +262,7 @@ themes = (function () {
     ModelData.prototype.buildReportElement = function (ref, opts) {
         if (! ref) return;
         
-        // génération du HTML du bloc élémentaire d'après les templates du thème (layout+element)
+        // génération du HTML du bloc élémentaire d'après les templates du modèle (layout+element)
         let $item = $( this.makeElementBloc(ref) );
         if (! $item.length) { console.warn("Bloc invalide: aucun bloc élémentaire disponible correspondant (ignoré)", ref); return; }
         
@@ -290,7 +290,7 @@ themes = (function () {
     };
 
     /*
-     * getColorsList: Retourne une simple liste des codes hexa des couleurs du thème
+     * getColorsList: Retourne une simple liste des codes hexa des couleurs du modèle
      */
     ModelData.prototype.getColorsList = function () {
         return Object.getOwnPropertyNames( this.colors ).map(color => color.value);
@@ -301,7 +301,7 @@ themes = (function () {
      */
     return {
         /* used by composer.js & report.js */
-        load:   _loadModel,
+        load:   _loadHtml,
         /* unused */
         data:   function(model_name) { return _cache[model_name]; },
         exists: function(model_name) { if (model_name in _cache) return (_cache[model_name]) ? true : false; },

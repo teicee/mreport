@@ -689,9 +689,9 @@ wizard = (function () {
      * @param  {string} modelId
      */
     var _onChangeModel = function (modelId) {
-        // load the composer theme
-        themes.load( modelId, function(success, data){
-            if (_debug) console.debug("Récupération des données du thème sélectionné :\n", data);
+        // load the selected model
+        models.load( modelId, function(success, data){
+            if (_debug) console.debug("Récupération des données du modèle sélectionné :\n", data);
             if (! success) return;
             _updateIconList(data);
             _updateStyle(data);

@@ -72,7 +72,7 @@ composer = (function () {
      * _HTMLTemplates - {object} Store structured html blocks and parameters
      * issued from special HTML model for the composer ("model-composer.html")
      */
-    var _HTMLTemplates = {}; // ModelData (from themes.js)
+    var _HTMLTemplates = {}; // ModelData (from models.js)
 
     /*
      * _listModels - {object} List available models for the final front rendering.
@@ -129,9 +129,9 @@ composer = (function () {
             $modelSelector.prop("disabled", false);
         }
         
-        // load the composer theme
-        themes.load( 'composer', function(success, data){
-            if (_debug) console.debug("Récupération des données du thème de composition :\n", data);
+        // load the composer model
+        models.load( 'composer', function(success, data){
+            if (_debug) console.debug("Récupération des données du modèle de composition :\n", data);
             if (! success) return;
             _HTMLTemplates = data;
             
@@ -377,7 +377,7 @@ composer = (function () {
             let composition = $rootContainer.append( _HTMLTemplates.page_layouts['wmain'] ).find('#report-composition')[0];
             if (! composition) return Swal.fire("Problème", "L'interface du composeur n'est pas valide", 'error');
             $("#composer-report-title").text( reportData.title );
-            if (reportJson.theme) $("#selectedModelComposer").val( reportJson.theme ).trigger('change');
+            if (reportJson.model) $("#selectedModelComposer").val( reportJson.model ).trigger('change');
             // application dans le composer des blocs chargés
             reportJson.blocs.forEach((bloc) => {
                 let $bloc = _HTMLTemplates.buildReportBloc(bloc);

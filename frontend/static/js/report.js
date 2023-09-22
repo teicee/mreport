@@ -38,7 +38,7 @@ report = (function () {
      * _HTMLTemplates - {object} Store structured html blocks and parameters
      * issued from HTML model selected for this report ("model-*.html")
      */
-    var _HTMLTemplates = {}; // ModelData (from themes.js)
+    var _HTMLTemplates = {}; // ModelData (from models.js)
 
     accounting.settings = {
         currency: {
@@ -395,8 +395,8 @@ report = (function () {
                 "html": null //html
             };
             // chargement du modèle utilisé par le rapport
-            themes.load( reportJson.theme || "b", function(success, data) {
-                if (_debug) console.debug("Récupération des données du thème de rendu :\n", data);
+            models.load( reportJson.model || "b", function(success, data) {
+                if (_debug) console.debug("Récupération des données du modèle de rendu :\n", data);
                 if (! success) return;
                 _HTMLTemplates = data;
                 // initialisation des éléments du composer dans la page

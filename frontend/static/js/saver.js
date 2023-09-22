@@ -13,8 +13,8 @@ saver = (function () {
      */
 
     // Représentation JSON de la composition d'un rapport (constitué d'une suite de JsonBloc)
-    var JsonReport = function(data, theme = "") {
-        this.theme = theme;
+    var JsonReport = function(data, model = "") {
+        this.model = model;
         this.blocs = [];  // liste de JsonBloc
         if (data instanceof Node) this.parseNode(data); else if (data) this.loadJson(data);
     };
@@ -50,7 +50,7 @@ saver = (function () {
      */
 
     JsonReport.prototype.loadJson = function(json) {
-        if (json.theme) this.theme = json.theme;
+        if (json.model) this.model = json.model;
         if (json.blocs) json.blocs.forEach((data) => { this.blocs.push( new JsonBloc(data) ); });
     };
 
