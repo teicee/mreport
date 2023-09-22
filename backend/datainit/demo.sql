@@ -138,7 +138,6 @@ ALTER TABLE :schema.report_composition OWNER TO :user;
 --
 
 CREATE TABLE :schema.report_definition (
---  id integer NOT NULL,
     report character varying(50) NOT NULL,
     save_date timestamp without time zone NOT NULL,
     json character varying(50000) NOT NULL

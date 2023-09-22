@@ -20,7 +20,6 @@ wizard = (function () {
      * each data sample linked to dataviz is stored for next usage
      * in _storeData
      */
-
     var _storeData = {};
 
     /*
@@ -48,8 +47,6 @@ wizard = (function () {
         "year":"2020"
         }
      */
-
-
     var _dataviz_infos = {};
 
     /*
@@ -62,9 +59,7 @@ wizard = (function () {
         "data": fdata,
         "properties": properties
       }
-     *
      */
-
     var _dataviz_definition = {};
 
     /*
@@ -72,17 +67,15 @@ wizard = (function () {
      * dataviz conf herited from composition report or dataviz table via _dataviz_infos
      * this var is used by wizard to initiate itself with existing conf
      */
-
     var _existingConfig = false;
 
     /*
-     *
      * _colorbtnId - Number used by _updateColorPicker to generate color buttons
      */
-
     var _colorbtnId = 0;
 
-    /** Method to extract a set of data in relation with dataviz
+    /*
+     * Method to extract a set of data in relation with dataviz
      * and necessary to configure and visualize a dataviz for a report
      * Result is stored in _storeData[xxx] to reuse it later
      * @param  {string} datavizId
@@ -1003,15 +996,13 @@ wizard = (function () {
                 //Events management
                 $('#wizard-panel').on('show.bs.modal', _onWizardOpened);
                 $('#wizard-panel').on('hide.bs.modal', _clean);
-                $("#w_dataviz_type").change(_onChangeDatavizType);
-                $("#wizard_refresh").click(_onValidateConfig);
-                $("#wizard_default_save").click(function (e) {
+                $("#w_dataviz_type").on('change', _onChangeDatavizType);
+                $("#wizard_refresh").on('click', _onValidateConfig);
+                $("#wizard_default_save").on('click', function (e) {
                     admin.saveVisualization(_dataviz_definition);
                 });
-                $("#wizard_add").click(function (e) {
-                    _configureDataviz();
-                });
-                $("#addColor").on("click", function (e) {
+                $("#wizard_add").on('click', _configureDataviz);
+                $("#addColor").on('click', function (e) {
                     _updateColorPicker({}, e)
                 });
                 // flag init done
@@ -1043,7 +1034,6 @@ wizard = (function () {
         onRemoveColor:      _onRemoveColor,
         /* used by wizard.html */
         onChangeModel:      _onChangeModel,
-        configureDataviz:   _configureDataviz,
     };
 
 })();

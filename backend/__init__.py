@@ -115,14 +115,12 @@ class Report_composition(db.Model):
         return '<report_composition {}>'.format(self.report)
 
 class Report_definition(db.Model):
-#   id = db.Column(db.Integer, autoincrement=True)
     report = db.Column(db.String(50),db.ForeignKey(schema+'report.report'),nullable=False)
-    json = db.Column(db.Text(50000), nullable=False)
     save_date = db.Column(db.DateTime, 
                           default=datetime.utcnow, 
                           onupdate=datetime.utcnow)
+    json = db.Column(db.Text(50000), nullable=False)
     __table_args__ = (
-#       db.PrimaryKeyConstraint('report', 'id'),
         db.PrimaryKeyConstraint('report', 'save_date'),
         tableschema
     )
@@ -531,7 +529,6 @@ class ManageReportDef(Resource):
                             return obj.isoformat()
                 try:
                     backup = {
-#                       'id':        ct.timestamp(),
                         'report':    report_id,
                         'save_date': DateTimeEncoder().encode(ct),
                         'json':      json.dumps(data),
@@ -543,28 +540,30 @@ class ManageReportDef(Resource):
                 db.session.commit()
             return {"response": "success" , "backup": backup}
 
-@backup.route('/<report_id>/last',doc={'description':'Dernière version d\'un rapport'})
-@backup.doc(params={'report_id': 'identifiant du rapport'})
+@backup.route('/<string:report_id>/last',doc={'description': "Dernière version d'un rapport"})
+@backup.doc(params={'report_id': "identifiant du rapport"})
 class GetLastReportDef(Resource):
-    def get(self,report_id):
+    def get(self, report_id):
         result = db.session.query(Report_definition) \
-                   .filter(Report_definition.save_date != None) \
                    .filter(Report_definition.report == report_id) \
+                   .filter(Report_definition.save_date != None) \
                    .order_by(desc(Report_definition.save_date)) \
                    .limit(1).first()
         if result is None:
             return {"response": "Aucune sauvegarde disponible pour ce rapport"}, 204
-        data = {'response':'success','report_backups':  json.loads(result.json)}
+        data = {'response':'success', 'report_backup': json.loads(result.json)}
         return jsonify(**data)
 
-@backup.route('/<report_id>/<report_definition_id>',doc={'description':'Recupère une version d\'un rapport'})
-@backup.doc(params={'report_id': 'identifiant du rapport', 'report_definition_id': 'identifiant de la version du rapport'})
-class GetReportDefId(Resource):
-    def get(self,report_id,report_definition_id):
-        result = db.session.query(Report_definition).filter(Report_definition.id == report_definition_id)
-        data = {'response':'success','report_backups':  json.loads(json.dumps([row2dict(r) for r in result]))}
+@backup.route('/<string:report_id>/<report_save_date>',doc={'description': "Recupère une version d'un rapport"})
+@backup.doc(params={'report_id': "identifiant du rapport", 'report_save_date': "date de la version du rapport"})
+class GetDateReportDef(Resource):
+    def get(self, report_id, report_save_date):
+        result = db.session.query(Report_definition) \
+                   .filter(Report_definition.report == report_id) \
+                   .filter(Report_definition.save_date == save_date) \
+                   .limit(1).first()
+        if result is None:
+            return {"response": "Aucune sauvegarde disponible pour ce rapport"}, 204
+        data = {'response':'success', 'report_backup': json.loads(result.json)}
         return jsonify(**data)
 
-
-
-#    return app

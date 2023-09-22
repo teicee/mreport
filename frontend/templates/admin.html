@@ -201,24 +201,27 @@
                 <div class="form-row">
                     <div class="form-group col-3">
                         <label for="selectedReportComposer">
-                            <i class="fas fa-file-alt mreport-secondary-color-1"></i> 
+                            <i class="fas fa-file-alt mreport-secondary-color-1"></i>
                             Rapport sélectionné
                         </label>
-                        <select class="form-control" id="selectedReportComposer" disabled></select>
+                        <select class="form-control" id="selectedReportComposer" disabled>
+                        </select>
                     </div>
                     <div class="form-group col-3">
                         <label for="selectedReportVersionComposer">
                             <i class="fas fa-history mreport-secondary-color-1"></i>
                             Version sélectionnée
                         </label>
-                        <select class="form-control" id="selectedReportVersionComposer" disabled></select>
+                        <select class="form-control" id="selectedReportVersionComposer" disabled>
+                        </select>
                     </div>
                     <div class="form-group col-3">
                         <label for="selectedModelComposer">
                             <i class="fas fa-palette mreport-secondary-color-1"></i>
                             Modèle de rendu sélectionné
                         </label>
-                        <select class="form-control" id="selectedModelComposer" disabled></select>
+                        <select class="form-control" id="selectedModelComposer" disabled>
+                        </select>
                     </div>
                     <div class="form-group col-3">
                         <label>
@@ -229,9 +232,11 @@
                           <button type="button" id="save_report_json" class="btn mreport-primary-color-1-bg">
                             <i class="fas fa-cloud-upload-alt"></i> Enregistrer
                           </button>
+                        <!--
                           <button type="button" id="view_report_html" class="btn mreport-primary-color-2-bg">
                             <i class="fas fa-file-export"></i> Aperçu
                           </button>
+                        -->
                         </div>
                     </div>
                 </div>
@@ -271,6 +276,7 @@
                 <p>Puis déposer ici les blocs et dataviz.</p>
               </div>
             </div>
+
         </div>
     </div>
     <!-- Composer end -->
@@ -522,6 +528,7 @@
             </div>
         </div>
     </div>
+
     <!-- Cart -->
     <div id="cd-cart">
         <a id="togglePanier" class="mreport-primary-color-1-bg">Fermer</a>

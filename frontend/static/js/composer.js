@@ -332,11 +332,13 @@ composer = (function () {
             let ref = this.getAttribute('data-ref');
             let $dataviz = $('#dataviz-items .dataviz-item[data-dataviz="'+ ref +'"]').clone();
             if (! $dataviz.length) return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ ref +")");
-            
-            let opt = JSON.parse(this.innerText);
-            $dataviz.find('code.dataviz-definition').text( this.innerText );
-            if (opt.type) $dataviz.addClass('configured');
-            
+            try {
+                let opt = JSON.parse(this.innerText);
+                if (opt.type) {
+                    $dataviz.find('code.dataviz-definition').text( this.innerText );
+                    $dataviz.addClass('configured');
+                }
+            } catch (err) { console.warn("Invalid dataviz definition: ", err); }
             this.replaceWith( $dataviz[0] );
         });
         return $node;
