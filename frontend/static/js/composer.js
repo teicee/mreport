@@ -159,10 +159,12 @@ composer = (function () {
         $composerMain.on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
             const $bloc = $(e.currentTarget).closest(".structure-item, .element-item, .dataviz-item");
             $bloc.remove();
+            _countUsedDataviz();
         });
         $composerMain.on('click', '.cell-tools .cell-empty', function(e){
             const $data = $(e.currentTarget).closest(".layout-cell").find('.components-container');
             $data.empty();
+            _countUsedDataviz();
         });
         $composerMain.on('click', '.cell-tools .cell-delete', function(e){
             const $cell = $(e.currentTarget).closest(".layout-cell");
@@ -184,6 +186,8 @@ composer = (function () {
                 $rows.empty().append($contents);
                 $rows.removeClass("layout-rows").addClass($others.hasClass("layout-rows") ? "layout-rows" : "layout-cell");
             }
+            // mise à jour des compteurs de dataviz utilisées
+            _countUsedDataviz();
         });
         
         // cell division actions
@@ -223,15 +227,15 @@ composer = (function () {
         
         // configure #structure-models to allow drag with clone option
         new Sortable(document.getElementById("structure-models"), {
-            group: { name: 'structure', pull: 'clone', put: false }, filter: 'input'
+            group: { name: 'structure', pull: 'clone', put: false }, sort: false, filter: 'input'
         });
         // configure #element-models to allow drag with clone option
         new Sortable(document.getElementById("element-models"), {
-            group: { name: 'component', pull: 'clone', put: false },
+            group: { name: 'component', pull: 'clone', put: false }, sort: false
         });
         // configure #dataviz-items to allow drag
         new Sortable(document.getElementById("dataviz-items"), {
-            group: { name: 'component', pull: 'clone', put: false },
+            group: { name: 'component', pull: 'clone', put: false }, dataIdAttr: 'data-dataviz'
         });
     };
 
@@ -315,6 +319,8 @@ composer = (function () {
                             $item.find(".data-tools .btn.edit").show();
                         }
                     }
+                    // mise à jour des compteurs de dataviz utilisées
+                    _countUsedDataviz();
                 }
             });
             // init existing dataviz for wizard
@@ -400,7 +406,33 @@ composer = (function () {
                     }
                 }
             });
+            // mise à jour des compteurs de dataviz utilisées
+            _countUsedDataviz();
         });
+    };
+
+    /*
+     * _countUsedDataviz - Mise à jour des compteurs de dataviz utilisées
+     */
+    var _countUsedDataviz = function () {
+        let tri = [];
+        let composition = document.getElementById("report-composition");
+        let ctn = document.querySelector("#dataviz-items");
+        ctn.querySelectorAll(".dataviz-item").forEach((dvz) => {
+            let ref = dvz.dataset.dataviz;
+            let nb = composition.querySelectorAll(".dataviz-item[data-dataviz='" + ref + "']").length;
+            let counter = dvz.querySelector('.counters');
+            if (counter) {
+                if (nb) { counter.classList.remove("badge-danger"); counter.classList.add("badge-info"); }
+                else    { counter.classList.remove("badge-info"); counter.classList.add("badge-danger"); }
+                counter.innerText = nb;
+            }
+            if (nb) dvz.classList.add("dvz-used");
+            else    dvz.classList.remove("dvz-used");
+            tri.push({'id': ref, 'nb': nb});
+        });
+        let srt = Sortable.get(ctn);
+        if (srt) srt.sort(tri.sort(function(a,b){ if (a.nb == b.nb) return (a.id < b.id)?-1:1; return (a.nb < b.nb)?-1:1; }).map((a) => a.id) , true);
     };
 
 // ============================================================================= Modification d'un éditable (modal)

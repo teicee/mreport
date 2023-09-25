@@ -80,6 +80,11 @@
 .builder .sidenav .element-label {
   font-size: small;
 }
+.builder .sidenav .dataviz-item .counters {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
 
 .builder .sidenav .list-group-item .bloc-tools,
 .builder .sidenav .list-group-item .cols-tools,
@@ -110,6 +115,9 @@
 }
 .builder .sidenav .sortable-drag .bloc-sources {
   font-size: 0.75em;
+}
+.builder .sidenav .sortable-drag .dataviz-item .counters {
+  display: none;
 }
 
 /* --------------------------------------------------------- Section principale */
@@ -381,6 +389,9 @@
 .builder #report-composition .components-container .dataviz-item .dataviz-definition {
   font-size: 0.75em;
   line-height: 1em;
+  display: none;
+}
+.builder #report-composition .components-container .dataviz-item .counters {
   display: none;
 }
 
