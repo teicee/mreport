@@ -85,6 +85,11 @@
   right: 0;
   bottom: 0;
 }
+.builder .sidenav .dataviz-item.dvz-used {
+/*display: none;*/
+  filter: alpha(opacity=75);
+  opacity: 0.75;
+}
 
 .builder .sidenav .list-group-item .bloc-tools,
 .builder .sidenav .list-group-item .cols-tools,

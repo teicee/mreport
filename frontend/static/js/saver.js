@@ -108,7 +108,10 @@ saver = (function () {
             case 'cols':
                 this.node = [];
                 for (var i = 0; i < node.childElementCount; i++) {
-                    let child = new JsonLayout(node.children[i]);
+                    let item = node.children[i].matches(".layout-rows,.layout-cols,.layout-cell,.layout-data")
+                             ? node.children[i]
+                             : node.children[i].querySelector(".layout-rows,.layout-cols,.layout-cell,.layout-data");
+                    let child = new JsonLayout(item);
                     if (child && child.type != "none") this.node.push(child);
                 }
             break;
@@ -251,7 +254,7 @@ saver = (function () {
             composition.querySelectorAll('.structure-bloc').forEach((bloc) => {
                 let rb  = bloc.querySelector('.report-bloc');
                 let rbt = bloc.querySelector('.report-bloc-title');
-                let ref = (rbt) ? 'btitle' : ((rb) ? rb.className.split(' ').pop() : 'b4-4-4');
+                let ref = (rbt) ? 'btitle' : ((rb) ? rb.className.split(' ').pop() : 'b12');
                 bloc.setAttribute('data-bloc', ref);
                 bloc.classList.add('structure-item');
                 bloc.classList.remove('structure-bloc');
@@ -266,10 +269,14 @@ saver = (function () {
                 div.classList.add('layout-rows');
             });
             composition.querySelectorAll('div.row').forEach((div) => {
-                div.classList.add('layout-cols');
+                if (! div.querySelector('.dataviz-container')) div.remove();
+                else div.classList.add('layout-cols');
             });
-            composition.querySelectorAll('.customBaseColumn').forEach((div) => {
-                div.classList.add('layout-cell');
+            composition.querySelectorAll('.customBaseColumn .dataviz-container').forEach((div) => {
+                div.closest('.customBaseColumn').classList.add('layout-cell');
+            });
+            composition.querySelectorAll('.customBaseColumn:not(.layout-cell)').forEach((div) => {
+                div.closest('.customBaseColumn').classList.add('layout-rows');
             });
             composition.querySelectorAll('.dataviz-container').forEach((div) => {
                 div.classList.add('components-container');

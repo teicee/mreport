@@ -9,7 +9,7 @@ composer = (function () {
     const _reType = new RegExp('^(.* )?layout-([^ ]+)( .*)?$');
     const _reSize = new RegExp('^(.* )?col-([0-9]+)( .*)?$');
 
-    var _getDatavizTypeIcon  = function (type) {
+    var _getDatavizTypeIcon = function (type) {
         switch (type) {
             case "chart":  return "fas fa-chart-bar";
             case "table":  return "fas fa-table";
@@ -339,9 +339,13 @@ composer = (function () {
             let $dataviz = $('#dataviz-items .dataviz-item[data-dataviz="'+ ref +'"]').clone();
             if (! $dataviz.length) return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ ref +")");
             try {
-                let opt = JSON.parse(this.innerText);
-                if (opt.type) {
+                let dvz = JSON.parse(this.innerText);
+                if (dvz.type) {
+                    //copy paste generated code in <code> element
                     $dataviz.find('code.dataviz-definition').text( this.innerText );
+                    //update dataviz element icon (chart for chart, table for table...)
+                    $dataviz.find('.dvz-icon').prop('class', 'dvz-icon ' + _getDatavizTypeIcon(dvz.type));
+                    //Tag dataviz element as yet configured
                     $dataviz.addClass('configured');
                 }
             } catch (err) { console.warn("Invalid dataviz definition: ", err); }
