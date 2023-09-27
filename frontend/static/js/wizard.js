@@ -6,11 +6,6 @@ wizard = (function () {
     var _debug = true;
 
     /*
-     * _initialized: flag true when wizard init is done
-     */
-    var _initialized = false;
-
-    /*
      * _composer_dataviz: DOM element configured from the composer
      */
     var _composer_dataviz;
@@ -707,21 +702,6 @@ wizard = (function () {
     };
 
     /**
-     * convert data attributes of html element to a Dataviz object
-     * @param  {element} html
-     */
-    var _html2json = function (html) {
-        if (! html) return {};
-        let type_class = html.className.match(/^(.* )?report-([^ ]*)( .*)?$/);
-        let properties = { ...html.dataset };
-        if ('id' in html) properties.id = html.id;
-        return JSON.stringify({
-            'type':       (type_class !== null) ? type_class[2] : '',
-            'properties': properties
-        });
-    };
-
-    /**
      * convert Dataviz object to html representation  this method is called by admin.js
      * to render dataviz in dataviz form
      * @param  {object} viz
@@ -1005,8 +985,6 @@ wizard = (function () {
                 $("#addColor").on('click', function (e) {
                     _updateColorPicker({}, e)
                 });
-                // flag init done
-                _initialized = true;
             }
         });
 
@@ -1020,14 +998,11 @@ wizard = (function () {
         /* used by report & composer.js */
         init:               _init,
         /* used by composer.js */
-        ready:              function(){ return _initialized; },
         updateStyle:        _updateStyle,
         updateIconList:     _updateIconList,
         getSampleData:      _getSampleData,
         /* used by admin.js (catalog > edit > #dataviz-modal-form > visualizeDataviz) */
         json2html:          _json2html,
-        /* used by saver.js */
-        html2json:          _html2json,
         /* used by textConfiguration.js & extLibs/piklor.js */
         rgb2hex:            _rgb2hex,
         /* used by extLibs/piklor.js */

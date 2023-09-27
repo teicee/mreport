@@ -97,7 +97,7 @@ models = (function () {
                 data.dataviz_components[ template.getAttribute('data-ref') ] = _readHtml(template);
             });
         } catch (error) {
-            console.error("Impossible de récupérer les données depuis le modèle :\n", html, error);
+            console.error("Impossible de récupérer les données depuis le modèle :\n", error, html);
             return false;
         }
         return data;

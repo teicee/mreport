@@ -215,9 +215,9 @@ saver = (function () {
             if (status === 'nocontent') {
                 // No database version, try to import from old HTML composer
                 _loadHtmlReport(report_id, callback);
-            } else if (data.response === "success" && data.report_backups) {
+            } else if (data.response === "success" && data.report_backup) {
                 // Load composition from JSON
-                let report_json = new JsonReport(data.report_backups);
+                let report_json = new JsonReport(data.report_backup);
                 if (_debug) console.debug("Import JSON de la composition :\n", report_json);
                 if (callback) callback(true, report_json.exportData());
             } else {
@@ -287,7 +287,17 @@ saver = (function () {
             composition.querySelectorAll('code.dataviz-definition').forEach((div) => {
                 let dvzCode = document.createElement('div');
                 dvzCode.innerHTML = div.innerText;
-                div.textContent = wizard.html2json( dvzCode.querySelector('.dataviz') );
+                let html = dvzCode.querySelector('.dataviz');
+                if (html) {
+                    // convert data attributes of html element to a Dataviz object
+                    let type_class = html.className.match(/^(.* )?report-([^ ]*)( .*)?$/);
+                    let properties = { ...html.dataset };
+                    if ('id' in html) properties.id = html.id;
+                    div.textContent = JSON.stringify({
+                        'type':       (type_class !== null) ? type_class[2] : '',
+                        'properties': properties
+                    });
+                };
             });
             composition.querySelectorAll('.structure-element.titleBloc').forEach((bloc) => {
                 let text = bloc.querySelector('.editable-text').cloneNode(true);

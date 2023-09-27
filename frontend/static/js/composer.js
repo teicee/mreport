@@ -88,25 +88,6 @@ composer = (function () {
      */
     var _selectedModel = "";
 
-    /*
-     * _onSelectModel: Update style and icons store derived from selected render model
-     * method linked to #selectedModelComposer change event
-     * TODO
-     */
-    var _onSelectModel = function (e) {
-        _selectedModel = this.value;
-        /*
-        // NOTE inutilisé pour ne charger les css du template que lorsque le wizard est ouvert
-        // NOTE wizard peut ne pas encore être initialisé et fonctionnel !
-        if (_selectedModel && wizard.ready()) {
-            // update style in wizard modal
-            wizard.updateStyle(_HTMLTemplates[_selectedModel]);
-            // update icon store in wizard modal
-            wizard.updateIconList(_HTMLTemplates[_selectedModel]);
-        }
-        */
-    };
-
 // ============================================================================= Initialisation du composer
 
     /*
@@ -120,7 +101,7 @@ composer = (function () {
         // init render models selector
         if ($modelSelector) {
             $modelSelector.empty();
-            $modelSelector.on('change', _onSelectModel);
+            $modelSelector.on('change', function(e){ _selectedModel = this.value; });
             for (const modelId in _listModels) {
                 $modelSelector.append('<option value="' + modelId + '">' + _listModels[modelId] + '</option>');
                 // auto-select the first loaded model
@@ -309,11 +290,11 @@ composer = (function () {
                         // Test if title component
                         if ($item.closest(".dataviz-autoconfig").length) {
                             // No wizard needed. autoconfig this dataviz & deactivate wizard for this dataviz
-                            var dataviz = $item.closest(".dataviz-item").attr("data-dataviz");
+                            let dataviz = $item.closest(".dataviz-item").attr("data-dataviz");
                             // Inject dataviz definition directly
                             $item.find("code.dataviz-definition").text('{ "type": "title", "properties": {"id": "'+ dataviz +'"} }');
                             // Set title icon & deactivate wizard button
-                            $item.find(".dataviz-label .dvz-icon").attr("class", "dvz-icon fas fa-heading");
+                            $item.find(".dataviz-label .dvz-icon").attr("class", "dvz-icon " + _getDatavizTypeIcon('title'));
                             $item.find(".data-tools .btn.edit").hide();
                         } else {
                             $item.find(".data-tools .btn.edit").show();

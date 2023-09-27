@@ -561,6 +561,11 @@ h5>.badge {
 #wizard-panel input:disabled{
   background-color: unset;
 }
+#dataviz-attributes.tab-content {
+  border: 1px solid #dee2e6;
+  border-top-color: #fff;
+  padding-top: 1em;
+}
 
 #modal-icon-picker {
   z-index: 10000;
