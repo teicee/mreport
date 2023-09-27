@@ -31,27 +31,27 @@ composer = (function () {
         cols_tools: [
             '<div class="cols-tools btn-group btn-group-sm">',
               '<button class="btn btn-warning" data-toggle="modal" data-target="#composer_grid_form">',
-                '<i class="fas fa-grip-horizontal"></i> <b>grid</b>',
+                '<i class="fas fa-grip-horizontal"></i><b>&nbsp;grid</b>',
               '</button>',
             '</div>',
         ].join(""),
         cell_tools: [
             '<div class="cell-tools btn-group btn-group-sm">',
               '<button class="btn btn-success cell-divide">',
-                '<i class="fas fa-columns"></i> <b>diviser</b>',
+                '<i class="fas fa-columns"></i><b>&nbsp;diviser</b>',
               '</button>',
               '<button class="btn btn-warning cell-empty">',
-                '<i class="fas fa-undo"></i> <b>vider</b>',
+                '<i class="fas fa-undo"></i><b>&nbsp;vider</b>',
               '</button>',
               '<button class="btn btn-danger cell-delete">',
-                '<i class="fas fa-trash"></i> <b>supprimer</b>',
+                '<i class="fas fa-trash"></i><b>&nbsp;supprimer</b>',
               '</button>',
             '</div>',
         ].join(""),
         // HTML used to add action buttons to editable texts
         text_tools: [
             '<button data-toggle="modal" data-target="#text-edit" class="btn btn-sm btn-warning text-edit">',
-              '<i class="fas fa-edit"></i> <b>éditer</b>',
+              '<i class="fas fa-edit"></i><b>&nbsp;éditer</b>',
             '</button>'
         ].join(""),
         // HTML used to add a new input for colunm size in the division form
@@ -245,7 +245,7 @@ composer = (function () {
      */
     var _configureComposerTools = function ($node) {
         // boutons d'action sur textes éditables
-        $node.find(".editable-text").addBack(".editable-text").prepend(_composerTemplates.text_tools);
+        $node.find(".editable-text").addBack(".editable-text").append(_composerTemplates.text_tools);
         // boutons d'action sur groupe de colonnes
         $node.find(".layout-cols").addBack(".layout-cols").prepend(_composerTemplates.cols_tools);
         // boutons d'action sur colonnes finales (cellules)
@@ -426,9 +426,11 @@ composer = (function () {
             let ref = dvz.dataset.dataviz;
             let nb = composition.querySelectorAll(".dataviz-item[data-dataviz='" + ref + "']").length;
             let counter = dvz.querySelector('.counters');
+            counter.classList.remove("badge-danger", "badge-warning", "badge-success", "badge-info");
             if (counter) {
-                if (nb) { counter.classList.remove("badge-danger"); counter.classList.add("badge-info"); }
-                else    { counter.classList.remove("badge-info"); counter.classList.add("badge-danger"); }
+                if  (nb > 1) counter.classList.add("badge-warning");
+                else if (nb) counter.classList.add("badge-info");
+                else         counter.classList.add("badge-danger");
                 counter.innerText = nb;
             }
             if (nb) dvz.classList.add("dvz-used");

@@ -158,12 +158,13 @@ h5>.badge {
   padding-top: 15px;
   display:inline-block;
 }
-/*
-.row {
+
+.card-body > .row,
+.sticky > .row {
   margin-left: 0;
   margin-right: 0;
 }
-*/
+
 .sticky {
   z-index: 2;
   position: sticky;
@@ -638,6 +639,24 @@ h5>.badge {
 
 .page{
   padding-top:59px;
+}
+
+span.certified-dataviz,
+span.designed-dataviz {
+  font-family: "Font Awesome 5 Free";
+  font-size: 20px;
+  font-weight: 700;
+  margin-left: 15px;
+}
+span.certified-dataviz.disabled,
+span.designed-dataviz.disabled {
+  display:none;
+}
+span.designed-dataviz:before {
+  content: "\f200";
+}
+span.certified-dataviz:before {
+  content: "\f559";
 }
 
 #catalog .badge{

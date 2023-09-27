@@ -1,9 +1,4 @@
 
-/*
-.builder.edit #report-composition .layout-rows { border: 2px dotted #009; }
-.builder.edit #report-composition .layout-cell { border: 2px dotted #900; }
-*/
-
 #composer,
 .builder.edit,
 .builder.edit .main,
@@ -77,6 +72,7 @@
   line-height: 1rem;
 }
 .builder .sidenav .structure-label,
+.builder .sidenav .dataviz-label,
 .builder .sidenav .element-label {
   font-size: small;
 }
@@ -166,6 +162,7 @@
 
 .builder #report-composition i.fas {
   width: 1em;
+  line-height: 1rem;
 }
 
 /* --------------------------------------------------------- Blocs de composition */
@@ -244,20 +241,24 @@
 }
 
 .builder #report-composition > li .cols-tools,
-.builder #report-composition > li .cell-tools,
-.builder #report-composition > li .text-edit {
+.builder #report-composition > li .cell-tools {
   display: none;
 }
 .builder #report-composition > li:hover .cols-tools,
-.builder #report-composition > li:hover .cell-tools,
-.builder #report-composition > li:hover .text-edit {
+.builder #report-composition > li:hover .cell-tools {
   display: flex;
 }
-
+.builder #report-composition > li .text-edit {
+  filter: alpha(opacity=0);
+  opacity: 0;
+}
+.builder #report-composition > li:hover .text-edit {
+  filter: alpha(opacity=25);
+  opacity: 0.25;
+}
 .builder #report-composition .list-group-item .bloc-tools,
 .builder #report-composition .layout-cols   > .cols-tools,
-.builder #report-composition .layout-cell   > .cell-tools,
-.builder #report-composition .editable-text > .text-edit {
+.builder #report-composition .layout-cell   > .cell-tools {
   filter: alpha(opacity=25);
   opacity: 0.25;
 }
@@ -279,7 +280,7 @@
 .builder #report-composition .list-group-item:hover .bloc-tools b,
 .builder #report-composition .layout-cols:hover   > .cols-tools b,
 .builder #report-composition .layout-cell:hover   > .cell-tools b,
-.builder #report-composition .editable-text:hover > .text-edit  b{
+.builder #report-composition .editable-text:hover > .text-edit  b {
   display: inline;
 }
 
@@ -313,14 +314,18 @@
 }
 
 .builder #report-composition .editable-text {
+  position: relative;
+  min-height: 1.5rem;
   border: 1px dotted #ffffff;
 }
 .builder #report-composition .editable-text:hover {
+  background-color: #ffcc0033;
   border: 1px dashed #ffcc00;
 }
 .builder #report-composition .editable-text .btn.text-edit {
-  float: left;
-  margin: -1px 0.5em 0 -1px;
+  margin: 0 0.5em;
+  padding: 0.1rem 0.25rem;
+  vertical-align: text-top;
 }
 
 .builder #report-composition .layout-cols.fixed-layout > .layout-cell .cell-tools .cell-delete {
@@ -353,14 +358,17 @@
   overflow: hidden;
   background: #ccc;
 }
-
-.builder #report-composition .components-container .dataviz-item {
+.builder #report-composition .components-container .dataviz-item,
+.builder #report-composition .components-container .element-item {
   position: relative;
+  min-height: 5em;
+  line-height: 1.25em;
+}
+.builder #report-composition .components-container .dataviz-item {
   background-color: #BFE4EA; /* from colors.css : .mreport-primary-color-3-bg */
   color: #006878;
 }
 .builder #report-composition .components-container .element-item {
-  position: relative;
   background-color: #e9ecef; /* from colors.css : .mreport-grey6-bg */
   color: #333;
 }
@@ -368,12 +376,15 @@
 .builder #report-composition .components-container .data-tools {
   position: absolute;
   bottom: 0;
-  right: 0;
+  left: 0;
   z-index: 50;
 }
-.builder #report-composition .components-container .data-tools .btn.drag,
+.builder #report-composition .components-container .data-tools .btn,
 .builder #report-composition .components-container .data-tools .btn b {
   display: none;
+}
+.builder #report-composition .components-container .data-tools .btn.edit {
+  display: inline-block;
 }
 .builder #report-composition .components-container .dataviz-item.configured .data-tools .btn.edit {
   background-color: #28a745;
@@ -402,6 +413,9 @@
 
 .builder #report-composition .components-container .list-group-item:hover {
   box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
+}
+.builder #report-composition .components-container .list-group-item:hover .data-tools .btn {
+  display: inline-block;
 }
 .builder #report-composition .components-container .list-group-item:hover .data-tools .btn b {
   display: inline;
@@ -485,96 +499,4 @@
 .style-titre-2 { font-size: 24px; font-weight: 600; }
 .style-titre-3 { font-size: 20px; font-weight: 500; }
 .style-titre-4 { font-size: 16px; font-weight: 400; }
-
-/*
-.card.dataviz-item:not(.used) .card-footer {
-    display: none;
-}
-
-.color-selector-group{
-    display: flex;
-    margin-top: 10px;
-}
-.chosecolors{
-    flex-direction: column;
-}
-.chosecolors .input-group-prepend,
-.chosecolors .input-group-prepend span{
-    flex-grow: 1;
-}
-
-#w_text_text,
-#w_title,
-#text-edit-value{
-    min-height: 31px;
-    height: 100% !important;
-    font-size: 16px;
-}
-#w_desc{
-    font-size: 16px;
-    min-height: 16px;
-}
-
-.manualColorPicking{
-    border: none;
-    border-radius: 4px;
-    margin: 5px;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.2);
-    width: 100%;
-}
-.manualColorPicking:focus{
-    outline: none;
-}
-
-.notdvz{
-    display: flex;
-}
-.notdvz i {
-    display: flex;
-    align-items: center;
-}
-
-.report-chart-title{
-    text-align: center;
-}
-.report-chart-summary{
-    text-align: justify;
-}
-.report-figure-chiffre {
-    padding-top: 40px !important;
-}
-
-span.designed-dataviz {
-    font-family: "Font Awesome 5 Free";
-    font-size: 20px;
-    font-weight: 700;
-}
-span.designed-dataviz:before {
-    content: "\f200";
-}
-span.certified-dataviz {
-    font-family: "Font Awesome 5 Free";
-    font-size: 20px;
-    font-weight: 700;
-    margin-left:15px;
-}
-span.certified-dataviz:before {
-    content: "\f559";
-}
-span.certified-dataviz.disabled,
-span.designed-dataviz.disabled {
-    display:none;
-}
-
-#dataviz-attributes.tab-content {
-    border: solid;
-    border-color: #fff #dee2e6 #dee2e6 #dee2e6;
-    border-width: thin;
-}
-
-.custom-control-input:checked~.custom-control-label::before{
-  background-color:#006878;
-  border-color: #006878;
-}
-*/
 

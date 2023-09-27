@@ -28,10 +28,10 @@
     <template class="report-layout" id="wstructure">
         <li class="structure-item list-group-item handle" data-bloc="{{REF}}" title="{{DESC}}">
             <div class="bloc-tools btn-group btn-group-sm">
-                <button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button>
-                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
+                <button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i><b>&nbsp;déplacer</b></button>
+                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i><b>&nbsp;supprimer</b></button>
             </div>
-            <span class="structure-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>
+            <span class="structure-label"><i class="fas fa-arrows-alt"></i>&nbsp;{{LABEL}}</span>
             <div class="structure-html"><!-- report-structure template is injected here -->{{HTML}}</div>
         </li>
     </template>
@@ -40,10 +40,10 @@
     <template class="report-layout" id="welement">
         <li class="element-item list-group-item handle" data-bloc="{{REF}}" title="{{DESC}}">
             <div class="data-tools btn-group btn-group-sm">
-                <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button-->
-                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
+                <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i><b>&nbsp;déplacer</b></button-->
+                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i><b>&nbsp;supprimer</b></button>
             </div>
-            <span class="element-label"><i class="fas fa-arrows-alt"></i> {{LABEL}}</span>
+            <span class="element-label"><i class="fas fa-arrows-alt"></i>&nbsp;{{LABEL}}</span>
             <div class="element-html"><!-- report-element template is injected here -->{{HTML}}</div>
         </li>
     </template>
@@ -52,11 +52,11 @@
     <template class="report-layout" id="wdataviz">
         <li class="dataviz-item list-group-item handle" data-dataviz="{{REF}}" data-type="{{TYPE}}" title="{{REF}}">
             <div class="data-tools btn-group btn-group-sm">
-                <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i> <b>déplacer</b></button-->
-                <button class="btn btn-warning edit" data-toggle="modal" data-component="report" data-related-id="{{REF}}" data-target="#wizard-panel"><i class="fas fa-cog"></i> <b>éditer</b></button>
-                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i> <b>supprimer</b></button>
+                <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i><b>&nbsp;déplacer</b></button-->
+                <button class="btn btn-warning edit" data-toggle="modal" data-target="#wizard-panel" data-component="composer" data-related-id="{{REF}}"><i class="fas fa-cog"></i><b>&nbsp;éditer</b></button>
+                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i><b>&nbsp;supprimer</b></button>
             </div>
-            <span class="dataviz-label"><i class="dvz-icon {{ICON}}" title="{{TYPE}}"></i> {{LABEL}}</span>
+            <span class="dataviz-label"><i class="dvz-icon {{ICON}}" title="{{TYPE}}"></i>&nbsp;{{LABEL}}</span>
             <code class="dataviz-definition"></code>
             <span class="counters badge"></span>
         </li>
