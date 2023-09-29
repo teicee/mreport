@@ -10,7 +10,7 @@ models = (function () {
      */
     var ModelData = function() {
         this.model = "";
-        this.colors = {};
+        this.colors = ["#e55039", "#60a3bc", "#78e08f", "#fad390"];
         this.page_styles = "";
         this.page_layouts = {};
         this.structure_blocs = {};
@@ -59,15 +59,9 @@ models = (function () {
             data.model = html.firstElementChild.id;
             
             // retrieve color palette
-            data.colors = {};
-            html.querySelectorAll("template.report-params").forEach(template => {
-                template.content.querySelectorAll("[type='color']").forEach(color => {
-                    data.colors[ color.id ] = {
-                        'label': color.getAttribute('name'),
-                        'value': color.getAttribute('value')
-                    };
-                });
-            });
+            if ('colors' in html.firstElementChild.dataset) {
+                data.colors = html.firstElementChild.dataset.colors.split(',');
+            }
             
             // retrieve specific CSS
             data.page_styles = Array.prototype.map.call(
@@ -287,13 +281,6 @@ models = (function () {
         $item.attr('data-ref', ref);
         $item.text(JSON.stringify(opts));
         return $item;
-    };
-
-    /*
-     * getColorsList: Retourne une simple liste des codes hexa des couleurs du modèle
-     */
-    ModelData.prototype.getColorsList = function () {
-        return Object.getOwnPropertyNames( this.colors ).map(color => color.value);
     };
 
     /*

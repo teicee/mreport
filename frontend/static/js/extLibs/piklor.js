@@ -26,95 +26,63 @@
         options = options || {};
         options.open = self.getElm(options.open);
         options.openEvent = options.openEvent || "click";
-        options.manualSelect = options.manualSelect || false;
-        options.removeColor = options.removeColor || false;
         options.style = Object(options.style);
         options.style.display = options.style.display || "block";
         options.closeOnBlur = options.closeOnBlur || false;
-        options.pointer = options.pointer || false;
-        options.template = options.template || "<div data-col=\"{color}\" style=\"background-color: {color}\"></div>";
+        options.template = options.template || "<div class=\"btn-color\" data-col=\"{color}\" style=\"background-color: {color}\"></div>";
+		options.manualInput = options.manualInput || false;
+		options.removeColor = options.removeColor || false;
         self.elm = self.getElm(sel);
         self.cbs = [];
         self.isOpen = true;
         self.colors = colors;
         self.options = options;
         self.render();
-        self.manualColorPicker = self.options.manualSelect ? self.elm.querySelector(".manualColorPicking") : false;
-        self.deleteColorBtn = self.options.removeColor ? self.elm.querySelector(".delete-color") : false;
+
         // Handle the open element and event.
         if (options.open) {
             options.open.addEventListener(options.openEvent, function (ev) {
-                if (options.pointer) {
-                    // Set tooltip Arrow on color panel opening
-                    var pointer = document.getElementsByClassName("tooltip_pointer")[0];
-                    self.isOpen ? (self.close(), pointer.style.display = "none") : (self.open(), pointer.style.display = "block");
-                    var btn = this;
-                    if (parseInt(btn.classList[1].split('btn').pop(), 10) <= 8 && ev.target.classList[0] != "textColorEditBtn") {
-                        var rect_colors = document.getElementsByClassName("color-picker" + btn.classList[1].split('btn').pop())[0];
-                        var colorsbounds = rect_colors.getBoundingClientRect();
-                        var btnbounds = btn.getBoundingClientRect();
-                        pointer.style.top = colorsbounds.top - 10 + "px";
-                        pointer.style.left = btnbounds.left + ((btnbounds.right - btnbounds.left) / 2) + "px";
-                    } else if (ev.target.classList[0] == "textColorEditBtn") {} else {
-                        pointer.style.display = "none";
-                    }
-                }else{
-                    self.isOpen ? self.close() : self.open();
-                }
-
+                self.isOpen ? self.close() : self.open();
             });
         }
 
         // Click on colors
         self.elm.addEventListener("click", function (ev) {
+			ev.stopPropagation();
             var col = ev.target.getAttribute("data-col");
-            if (!col) {
-                return;
-            }
+            if (!col) { return; }
             self.set(col);
             self.close();
         });
-        if (self.manualColorPicker) {
-            // Validate custom color
-            self.manualColorPicker.addEventListener("change", function (ev) {
-                var col = ev.target.value;
-                if (/^#([0-9A-F]{3}){1,2}$/i.test(col)) {
-                    self.set(col);
-                    self.close();
-                } else {
-                    ev.target.style.border = "1px solid red";
-                }
 
-            })
-        }
-        if(self.deleteColorBtn){
-            // Delete selected Color
-            self.deleteColorBtn.addEventListener("click", function () {
-                self.elm.parentNode.removeChild(self.elm);
-                self.options.open.parentNode.removeChild(self.options.open);
-                wizard.onRemoveColor();
-            })
-        }
-        if (options.closeOnBlur) {
-            window.addEventListener("click", function (ev) {
-                // check if we didn't click 'open' and 'color pallete' elements
-                if (ev.target != options.open && ev.target != self.elm && self.isOpen && ev.target != self.manualColorPicker) {
-                    self.close();
-                    // Set tooltip Arrow on Blur
-                    var pointer = document.getElementsByClassName("tooltip_pointer")[0];
-                    var btn = ev.target;
-                    if (btn.classList.contains("colorbtn") && parseInt(btn.classList[1].split('btn').pop(), 10) <= 8) {
-                        var rect_colors = document.getElementsByClassName("color-picker" + btn.classList[1].substr(-1))[0];
-                        var colorsbounds = rect_colors.getBoundingClientRect();
-                        var btnbounds = btn.getBoundingClientRect();
-                        pointer.style.top = colorsbounds.top - 10 + "px";
-                        pointer.style.left = btnbounds.left + ((btnbounds.right - btnbounds.left) / 2) + "px";
-                    } else {
-                        pointer.style.display = "none";
-                    }
-                }
-            });
-        }
+		// Validate manual color
+		if (options.manualInput) {
+			self.elm.querySelector('.color-manual input').addEventListener("change", function (ev) {
+				let color = ev.target.value.trim();
+				if (! color.length) return;
+				self.set(color);
+				self.close();
+			});
+		}
+
+		// Delete this piklor instance
+		if (options.removeColor) {
+			self.elm.querySelector('.color-delete').addEventListener("click", function (ev) {
+				self.close();
+				self.elm.remove();
+				if (self.options.open) self.options.open.remove();
+				self.set(false);
+				delete self;
+			});
+		}
+
+		// Function for window click event to close this instance (except if the click is from his own open button)
+		self.closeOnBlur = function(ev) {
+			if (self.isOpen && ev.target != self.options.open) {
+				self.close();
+			}
+			return true;
+		};
 
         if (options.autoclose !== false) {
             self.close();
@@ -145,20 +113,20 @@
      * @function
      */
     Piklor.prototype.render = function () {
-        var self = this,
-            html = "";
+        var self = this
+          , html = ""
+          ;
 
+		if (self.options.manualInput) {
+			html += '<div class="color-manual"><input type="text" placeholder="Code couleur" /></div>';
+		}
         self.colors.forEach(function (c) {
             html += self.options.template.replace(/\{color\}/g, c);
         });
-        var temp = "";
-        if (this.options.manualSelect) {
-            temp += "<div class='col-6 px-2 my-2 optional-parameter'><input class='manualColorPicking' placeholder='Saisissez une couleur'></input></div>";
-        }
-        if(this.options.removeColor){
-            temp+='<div class="col-6 px-2 my-2 optional-parameter"><button type="button" class="btn mreport-primary-color-3-bg delete-color">Delete Color</button></div>';
-        }
-        html+='<div class="optional-piklor-parameters row">'+temp+'</div>';
+		if (self.options.removeColor) {
+			html += '<div class="color-delete" title="Supprimer la couleur"><i class="fas fa-ban"></i></div>';
+		}
+
         self.elm.innerHTML = html;
     };
 
@@ -170,9 +138,8 @@
      * @function
      */
     Piklor.prototype.close = function () {
-        if (this.manualColorPicker) {
-            this.manualColorPicker.style.border = "none";
-        }
+		if (this.options.closeOnBlur) document.removeEventListener("click", this.closeOnBlur);
+		if (this.options.open) this.options.open.classList.remove('piklor-open');
         this.elm.style.display = "none";
         this.isOpen = false;
     };
@@ -185,10 +152,12 @@
      * @function
      */
     Piklor.prototype.open = function () {
-        if (this.manualColorPicker) {
-            var _hexDigits = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f");
-            this.manualColorPicker.value = wizard.rgb2hex(this.options.open.style.backgroundColor, _hexDigits);
-        }
+		if (this.options.closeOnBlur) document.addEventListener("click", this.closeOnBlur);
+		if (this.options.open) this.options.open.classList.add('piklor-open');
+		if (this.options.manualInput) {
+			let input = this.elm.querySelector('.color-manual input');
+			if (input) input.value = (this.options.open && 'color' in this.options.open.dataset) ? this.options.open.dataset.color : "";
+		}
         this.elm.style.display = this.options.style.display;
         this.isOpen = true;
     };
@@ -217,9 +186,8 @@
     Piklor.prototype.set = function (c, p) {
         var self = this;
         self.color = c;
-        if (p === false) {
-            return;
-        }
+		if (self.options.open) self.options.open.dataset.color = c;
+        if (p === false) { return; }
         self.cbs.forEach(function (cb) {
             cb.call(self, c);
         });

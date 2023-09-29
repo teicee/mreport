@@ -6,8 +6,6 @@ textedit = (function () {
 
     var _currentInput = {};
 
-    var _hexDigits = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f");
-
     var _styleProperties = ["font-size", "font-weight", "color", "font-family", "letter-spacing", "text-transform"];
 
     var _generatedFonts = {
@@ -114,7 +112,7 @@ textedit = (function () {
             var input = document.getElementById("w_text_" + cameled);
             // Handle particular cases
             if (item === "color")
-                newValue = wizard.rgb2hex(editedStyle[item], _hexDigits);
+                newValue = wizard.rgb2hex(editedStyle[item]);
             if (input.type === "number")
                 newValue = _removeLetters(newValue);
             input.value = newValue;

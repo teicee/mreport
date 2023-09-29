@@ -65,9 +65,9 @@ wizard = (function () {
     var _existingConfig = false;
 
     /*
-     * _colorbtnId - Number used by _updateColorPicker to generate color buttons
+     * _piklor_instances - Store all piklor instances created (with a numeric index as key)
      */
-    var _colorbtnId = 0;
+    var _piklor_instances = {};
 
     /*
      * Method to extract a set of data in relation with dataviz
@@ -184,9 +184,10 @@ wizard = (function () {
         $(".dataviz-attributes").val("");
         $("#w_dataviz_type").val("");
         $("#wizard-code").text("");
-        $(".colorbtn, .color-picker").each(function (index, elem) {
-            elem.remove();
-        })
+        //remove color pickers
+        document.querySelectorAll("#color-pickers .color-picker-wrapper .available-colors").forEach((el) => { el.remove(); });
+        document.querySelectorAll("#color-pickers .color-picker-wrapper .btn-color").forEach((el) => { el.remove(); });
+        Object.keys(_piklor_instances).forEach((index) => { delete _piklor_instances[ index ]; });
         //remove preview css from selected template
         $("#wizard-result style").remove();
         document.getElementById("wizard-view").querySelector("STYLE").innerHTML = "";
@@ -277,7 +278,7 @@ wizard = (function () {
         var datavizId = _dataviz_infos.dataviz;
         var _data = _storeData[datavizId]
         let modelId = document.getElementById("selectedModelWizard").value;
-        var colors = composer.getTemplates().getColorsList() || ["#e55039", "#60a3bc", "#78e08f", "#fad390"];
+        var colors = composer.getTemplates().colors;
         var unit = _dataviz_infos.unit;
         $("#w_unit").val(unit);
         //significative label if is true, allow chart and extra column in table
@@ -297,12 +298,7 @@ wizard = (function () {
                 $("#w_chart_type").val(chart_type);
                 $("#w_colors").val(colors.slice(0, nb_datasets).join(","));
                 let basecolors = document.getElementById("w_colors").value.split(',');
-                basecolors.forEach(function (elem) {
-                    _updateColorPicker({
-                        "color": elem,
-                        "datasets": nb_datasets
-                    })
-                });
+                basecolors.forEach((color) => _createColorPicker(color, _data.dataset.length));
                 // set chart label(s)
                 if (nb_datasets === 1) {
                     $("#w_label").val("Légende");
@@ -365,17 +361,12 @@ wizard = (function () {
         $("#w_label").val(cfg.properties.label);
         var title = $("#w_title");
         var description = $("#w_desc");
+
         // Set colors for Piklor lib
         $("#w_colors").val(cfg.properties.colors);
         let basecolors = document.getElementById("w_colors").value.split(',');
-        basecolors.forEach(function (elem) {
-            _updateColorPicker({
-                "color": elem,
-                "datasets": _data.dataset.length
-            }, {
-                "type": "click"
-            })
-        });
+        basecolors.forEach((color) => _createColorPicker(color, _data.dataset.length));
+
         if (cfg.properties.icon) {
             $("#w_icon").val(cfg.properties.icon);
         }
@@ -898,69 +889,48 @@ wizard = (function () {
         }
     };
 
-    var _rgb2hex = function (rgb, hexDigits) {
-        rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-        if (rgb !== null)
-            return "#" + _hex(rgb[1], hexDigits) + _hex(rgb[2], hexDigits) + _hex(rgb[3], hexDigits);
-        else
-            return "";
+    var _rgb2hex = function (rgb) {
+        let res = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)[,\s\d\.]*\)$/);
+        return (res) ? '#' + res.slice(0,3).map((n) => parseFloat(n).toString(16).replace('NaN','').padStart(2,'0')).join('') : rgb;
     }
-    var _hex = function (x, hexDigits) {
-        return isNaN(x) ? "00" : hexDigits[(x - x % 16) / 16] + hexDigits[x % 16];
-    }
-    var _updateColorPicker = function (saved, e) {
-        var colorbtn = _colorbtnId += 1;
-        var modelId = document.getElementById("selectedModelWizard").value;
-//      var model = (modelId) ? composer.models()[modelId] : "";
-        var model = composer.getTemplates();
-        /*if (typeof saved.datasets === "undefined") {
-            saved.datasets = _data.dataset.length;
-        }*/
-        if (typeof e === "undefined") {
-            e = {};
-        }
-        if (colorbtn <= saved.datasets || e.type == "click") {
-            $("#picker-wrapper").append('<div class="colorbtn colorbtn' + colorbtn + '"></div>');
-            $(".colorbtn" + colorbtn).css('background-color', saved.color ? saved.color : "#FFF");
-            $(".chosecolors").append('<div class="available_colors color-picker' + colorbtn + '"></div>');
-            if (! model) return;
 
-            var pk = new Piklor(".color-picker" + colorbtn, model.getColorsList(), {
-                open: ".picker-wrapper .colorbtn" + colorbtn,
-                closeOnBlur: true,
-                manualSelect: true,
-                pointer: true,
-                removeColor: true
-            })
+    /**
+     * _createColorPicker. Set a new Piklor instance for a new color to edit
+     * @param  {string} color_code
+     * @param  {int} nb_datasets
+     */
+    var _createColorPicker = function (color_code = null, nb_datasets = null) {
+        if (! color_code) color_code = '#ffffff';
+        if (! nb_datasets) nb_datasets = (typeof _data !== "undefined") ? _data.dataset.length : 1; // TODO: pour limiter le add ?
+        let index = (Math.max(0, Math.max(...Object.keys( _piklor_instances ))) || 0) + 1;
 
-            pk.colorChosen(function (col) {
-                $(".colorbtn" + colorbtn).css('background-color', col);
-                var pointer = document.getElementsByClassName("tooltip_pointer")[0];
-                pointer.style.display = "none";
-                var hidden_input = document.getElementById("w_colors");
-                hidden_input.value = "";
-                var hexDigits = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f");
-                $(".colorbtn").each(function (index, elem) {
-                    if (elem.style.backgroundColor != "") {
-                        hidden_input.value += _rgb2hex(elem.style.backgroundColor, hexDigits) + ",";
-                    }
-                });
-                hidden_input.value = hidden_input.value.slice(0, -1);
-            });
-        }
+        let button = document.createElement('button');
+        button.className = "btn-color piklor-" + index;
+        button.style.backgroundColor = button.dataset.color = color_code;
+        button.innerHTML = "&nbsp;";
+        let palette = document.createElement('div');
+        palette.className = "available-colors piklor-" + index;
+        let wrapper = document.querySelector("#color-pickers .color-picker-wrapper");
+        wrapper.appendChild(button);
+        wrapper.appendChild(palette);
 
-    };
-    var _onRemoveColor = function () {
-        var hidden_input = document.getElementById("w_colors");
-        hidden_input.value = "";
-        var hexDigits = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f");
-        $(".colorbtn").each(function (index, elem) {
-            if (elem.style.backgroundColor != "") {
-                hidden_input.value += _rgb2hex(elem.style.backgroundColor, hexDigits) + ",";
-            }
+        let input = document.querySelector("#color-pickers input.dataviz-attributes");
+        let model = composer.getTemplates(); // TODO: utiliser le modèle de rendu sélectionné
+        let pk = new Piklor(palette, (model.colors) ? model.colors : [], {
+            closeOnBlur: true,
+            manualInput: true,
+            removeColor: true,
+            open: button
+        })
+        pk.colorChosen(function (color) {
+            if (this.options.open) this.options.open.style.backgroundColor = (color !== false) ? color : "";
+            let colors = Array.from(wrapper.querySelectorAll("button.btn-color"), (btn) => btn.dataset.color);
+            if (input) input.value = colors.join(",");
         });
-        hidden_input.value = hidden_input.value.slice(0, -1);
-    }
+        _piklor_instances[ index ] = pk;
+
+        if (input) input.style.display = "none";
+    };
 
     /**
      * this method initializes wizard
@@ -982,9 +952,7 @@ wizard = (function () {
                     admin.saveVisualization(_dataviz_definition);
                 });
                 $("#wizard_add").on('click', _configureDataviz);
-                $("#addColor").on('click', function (e) {
-                    _updateColorPicker({}, e)
-                });
+                $("#color-pickers .color-picker-add").on('click', function(e){ _createColorPicker(); });
             }
         });
 
@@ -1003,10 +971,8 @@ wizard = (function () {
         getSampleData:      _getSampleData,
         /* used by admin.js (catalog > edit > #dataviz-modal-form > visualizeDataviz) */
         json2html:          _json2html,
-        /* used by textConfiguration.js & extLibs/piklor.js */
+        /* used by textConfiguration.js */
         rgb2hex:            _rgb2hex,
-        /* used by extLibs/piklor.js */
-        onRemoveColor:      _onRemoveColor,
         /* used by wizard.html */
         onChangeModel:      _onChangeModel,
     };

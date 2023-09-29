@@ -111,7 +111,6 @@
                                                     </div>-->
                                         </div>
 
-
                                         <div class="tab-pane" id="w2">
                                                 <div class="attribute input-group input-group-sm mb-3">
                                                     <div class="input-group-prepend">
@@ -146,8 +145,6 @@
                                                         class="table form-control dataviz-attributes" id="w_table_column">
                                                 </div>
 
-
-
                                                 <div class="attribute input-group input-group-sm mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">label</span>
@@ -155,19 +152,21 @@
                                                     <input type="text" data-prop="label"
                                                         class="chart table form-control dataviz-attributes" id="w_label">
                                                 </div>
-                                                <div class="attribute input-group input-group-sm mb-3 chosecolors">
+
+                                                <div class="attribute input-group input-group-sm mb-3" id="color-pickers">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">colors</span>
                                                     </div>
-                                                    <div class="color-selector-group">
-                                                        <div id="picker-wrapper" class="picker-wrapper"></div>
-                                                        <i id="addColor" class="fas fa-plus-circle fa-2x"></i>
-                                                    </div>
-
                                                     <input type="text" data-prop="colors"
-                                                        class="d-none chart form-control dataviz-attributes" id="w_colors">
-                                                    <div class="tooltip_pointer"></div>
+                                                        class="chart form-control dataviz-attributes" id="w_colors">
+                                                    <div class="form-control color-picker-wrapper"></div>
+                                                    <div class="input-group-append">
+                                                        <span class="input-group-text color-picker-add" title="Ajouter une couleur">
+                                                            <i class="fas fa-plus-circle"></i>
+                                                        </span>
+                                                    </div>
                                                 </div>
+
                                                 <div class="attribute input-group input-group-sm mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">opacity</span>
@@ -207,7 +206,7 @@
                                         </div>
                                     </div><!-- End tab-content -->
 
-                                    <div>
+                                    <div class="mb-3">
                                         <button id="wizard_refresh" class="btn btn-block mreport-primary-color-2-bg">Appliquer les paramètres</button>
                                     </div>
                         </div> <!-- End wizard-parameters-->

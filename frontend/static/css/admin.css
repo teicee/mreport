@@ -464,48 +464,92 @@ h5>.badge {
   align-items: center;
   flex-direction: column;
 }
-.colorbtn{
-  background-color: #FFF;
-  border: solid 1px grey;
+
+/**
+ * Wizard colors choser
+ */
+.input-group-sm > .form-control.color-picker-wrapper,
+.input-group-lg > .form-control.color-picker-wrapper,
+.form-control.color-picker-wrapper {
+  min-height: calc(2.25rem + 2px);
+  height: auto;
+  padding-right: 0;
+  padding-bottom: 0;
 }
-.available_colors div:not(.optional-piklor-parameters):not(.optional-parameter){
-  border: solid 1px grey;
+.input-group-sm > .form-control.color-picker-wrapper {
+  min-height: calc(1.8125rem + 2px);
 }
-.available_colors div:not(.optional-piklor-parameters):not(.optional-parameter):hover,
-.colorbtn:hover,
-#addColor:hover{
-  cursor: pointer;
-  transform: scale(1.15);
-  transition: 0.2s;
+.input-group-lg > .form-control.color-picker-wrapper {
+  min-height: calc(2.875rem + 2px);
 }
-#addColor{
-  transform:scale(1);
-  margin-left: 5px;
-  transition: 0.2s;
+.color-picker-wrapper {
+  position: relative;
 }
-.available_colors div:not(.optional-piklor-parameters):not(.optional-parameter),
-.colorbtn {
-  width: 25px;
+.color-picker-wrapper .btn-color {
   display: inline-block;
-  height: 25px;
-  margin: 4px;
+  width: 1.5em;
+  height: 1.5em;
+  line-height: 1;
+  border: 1px solid grey;
   border-radius: 100%;
-  opacity: 0.7;
+  margin: 0 0.25em 0.25em 0;
   transition: 0.2s;
+  cursor: pointer;
 }
-.tooltip_pointer{
-  content: "";
-  position: fixed;
-  bottom: 80%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: transparent transparent #e9ecef transparent;
+.color-picker-wrapper .available-colors .color-delete {
+  display: inline-block;
+  font-size: 1.5em;
+  line-height: 1;
+  vertical-align: top;
 }
-.available_colors{
+.color-picker-add i,
+.color-picker-wrapper .available-colors .color-delete i {
+  transition: 0.2s;
+  cursor: pointer;
+}
+.color-picker-wrapper .btn-color:hover,
+.color-picker-add:hover i,
+.color-picker-wrapper .available-colors .color-delete:hover i {
+  transform: scale(1.15);
+}
+.color-picker-wrapper .available-colors {
+  position: absolute;
+  z-index: 500;
+  width: 100%;
+  left: 0;
+  margin-top: 0.5em;
+  padding: 0.5em;
   background-color: #e9ecef;
+  border: 1px solid #ccc;
+  border-radius: 0.25em;
+  box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
+.color-picker-wrapper .available-colors .color-manual input {
+  width: 100%;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 0.15em 0.5em;
+  margin-bottom: 0.5em;
+}
+.color-picker-wrapper .btn-color.piklor-open {
+  transform: scale(1.15);
+  border-color: black;
+  position: relative;
+}
+.color-picker-wrapper .btn-color.piklor-open:after {
+  content: " ";
+  width: 0;
+  height: 0;
+  border-left: 0.75em solid transparent;
+  border-right: 0.75em solid transparent;
+  border-bottom: 0.5em solid #ccc;
+  position: absolute;
+  z-index: 490;
+  top: 1.5em;
+  left: 50%;
+  margin-left: -0.75em;
+}
+
 .text-color-picker div{
   width: 30px;
   display: inline-block;
@@ -525,6 +569,7 @@ h5>.badge {
   transform: scale(1.15);
   transition: 0.2s;
 }
+
 #yviz .btn {
   margin-top: 10px;
 }
