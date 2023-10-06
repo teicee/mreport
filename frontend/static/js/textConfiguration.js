@@ -112,7 +112,7 @@ textedit = (function () {
             var input = document.getElementById("w_text_" + cameled);
             // Handle particular cases
             if (item === "color")
-                newValue = wizard.rgb2hex(editedStyle[item]);
+                newValue = _rgb2hex(editedStyle[item]);
             if (input.type === "number")
                 newValue = _removeLetters(newValue);
             input.value = newValue;
@@ -207,6 +207,12 @@ textedit = (function () {
             return chr.toUpperCase();
         });
     }
+
+    var _rgb2hex = function (rgb) {
+        let res = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)[,\s\d\.]*\)$/);
+        return (res) ? '#' + res.slice(0,3).map((n) => parseFloat(n).toString(16).replace('NaN','').padStart(2,'0')).join('') : rgb;
+    };
+
     var _init = function () {
         $.ajax({
             url: "/static/html/textConfiguration.html",

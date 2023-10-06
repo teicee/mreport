@@ -9,7 +9,8 @@ models = (function () {
      * ModelData : Object definition to store templates and parameters for a model
      */
     var ModelData = function() {
-        this.model = "";
+        this.ref = "";  // référence utilisée dans les sélecteurs et dans le nom du fichier "model-<ref>.html"
+        this.id = "";   // identifiant renseigné dans le modèle HTML chargé par l'attribut id (inutilisé)
         this.colors = ["#e55039", "#60a3bc", "#78e08f", "#fad390"];
         this.page_styles = "";
         this.page_layouts = {};
@@ -28,25 +29,26 @@ models = (function () {
     /*
      * _loadHtml : Load HTML templates and parameters from server model file
      */
-    var _loadHtml = function (model_name, callback) {
+    var _loadHtml = function (model_ref, callback) {
         // retourne directement les données du modèle s'il a déjà été chargé
-        if (model_name in _cache) return (callback) ? callback(true, _cache[ model_name ]) : true;
+        if (model_ref in _cache) return (callback) ? callback(true, _cache[ model_ref ]) : true;
         
         // sinon analyse du fichier contenant les templates sur le serveur
         $.ajax({
-            url: "/static/html/model-" + model_name + ".html",
-            dataType: "html" //"xml"
+            url: "/static/html/model-" + model_ref + ".html",
+            dataType: "html"
         })
         .fail(function (xhr, status, err) {
-            console.error("Erreur au chargement du fichier html/model-" + model_name + ".html :\n", err);
-            _cache[ model_name ] = false;
+            console.error("Erreur au chargement du fichier html/model-" + model_ref + ".html :\n", err);
+            _cache[ model_ref ] = false;
         })
         .done(function (data, status, xhr) {
-            if (_debug) console.debug("Chargement du fichier html du modèle '" + model_name + "' :\n", data);
+            if (_debug) console.debug("Chargement du fichier html du modèle '" + model_ref + "' :\n", data);
             const parser = new DOMParser();
-            _cache[ model_name ] = _parseHtml( parser.parseFromString(data, "text/html") );
-            if (_debug) console.debug("Récupération des données du modèle '" + model_name + "' :\n", _cache[ model_name ]);
-            if (callback) callback(true, _cache[ model_name ]);
+            _cache[ model_ref ] = _parseHtml( parser.parseFromString(data, "text/html") );
+            _cache[ model_ref ].ref = model_ref;
+            if (_debug) console.debug("Récupération des données du modèle '" + model_ref + "' :\n", _cache[ model_ref ]);
+            if (callback) callback(true, _cache[ model_ref ]);
         })
     };
 
@@ -56,7 +58,7 @@ models = (function () {
     var _parseHtml = function(html) {
         let data = new ModelData();
         try {
-            data.model = html.firstElementChild.id;
+            data.id = html.firstElementChild.id;
             
             // retrieve color palette
             if ('colors' in html.firstElementChild.dataset) {
@@ -283,6 +285,48 @@ models = (function () {
         return $item;
     };
 
+    /**
+     * (ex json2html) convert Dataviz object to html representation  this method is called by admin.js
+     * to render dataviz in dataviz form
+     * @param  {object} viz
+     */
+    ModelData.prototype.renderDataviz = function (viz) {
+        if (_debug) console.debug("Définition JSON de la dataviz à générer en HTML :\n", viz);
+        if (! this.dataviz_components[ viz.type ]) return '[DATAVIZ NOT FOUND: '+ viz.type +']';
+        
+        // generate HTML element from the model dataviz template
+        let template = document.createElement('template');
+        template.innerHTML = this.dataviz_components[ viz.type ].replace("{{dataviz}}", viz.properties.id).trim();
+        let component = template.content.firstChild;
+        
+        // populate HTML data attributes from JSON properties
+        let dataviz = component.querySelector(".dataviz");
+        for (const [attribute, value] of Object.entries(viz.properties)) {
+            if (attribute !== "id") dataviz.dataset[attribute] = value;
+        }
+        
+        // set icon class from icon attribute for figures components
+        if (viz.properties.icon && viz.type === "figure") {
+            [...dataviz.classList].forEach((c) => { if (c.startsWith('icon-')) dataviz.classList.remove(c); });
+            dataviz.classList.add(viz.properties.icon);
+            dataviz.classList.add("custom-icon");
+            if (viz.properties.iconposition) switch (viz.properties.iconposition) {
+                case "custom-icon-left"  : dataviz.classList.add("custom-icon-left");  break;
+                case "custom-icon-right" : dataviz.classList.add("custom-icon-right"); break;
+            }
+        }
+        
+        // set optional title and description
+        component.querySelectorAll(".report-dataviz-title").forEach((el) => {
+            el.innerText = viz.properties.title;
+        });
+        component.querySelectorAll(".report-dataviz-description").forEach((el) => {
+            el.innerHTML = viz.properties.description;
+        });
+        
+        return component;
+    };
+
     /*
      * Public
      */
@@ -290,8 +334,8 @@ models = (function () {
         /* used by composer.js & report.js */
         load:   _loadHtml,
         /* unused */
-        data:   function(model_name) { return _cache[model_name]; },
-        exists: function(model_name) { if (model_name in _cache) return (_cache[model_name]) ? true : false; },
+        data:   function(model_ref) { return _cache[model_ref]; },
+        exists: function(model_ref) { if (model_ref in _cache) return (_cache[model_ref]) ? true : false; },
     };
 
 })();

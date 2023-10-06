@@ -130,7 +130,7 @@
   padding: 0px;
 }
 
-.builder #composer-report-title {
+.builder .main h2 {
   font-size: 1rem;
   margin: 0;
   margin-bottom: 1em;

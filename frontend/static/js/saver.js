@@ -14,34 +14,34 @@ saver = (function () {
 
     // Représentation JSON de la composition d'un rapport (constitué d'une suite de JsonBloc)
     var JsonReport = function(data, model = "") {
-        this.model = model;
-        this.blocs = [];  // liste de JsonBloc
+        this.model   = model;   // pour init depuis le composer
+        this.blocs   = [];      // liste de JsonBloc
         if (data instanceof Node) this.parseNode(data); else if (data) this.loadJson(data);
     };
 
     // Représentation JSON d'un bloc composant un rapport (constitué de JsonLayout récursifs)
     var JsonBloc = function(data) {
         this.ref     = "";
-        this.title   = "";
-        this.layout  = {};  // objet JsonLayout
-        this.sources = "";
+        this.title   = "";      // texte éditable du titre
+        this.sources = "";      // texte éditable du des sources
+        this.layout  = {};      // objet JsonLayout
         if (data instanceof Node) this.parseNode(data); else if (data) this.loadJson(data);
     };
 
-    // Représentation JSON d'une structure de bloc dans un rapport (de type rows, cols, cell ou data)
+    // Représentation JSON d'une structure de bloc dans un rapport (définition récursive)
     var JsonLayout = function(data) {
-        this.type = "none";
-        this.size = null;
-        this.node = null;  // liste de JsonLayout
-        this.data = null;  // liste de JsonComponent
+        this.type    = "none";  // "rows", "cols", "cell" ou "data"
+        this.size    = null;    // taille de colonne bootstrap [1-12]
+        this.node    = null;    // liste de JsonLayout
+        this.data    = null;    // liste de JsonComponent
         if (data instanceof Node) this.parseNode(data); else if (data) this.loadJson(data);
     };
 
-    // Représentation JSON d'un composant listé dans la structure d'un rapport (dataviz ou element)
+    // Représentation JSON d'un composant listé dans la structure (cell ou data) d'un rapport
     var JsonComponent = function(data) {
-        this.type = "none";
-        this.ref  = "";
-        this.opts = {};
+        this.type    = "none";  // "dataviz" ou "element"
+        this.ref     = "";
+        this.opts    = {};
         if (data instanceof Node) this.parseNode(data); else if (data) this.loadJson(data);
     };
 
@@ -57,8 +57,8 @@ saver = (function () {
     JsonBloc.prototype.loadJson = function(json) {
         if (json.ref)     this.ref     = json.ref;
         if (json.title)   this.title   = json.title;
-        if (json.layout)  this.layout  = new JsonLayout(json.layout);
         if (json.sources) this.sources = json.sources;
+        if (json.layout)  this.layout  = new JsonLayout(json.layout);
     };
 
     JsonLayout.prototype.loadJson = function(json) {
@@ -136,11 +136,11 @@ saver = (function () {
             this.ref  = node.dataset.dataviz;
             let code = node.querySelector('code.dataviz-definition');
             try {
-                if (code.textContent.length) this.opts = JSON.parse( code.textContent )
+                if (code.textContent.length) this.opts = JSON.parse( code.textContent );
             } catch (e) {
                 console.error("Configuration du dataviz inutilisable !\n", code, e);
             }
-//          if (! this.opts) this.opts = { 'properties': { 'id': ref } };
+            if (! this.opts) this.opts = { 'properties': {'id': ref} };
             return;
         }
         // extraction des données d'un element
@@ -289,15 +289,28 @@ saver = (function () {
                 dvzCode.innerHTML = div.innerText;
                 let html = dvzCode.querySelector('.dataviz');
                 if (html) {
-                    // convert data attributes of html element to a Dataviz object
                     let type_class = html.className.match(/^(.* )?report-([^ ]*)( .*)?$/);
-                    let properties = { ...html.dataset };
-                    if ('id' in html) properties.id = html.id;
-                    div.textContent = JSON.stringify({
-                        'type':       (type_class !== null) ? type_class[2] : '',
-                        'properties': properties
-                    });
-                };
+                    let definition = { 'type': (type_class)?type_class[2]:'', 'properties': {} };
+                    for (const [prop, val] of Object.entries(html.dataset)) switch (prop) {
+                        case "stacked":
+                        case "begin0":
+                        case "hidelegend":
+                        case "showlabels":
+                            definition.properties[ prop ] = (val === "true") ? true : false;
+                            break;
+                        case "label":
+                        case "colors":
+                            definition.properties[ prop ] = val.split(",");
+                            break;
+                        case "columns":
+                            definition.properties[ prop ] = val.split(",").map((v) => Number(v));
+                            break;
+                        default:
+                            definition.properties[ prop ] = val;
+                    }
+                    if (html.id) definition.properties.id = html.id;
+                    div.textContent = JSON.stringify(definition);
+                }
             });
             composition.querySelectorAll('.structure-element.titleBloc').forEach((bloc) => {
                 let text = bloc.querySelector('.editable-text').cloneNode(true);

@@ -3,6 +3,8 @@ admin = (function () {
      * Private
      */
 
+    var _debug = true;
+
     var _dataviz_data = {};
 
     var _report_data = {};
@@ -458,9 +460,7 @@ admin = (function () {
         let container = document.getElementById("dataviz-cards");
         let template = container.querySelector("template").innerHTML.trim();
         var cards = { cards: [] };
-        Object.entries(_dataviz_data).forEach(function (a) {
-            var id = a[0];
-            var data = a[1];
+        for (const [id, data] of Object.entries(_dataviz_data)) {
             var designedDataviz = (data.viz.length > 0)? 'enabled':'disabled';
             var certifiedDataviz = 'disabled';
             if (data.description && data.description.includes("[certified]")) {
@@ -478,7 +478,7 @@ admin = (function () {
             };
             cards.cards.push(card);
 
-        });
+        }
         let render = Mustache.render(template, cards);
        $(container).append(render);
        _setDatavizUsed(_report_data);
@@ -577,6 +577,7 @@ admin = (function () {
             success: function (data) {
                 if (data.response === "success") {
                     _dataviz_data = _arr2dic(data.datavizs, "dataviz");
+                    if (_debug) console.debug("Store dataviz data:\n", _dataviz_data);
                     _showDataviz();
                     var options = {
                         tokenize: false,
@@ -683,15 +684,15 @@ admin = (function () {
       $('#dataviz-modal-form').on('show.bs.modal', function (e) {
             var newDataviz = $(e.relatedTarget).attr('data-dataviz-state');
             $(e.currentTarget).attr("data-dataviz-state", newDataviz);
-            var title = $(e.currentTarget).find('.form-control');
+            var $input = $(e.currentTarget).find('.form-control');
             var confirmed = $("#dataviz_confirmed");
             if (newDataviz === "edit") {
                 confirmed.attr("onclick", "admin.updateDataviz();");
-                title.prop("disabled", false);
+                $input.prop("disabled", false);
                 confirmed.html("Enregistrer");
             } else if (newDataviz === "delete") {
                 confirmed.attr("onclick", "admin.deleteDataviz();");
-                title.prop("disabled", true);
+                $input.prop("disabled", true);
                 confirmed.html("Supprimer");
             }
             var datavizId = $(e.relatedTarget).attr('data-related-id');
@@ -701,9 +702,7 @@ admin = (function () {
             //Remove existing visualization
             document.getElementById("xviz").innerHTML = '';
             _populateForm('#dataviz-form', _dataviz_data[datavizId]);
-            if (visualization.value) {
-                admin.visualizeDataviz();
-            }
+            if (visualization.value) _visualizeDataviz();
         });
         /* Select all visible items in the list and trigger the cahnge event on checkbox to add them in the cart */
         $("#checkAll").click(function () {
@@ -1321,21 +1320,41 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
     };
 
     var _visualizeDataviz = function () {
-        let element = document.getElementById("xviz");
-        element.innerHTML = '';
+        let container = document.getElementById("xviz");
+        container.innerHTML = '';
+        models.load( composer.getModelId() || 'composer', function(success, model){
+            if (_debug) console.debug("Chargement du modèle pour le rendu de la dataviz :\n", model);
+            if (! success) return;
 
-        let viz = JSON.parse(visualization.value);
-        let dataviz = wizard.json2html(viz);
-        if (! (dataviz instanceof Node)) {
-            element.innerText = "ERROR: " + dataviz; return;
-        }
-        element.appendChild(dataviz);
-        report.testViz(viz.data, viz.type, viz.properties);
-        //Hack to avoid many div with the same id
-        dataviz.querySelector(".dataviz").id += ".tmp";
-        if (dataviz.querySelector("canvas")) {
-            dataviz.querySelector("canvas").id += ".tmp";
-        }
+            let viz = JSON.parse(visualization.value);
+            if (_debug) console.debug("Configuration JSON pour la dataviz :\n", viz);
+
+            let component = model.renderDataviz(viz);
+            if (! (component instanceof Node)) {
+                container.innerText = "ERROR: " + component; return;
+            }
+
+            let style = document.createElement("style");
+            style.type = 'text/css';
+            style.appendChild(document.createTextNode(model.page_styles));
+
+            let dataviz = document.createElement("div");
+            dataviz.id = "yviz";
+            dataviz.className = "col";
+            dataviz.style.border = "solid";
+            dataviz.appendChild(style);
+            dataviz.appendChild(component);
+
+            //Hack to avoid many div with the same id
+            dataviz.querySelector(".dataviz").id += ".tmp";
+            if (dataviz.querySelector("canvas")) {
+                dataviz.querySelector("canvas").id += ".tmp";
+            }
+            if (_debug) console.debug("Version HTML générée pour la dataviz :\n", dataviz);
+
+            container.appendChild(dataviz);
+            report.testViz(viz.data, viz.type, viz.properties);
+        });
     };
 
     /*
@@ -1362,7 +1381,7 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
                     //Refresh dataviz in dataviz-modal-form
                     if (document.getElementById("dataviz-modal-form").classList.contains("show")) {
                         visualization.value = response.data.viz;
-                        admin.visualizeDataviz();
+                        _visualizeDataviz();
                     }
                     Swal.fire({
                         title: 'Sauvegardé',
@@ -1539,7 +1558,6 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
         getDataviz: _getDataviz,
         createReport: _createReport,
         getReportData: _getReportData,
-        visualizeDataviz: _visualizeDataviz,
         saveVisualization: _saveDataviz,
         initLevels: _initLevels,
         initReportsVersion: _initReportsVersion,

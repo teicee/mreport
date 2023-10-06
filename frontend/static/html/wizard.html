@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">Assistant</h5>
+                <h5 class="modal-title">Assitant de configuration : <tt><!-- dataviz id injected here --></tt></h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -17,9 +17,11 @@
                                         <div class="input-group-prepend">
                                             <label class="input-group-text" for="selectedModelWizard">Modèle</label>
                                         </div>
-                                        <select class="form-control" disabled id="selectedModelWizard" onchange="wizard.onChangeModel(this.value);">
-                                            <option disabled="" value="" selected="">Modèle</option>
-                                        <option value="a">a</option><option value="b">b</option></select>
+                                        <select class="form-control" id="selectedModelWizard" disabled>
+                                            <option value="" disabled>Modèle</option>
+                                            <option value="a">a</option>
+                                            <option value="b">b</option>
+                                        </select>
                                     </div>
                                     <div class="attribute input-group mb-3">
                                         <div class="input-group-prepend">
@@ -30,95 +32,96 @@
                                     </div>
                                     <nav class="nav nav-tabs">
                                         <a class="nav-item nav-link show active" href="#w1" data-toggle="tab">Paramétrage</a>
-                                        <a class="nav-item nav-link show" href="#w2" data-toggle="tab">Avancé</a>
+                                        <a class="nav-item nav-link show"        href="#w2" data-toggle="tab">Avancé</a>
                                     </nav>
 
                                     <div id="dataviz-attributes" class="tab-content container mb-3">
                                         <div class="tab-pane active" id="w1">
-                                                    <div class="attribute input-group input-group-sm mb-3">
+
+                                                    <div class="input-group input-group-sm mb-3 attribute type-figure">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">unit</span>
                                                         </div>
                                                         <input type="text" data-prop="unit"
-                                                            class="figure form-control dataviz-attributes" id="w_unit">
+                                                            class="form-control dataviz-attributes" id="w_unit">
                                                     </div>
 
-                                                    <div class="attribute input-group input-group-sm mb-3">
+                                                    <div class="input-group input-group-sm mb-3 attribute type-figure">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">Icone</span>
                                                         </div>
-                                                        <input class="figure form-control dataviz-attributes"
-                                                            data-prop="icon" id="w_icon">
+                                                        <input type="text" data-prop="icon"
+                                                            class="form-control dataviz-attributes" id="w_icon">
                                                         </input>
                                                         <div class="input-group-append">
                                                             <button type="button" class="btn mreport-primary-color-1-bg" onclick="document.querySelector('.card-container').classList.toggle('backcard');">...</button>
                                                         </div>
-
                                                     </div>
-                                                    <div class="attribute input-group input-group-sm mb-3">
+
+                                                    <div class="input-group input-group-sm mb-3 attribute type-figure">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">Position</span>
                                                         </div>
-                                                        <select class="custom-select figure form-control dataviz-attributes"
-                                                            data-prop="iconposition" id="w_icon_position">
-                                                            <option selected value="custom-icon">centrée</option>
+                                                        <select data-prop="iconposition"
+                                                            class="custom-select form-control dataviz-attributes" id="w_icon_position">
+                                                            <option value="custom-icon">centrée</option>
                                                             <option value="custom-icon-left">gauche</option>
                                                             <option value="custom-icon-right">droite</option>
                                                         </select>
                                                     </div>
-                                                    <div class="attribute input-group input-group-sm mb-3 text-config">
+
+                                                    <div class="input-group input-group-sm mb-3 text-config attribute type-chart type-table">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">Titre</span>
                                                         </div>
-
                                                         <input type="text" data-prop="title"
-                                                            class="chart table form-control dataviz-attributes" id="w_title">
-
-
+                                                            class="form-control dataviz-attributes" id="w_title">
                                                     </div>
-                                                    <div class="attribute input-group input-group-sm mb-3 text-config">
+
+                                                    <div class="input-group input-group-sm mb-3 text-config attribute type-chart type-table">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">Description</span>
                                                         </div>
                                                         <textarea data-prop="description"
-                                                            class="chart table form-control dataviz-attributes" id="w_desc">
+                                                            class="form-control dataviz-attributes" id="w_description">
                                                         </textarea>
                                                     </div>
-                                                    <div class="attribute input-group input-group-sm mb-3">
+
+                                                    <div class="input-group input-group-sm mb-3 attribute type-map">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">Zoom</span>
                                                         </div>
                                                         <input type="number" min="0" max="20" data-prop="zoom"
-                                                            class="map form-control dataviz-attributes" id="w_zoom">
+                                                            class="form-control dataviz-attributes" id="w_zoom">
                                                     </div>
-                                                    <!--<div class="attribute input-group input-group-sm mb-3 text-config">
+
+                                                    <!--
+                                                    <div class="input-group input-group-sm mb-3 text-config attribute type-figure">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">Style Chiffre Clé</span>
                                                         </div>
-
                                                         <input type="text" data-prop="style_cc"
-                                                            class="figure form-control dataviz-attributes" disabled id="w_style_cc">
-
+                                                            class="form-control dataviz-attributes" disabled id="w_style_cc">
                                                     </div>
-                                                    <div class="attribute input-group input-group-sm mb-3 text-config">
+                                                    <div class="input-group input-group-sm mb-3 text-config attribute type-figure">
                                                         <div class="input-group-prepend">
                                                             <span class="input-group-text">Style Caption</span>
                                                         </div>
-
                                                         <input type="text" data-prop="style_caption"
-                                                            class="figure form-control dataviz-attributes " disabled id="w_style_caption">
+                                                            class="form-control dataviz-attributes" disabled id="w_style_caption">
+                                                    </div>
+                                                    -->
 
-                                                    </div>-->
                                         </div>
-
                                         <div class="tab-pane" id="w2">
-                                                <div class="attribute input-group input-group-sm mb-3">
+
+                                                <div class="input-group input-group-sm mb-3 attribute type-chart">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">type</span>
                                                     </div>
-                                                    <select class="custom-select chart form-control dataviz-attributes"
-                                                        data-prop="type" id="w_chart_type">
-                                                        <option selected value="bar">bar</option>
+                                                    <select data-prop="type"
+                                                        class="custom-select form-control dataviz-attributes" id="w_chart_type">
+                                                        <option value="bar">bar</option>
                                                         <option value="line">line</option>
                                                         <option value="radar">radar</option>
                                                         <option value="doughnut">doughnut</option>
@@ -129,36 +132,36 @@
                                                     </select>
                                                 </div>
 
-                                                <div class="attribute input-group input-group-sm mb-3">
+                                                <div class="input-group input-group-sm mb-3 attribute type-table">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">extracolumn</span>
                                                     </div>
                                                     <input type="text" data-prop="extracolumn"
-                                                        class="table form-control dataviz-attributes" id="w_table_extracolumn">
+                                                        class="form-control dataviz-attributes" id="w_table_extracolumn">
                                                 </div>
 
-                                                <div class="attribute input-group input-group-sm mb-3">
+                                                <div class="input-group input-group-sm mb-3 attribute type-table">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">columns</span>
                                                     </div>
                                                     <input type="text" data-prop="columns"
-                                                        class="table form-control dataviz-attributes" id="w_table_column">
+                                                        class="form-control dataviz-attributes" id="w_table_columns">
                                                 </div>
 
-                                                <div class="attribute input-group input-group-sm mb-3">
+                                                <div class="input-group input-group-sm mb-3 attribute type-chart type-table">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">label</span>
                                                     </div>
                                                     <input type="text" data-prop="label"
-                                                        class="chart table form-control dataviz-attributes" id="w_label">
+                                                        class="form-control dataviz-attributes" id="w_label">
                                                 </div>
 
-                                                <div class="attribute input-group input-group-sm mb-3" id="color-pickers">
+                                                <div class="input-group input-group-sm mb-3 attribute type-chart" id="color-pickers">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">colors</span>
                                                     </div>
                                                     <input type="text" data-prop="colors"
-                                                        class="chart form-control dataviz-attributes" id="w_colors">
+                                                        class="form-control dataviz-attributes" id="w_colors">
                                                     <div class="form-control color-picker-wrapper"></div>
                                                     <div class="input-group-append">
                                                         <span class="input-group-text color-picker-add" title="Ajouter une couleur">
@@ -167,47 +170,55 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="attribute input-group input-group-sm mb-3">
+                                                <div class="input-group input-group-sm mb-3 attribute type-chart">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">opacity</span>
                                                     </div>
                                                     <input type="text" data-prop="opacity"
-                                                        class="chart form-control dataviz-attributes" id="w_chart_opacity">
+                                                        class="form-control dataviz-attributes" id="w_chart_opacity">
                                                 </div>
-                                                <div class="attribute input-group input-group-sm mb-3">
+
+                                                <div class="input-group input-group-sm mb-3 attribute type-chart">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">ratio</span>
                                                     </div>
-                                                    <select class="custom-select chart form-control dataviz-attributes"
-                                                        data-prop="ratio" id="w_chart_ratio">
-                                                        <option selected value="2:1">2:1</option>
-                                                        <option selected value="3:2">3:2</option>
+                                                    <select data-prop="ratio"
+                                                        class="custom-select form-control dataviz-attributes" id="w_chart_ratio">
+                                                        <option value="2:1">2:1</option>
+                                                        <option value="3:2">3:2</option>
                                                         <option value="1:1">1:1</option>
                                                     </select>
                                                 </div>
-                                                <div class="attribute custom-control  custom-checkbox">
-                                                    <input type="checkbox" data-prop="stacked" class="custom-control-input chart form-control dataviz-attributes"id="w_chart_stacked">
+
+                                                <div class="custom-control custom-checkbox attribute type-chart">
+                                                    <input type="checkbox" data-prop="stacked"
+                                                        class="custom-control-input form-control dataviz-attributes" id="w_chart_stacked">
                                                     <label class="custom-control-label" for="w_chart_stacked">Diag. empilé</label>
                                                 </div>
-                                                <div class="attribute custom-control custom-checkbox">
-                                                    <input type="checkbox" data-prop="begin0" class="custom-control-input chart form-control dataviz-attributes"id="w_chart_begin0">
+                                                <div class="custom-control custom-checkbox attribute type-chart">
+                                                    <input type="checkbox" data-prop="begin0"
+                                                        class="custom-control-input form-control dataviz-attributes" id="w_chart_begin0">
                                                     <label class="custom-control-label" for="w_chart_begin0">Démarre à 0</label>
                                                 </div>
-                                                <div class="attribute custom-control custom-checkbox">
-                                                    <input type="checkbox" data-prop="hidelegend" class="custom-control-input chart form-control dataviz-attributes"id="w_chart_hidelegend">
+                                                <div class="custom-control custom-checkbox attribute type-chart">
+                                                    <input type="checkbox" data-prop="hidelegend"
+                                                        class="custom-control-input form-control dataviz-attributes" id="w_chart_hidelegend">
                                                     <label class="custom-control-label" for="w_chart_hidelegend">Masquer la légende</label>
                                                 </div>
-                                                <div class="attribute custom-control custom-checkbox">
-                                                    <input type="checkbox" data-prop="showlabels" class="custom-control-input chart form-control dataviz-attributes"id="w_chart_showlabels">
+                                                <div class="custom-control custom-checkbox attribute type-chart">
+                                                    <input type="checkbox" data-prop="showlabels"
+                                                        class="custom-control-input form-control dataviz-attributes" id="w_chart_showlabels">
                                                     <label class="custom-control-label" for="w_chart_showlabels">Etiquetage</label>
                                                 </div>
-
 
                                         </div>
                                     </div><!-- End tab-content -->
 
                                     <div class="mb-3">
-                                        <button id="wizard_refresh" class="btn btn-block mreport-primary-color-2-bg">Appliquer les paramètres</button>
+                                        <button id="wizard-form-apply" class="btn btn-block mreport-primary-color-2-bg"
+                                            title="Génération de la configuration JSON du dataviz et mise à jour de la prévisualisation HTML affichée">
+                                            Appliquer les paramètres <i class="fas fa-angle-double-right"></i>
+                                        </button>
                                     </div>
                         </div> <!-- End wizard-parameters-->
 
@@ -218,8 +229,8 @@
                             <div class="card card-flip">
                                 <div class="front">
                                     <div class="card-body">
-                                        <h6 class="card-title">Affichage</h6>
-                                        <div id="wizard-result"><!--code is injected here --></div>
+                                        <h6 class="card-title">Prévisualisation du rendu :</h6>
+                                        <div id="wizard-result" class="preloader"><!--code is injected here --></div>
                                     </div>
                                 </div>
                                 <div class="back">
@@ -250,9 +261,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="wizard_add" class="btn mreport-primary-color-1-bg">Sauvegarder dans le rapport sélectionné</button>
-                <button id="wizard_default_save" class="btn mreport-primary-color-2-bg">Définir comme représentation par défaut</button>
-                <button type="button" class="btn mreport-primary-color-3-bg" data-dismiss="modal">Fermer</button>
+                <button id="wizard-compose-save" class="btn mreport-primary-color-1-bg"><i class="fas fa-file-import"></i> Sauvegarder dans le rapport sélectionné</button>
+                <button id="wizard-default-save" class="btn mreport-primary-color-2-bg"><i class="fas fa-check"></i> Définir comme représentation par défaut</button>
+                <button type="button" class="btn mreport-primary-color-3-bg" data-dismiss="modal"><i class="fas fa-times-circle"></i> Fermer</button>
             </div>
         </div>
     </div>

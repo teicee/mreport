@@ -304,7 +304,7 @@ composer = (function () {
                     _countUsedDataviz();
                 }
             });
-            // init existing dataviz for wizard
+            // init existing dataviz for wizard (TODO: à faire uniquement à l'ouverture du wizard)
             for (const dvz of this.getElementsByClassName("dataviz-item")) wizard.getSampleData(dvz.dataset['dataviz']);
             if ($(this).closest(".dataviz-autoconfig").length) $(this).find(".data-tools .btn.edit").hide();
         });
@@ -320,19 +320,26 @@ composer = (function () {
             let $dataviz = $('#dataviz-items .dataviz-item[data-dataviz="'+ ref +'"]').clone();
             if (! $dataviz.length) return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ ref +")");
             try {
-                let dvz = JSON.parse(this.innerText);
-                if (dvz.type) {
-                    //copy paste generated code in <code> element
-                    $dataviz.find('code.dataviz-definition').text( this.innerText );
-                    //update dataviz element icon (chart for chart, table for table...)
-                    $dataviz.find('.dvz-icon').prop('class', 'dvz-icon ' + _getDatavizTypeIcon(dvz.type));
-                    //Tag dataviz element as yet configured
-                    $dataviz.addClass('configured');
-                }
+                let definition = JSON.parse( this.innerText );
+                this.replaceWith( _configDataviz($dataviz[0], definition) );
             } catch (err) { console.warn("Invalid dataviz definition: ", err); }
-            this.replaceWith( $dataviz[0] );
         });
         return $node;
+    };
+
+    /*
+     * _configDataviz - 
+     */
+    var _configDataviz = function (node, viz) {
+        if (viz.type) {
+            // copy paste generated code in <code> element
+            node.querySelector('code.dataviz-definition').innerText = JSON.stringify(viz);
+            // update dataviz element icon (chart for chart, table for table...)
+            node.querySelector('.dvz-icon').className = 'dvz-icon ' + _getDatavizTypeIcon(viz.type);
+            // tag dataviz element as yet configured
+            node.classList.add("configured");
+        }
+        return node;
     };
 
     /*
@@ -453,7 +460,7 @@ composer = (function () {
     var _setTextData = function (data, node) {
         if (! node) return false;
         if (typeof data === "String") data = {'content': data, 'style': "", 'isHTML': false };
-        for (const c of node.classList.values()) if (c.startsWith('style-')) node.classList.remove(c);
+        [...node.classList].forEach((c) => { if (c.startsWith('style-')) node.classList.remove(c); });
         if (data.style)  node.classList.add('style-' + data.style);
         if (data.isHTML) node.innerHTML = data.content;
         else             node.innerText = data.content;
@@ -619,6 +626,7 @@ composer = (function () {
         getTextData:    _getTextData,
         /* used by saver.js & wizard.js */
         getModelId:     function() { return _selectedModel; },
+        configDataviz:  _configDataviz,
         /* used by wizard.js & textConfiguration.js */
         getTemplates:   function() { return _HTMLTemplates; },
     };
