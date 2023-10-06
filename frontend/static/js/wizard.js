@@ -66,6 +66,8 @@ wizard = (function () {
      */
     var _piklor_instances = {};
 
+    var _close_confirmation= false;
+
     /** TODO
      * Method to extract a set of data in relation with dataviz
      * and necessary to configure and visualize a dataviz for a report
@@ -175,6 +177,7 @@ if (_debug) console.debug("Wizard sample data for :", datavizId);
      */
     var _clean = function () {
 console.log('CALL _clean');
+        _close_confirmation = false;
         _dataviz_composer = null;
         _dataviz_infos = {};
         _dataviz_definition = {};
@@ -685,7 +688,37 @@ console.log('CALL _saveDatavizComposer');
      */
     var _onWizardClose = function () {
 console.log('CALL _onWizardClose');
+        if (! _close_confirmation) {
+            // affiche le dialogue de confirmation
+            Swal.fire({
+                title: "Êtes-vous sûr de vouloir quitter l'assistant ?",
+                icon: 'warning',
+                buttonsStyling: false,
+                customClass: {
+                  cancelButton: 'btn btn-secondary mr-2',
+                  confirmButton: 'btn btn-danger ml-2',
+                },
+                showCancelButton: true,
+                cancelButtonText: "Rester",
+                confirmButtonText: "Quitter",
+                reverseButtons: true,
+                focusCancel: true,
+                allowOutsideClick: false,
+            }).then((result) => {
+                // code exécuté après la fermeture de la boîte de dialogue Swal
+                console.log("onwizardclose result:", result);
+                if (result.isConfirmed) {
+//                  admin.saveVisualization(_dataviz_definition);
+                    _close_confirmation = true;
+                    $("#wizard-panel").modal("hide");
+                }
+            });
+            // annule la fermeture de la modal
+            return false;
+        }
+        // exécute les actions à la fermeture
         _clean();
+        return true;
     };
 
     /**
