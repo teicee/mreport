@@ -93,9 +93,9 @@ saver = (function () {
     JsonBloc.prototype.parseNode = function(node) {
         let elem;
         this.ref = node.dataset.bloc;
-        if (elem = node.querySelector(".structure-html .bloc-title"))   this.title   = composer.getTextData(elem);
+        if (elem = node.querySelector(".structure-html .bloc-title"))   this.title   = _parseEditableText(elem);
         if (elem = node.querySelector(".structure-html .bloc-layout"))  this.layout  = new JsonLayout(elem);
-        if (elem = node.querySelector(".structure-html .bloc-sources")) this.sources = composer.getTextData(elem);
+        if (elem = node.querySelector(".structure-html .bloc-sources")) this.sources = _parseEditableText(elem);
     };
 
     JsonLayout.prototype.parseNode = function(node) {
@@ -149,7 +149,7 @@ saver = (function () {
             this.ref  = node.dataset.bloc;
             switch (this.ref) {
                 case "btexte":
-                    this.opts = composer.getTextData( node.querySelector('.element-html .bloc-element .bloc-content') );
+                    this.opts = _parseEditableText( node.querySelector('.element-html .bloc-element .bloc-content') );
                 break;
             }
             return;
@@ -338,10 +338,32 @@ saver = (function () {
     };
 
     /*
+     * _parseEditableText - retourne les données en cours d'un texte éditable (contenu text/html et classe de style)
+     */
+    var _parseEditableText = function (node) {
+        if (! node.classList.contains('editable-text')) node = node.querySelector('.editable-text');
+        let isHTML  = (node.querySelector(':scope > :not(button)') !== null);
+        let style   = ""; for (const c of node.classList.values()) if (c.startsWith('style-')) style = c.slice(6);
+        let content = "";
+        if (isHTML) {
+            content = node.innerHTML.replaceAll(/<button.*<\/button>/gi, '').replaceAll(/<!--.*-->/gi, '').trim();
+        } else {
+            let texts = [], child = node.firstChild;
+            while (child) {
+                if (child.nodeType == Node.TEXT_NODE) texts.push( child.data.trim() );
+                child = child.nextSibling;
+            }
+            content = texts.filter(function(t){ return (t.length)>0 }).join("\n");
+        }
+        return { isHTML: isHTML, style: style, content: content }
+    };
+
+    /*
      * Public
      */
     return {
         /* used by composer.js */
+        getTextData:    _parseEditableText,
         saveJsonReport: _saveJsonReport,
         /* used by composer.js & report.js */
         loadJsonReport: _loadJsonReport,

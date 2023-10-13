@@ -432,27 +432,6 @@ composer = (function () {
     var _textSelected = null;
 
     /*
-     * _getTextData - retourne les données en cours d'un texte éditable (contenu text/html et classe de style)
-     */
-    var _getTextData = function (node) {
-        if (! node.classList.contains('editable-text')) node = node.querySelector('.editable-text');
-        let isHTML  = (node.querySelector(':scope > :not(button)') !== null);
-        let style   = ""; for (const c of node.classList.values()) if (c.startsWith('style-')) style = c.slice(6);
-        let content = "";
-        if (isHTML) {
-            content = node.innerHTML.replaceAll(/<button.*<\/button>/gi, '').replaceAll(/<!--.*-->/gi, '').trim();
-        } else {
-            let texts = [], child = node.firstChild;
-            while (child) {
-                if (child.nodeType == Node.TEXT_NODE) texts.push( child.data.trim() );
-                child = child.nextSibling;
-            }
-            content = texts.filter(function(t){ return (t.length)>0 }).join("\n");
-        }
-        return { isHTML: isHTML, style: style, content: content }
-    };
-
-    /*
      * _setTextData - modification du contenu d'un texte éditable à partir des données JSON (load ou edit)
      */
     var _setTextData = function (data, node) {
@@ -472,7 +451,7 @@ composer = (function () {
         let source = evt.relatedTarget.closest('.editable-text');
         if (! source) { console.warn("Aucun contexte source retrouvé pour l'édition d'un texte !"); return false; }
 
-        let curText = _getTextData(source);
+        let curText = saver.getTextData(source);
         if (source.classList.contains('bloc-title')) {
 //          evt.target.querySelector("#text-edit-level").disabled = false;
             evt.target.querySelector("input[value='text']").checked = true;
@@ -620,8 +599,6 @@ composer = (function () {
             $("#btn-composer").click(); // show composer page
             $('#selectedReportComposer').val(reportId).trigger("change"); // set report select value
         },
-        /* used by saver.js */
-        getTextData:    _getTextData,
         /* used by saver.js & wizard.js */
         getModelId:     function() { return _selectedModel; },
         configDataviz:  _configDataviz,
