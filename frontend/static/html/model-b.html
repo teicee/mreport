@@ -308,7 +308,7 @@
 .full-width{
     width: 100%;
 }
-.component-container:hover .report-share{
+.components-container:hover .report-share{
     display: block;
 }
 .no-data{
@@ -387,7 +387,7 @@
 }
 
 /* Icon and text used with empty dataviz */
-.model-b div.component-container:empty {
+.model-b div.components-container:empty {
     min-height: 100px;
     background-image: url(/static/picto/black/travaux.svg);
     background-repeat: no-repeat;
@@ -395,7 +395,7 @@
     background-position-x: center;
     background-position-y: center;
 }
-.model-b div.component-container:empty:after {
+.model-b div.components-container:empty:after {
     content: "En construction";
     text-align: center;
     padding-left: 180px;
@@ -428,7 +428,6 @@
     size: A4 portrait;
     -webkit-print-color-adjust: exact !important;   /* Chrome, Safari */
     color-adjust: exact !important;
-
   }
   canvas {
         min-height: 100%;
@@ -437,7 +436,6 @@
         height: auto!important;
         width: auto!important;
     }
-
     .printButton{
         display: none !important;
     }
@@ -448,6 +446,7 @@
         background-color: #ffffff;
     }
 }
+
 
 .icon-black-covoiturage { background-image: url(/static/picto/black/covoiturage.svg);}
 .icon-black-chauve_souris { background-image: url(/static/picto/black/chauve_souris.svg);}
