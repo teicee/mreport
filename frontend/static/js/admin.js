@@ -701,6 +701,7 @@ admin = (function () {
             $(e.currentTarget).find(".dataviz-title").text(datavizId);
             //Remove existing visualization
             document.getElementById("xviz").innerHTML = '';
+            if (_debug) console.debug("Informations sur la dataviz :\n", _dataviz_data[datavizId]);
             _populateForm('#dataviz-form', _dataviz_data[datavizId]);
             if (visualization.value) _visualizeDataviz();
         });
@@ -1336,24 +1337,23 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
 
             let style = document.createElement("style");
             style.type = 'text/css';
-            style.appendChild(document.createTextNode(model.page_styles));
+//          style.appendChild(document.createTextNode(model.page_styles));
 
             let dataviz = document.createElement("div");
             dataviz.id = "yviz";
             dataviz.className = "col";
-            dataviz.style.border = "solid";
             dataviz.appendChild(style);
             dataviz.appendChild(component);
+
+            if (_debug) console.debug("Version HTML générée pour la dataviz :\n", dataviz);
+            container.appendChild(dataviz);
+            report.testViz(viz.data, viz.type, viz.properties);
 
             //Hack to avoid many div with the same id
             dataviz.querySelector(".dataviz").id += ".tmp";
             if (dataviz.querySelector("canvas")) {
                 dataviz.querySelector("canvas").id += ".tmp";
             }
-            if (_debug) console.debug("Version HTML générée pour la dataviz :\n", dataviz);
-
-            container.appendChild(dataviz);
-            report.testViz(viz.data, viz.type, viz.properties);
         });
     };
 

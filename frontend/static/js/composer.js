@@ -304,8 +304,6 @@ composer = (function () {
                     _countUsedDataviz();
                 }
             });
-            // init existing dataviz for wizard (TODO: à faire uniquement à l'ouverture du wizard)
-            for (const dvz of this.getElementsByClassName("dataviz-item")) wizard.getSampleData(dvz.dataset['dataviz']);
             if ($(this).closest(".dataviz-autoconfig").length) $(this).find(".data-tools .btn.edit").hide();
         });
         return $node;
