@@ -488,7 +488,7 @@
 #wizard-panel #wizard-code {
   font-size: 10px;
   line-height: 12px;
-  display: block;
+  display: none;
 }
 
 .style-titre-1:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "I"; }
