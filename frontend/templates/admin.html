@@ -1,25 +1,24 @@
 <!DOCTYPE html>
 <html lang="fr">
-<meta charset="utf-8">
-
 <head>
     <title>MREPORT - beta1</title>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <script src="/static/js/extLibs/jquery.min.js"></script>
     <script src="/static/js/extLibs/popper.min.js"></script>
     <script src="/static/js/extLibs/bootstrap.min.js"></script>
     <script src="/static/js/extLibs/Chart.min.js"></script>
     <script src="/static/js/extLibs/chartjs-plugin-datalabels.js"></script>
-    <link href="/static/js/extLibs/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/js/extLibs/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
     <link rel="stylesheet" href="/static/js/extLibs/leaflet.css" />
     <script src="/static/js/extLibs/leaflet.js"></script>
-    <link href="/static/css/admin.css" rel="stylesheet">
-    <link href="/static/css/composer.css" rel="stylesheet">
-    <link href="/static/css/import.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/fonts/04b_30/stylesheet.css">
-    <link href="/static/css/colors.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/admin.css" />
+    <link rel="stylesheet" href="/static/css/composer.css" />
+    <link rel="stylesheet" href="/static/css/import.css" />
+    <link rel="stylesheet" href="/static/fonts/04b_30/stylesheet.css" />
+    <link rel="stylesheet" href="/static/css/colors.css" />
     <script src="/static/js/extLibs/mustache.min.js"></script>
     <script src="/static/js/extLibs/fuse.min.js"></script>
     <script src="/static/js/extLibs/Sortable.js"></script>
@@ -29,18 +28,17 @@
     <script src="/static/js/extLibs/indent.min.js"></script>
     <script src="/static/js/extLibs/bs-custom-file-input.min.js"></script>
     <script src="/static/js/extLibs/papaparse.min.js"></script>
-    <script src="/static/js/textConfiguration.js"></script>
     <script src="/static/js/composer.js"></script>
+    <script src="/static/js/saver.js"></script>
     <script src="/static/js/models.js"></script>
     <script src="/static/js/wizard.js"></script>
     <script src="/static/js/report.js"></script>
     <script src="/static/js/admin.js"></script>
     <script src="/static/js/import.js"></script>
-    <script src="/static/js/saver.js"></script>
-
 </head>
 
 <body class="mreport-grey6-bg">
+
     <!-- Navigation start -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-light bg-light">
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
@@ -68,7 +66,6 @@
                     <a id="btn-composer" class="nav-link">Composeur</a>
                 </li>
             </ul>
-
         </div>
     </nav>
     <!-- Navigation end -->
@@ -98,7 +95,6 @@
           <img src="/static/img/graph2.png" class="img-fluid" alt="Responsive image">
         </div>
       </div>
-
     </div>
 
     <!-- Catalog start -->
@@ -164,15 +160,13 @@
                 {{/cards}}
             </template>
             <!-- End template {% endraw %} -->
-
         </div>
     </div>
     </div>
-    <!-- Catalog start -->
+    <!-- Catalog end -->
 
     <!-- Reports start -->
     <div class="container-fluid page" id="reports">
-    <div class="">
     <div id="reports-content">
       <h1 class="col-12">Rapports</h1>
         <div class="d-flex align-items-end flex-column sticky">
@@ -188,10 +182,8 @@
           </div>
         </div>
     </div>
-    
     </div>
-  </div>
-    <!-- Reports start -->
+    <!-- Reports end -->
 
     <!-- Composer start -->
     <div id="composer" class="container-fluid page">
@@ -569,7 +561,6 @@
         </ul>
     </div>
 
-    
   <!-- Report select slide in -->
   <div id="report-select-options">
     <a id="toggle-report-select-option" class="mreport-primary-color-1-bg">Fermer</a>
@@ -603,12 +594,12 @@
     </ul>
   </div>
 
-    <!--version list -->
+    <!-- version list -->
     <div id="version-list" class="">
       <div id="version-list-content">
         <a id="closeVersions" class="mreport-primary-color-1-bg">Fermer</a>
-        <div class="sticky"> 
-          <h2>Versions</h6>
+        <div class="sticky">
+          <h2>Versions</h2>
         </div>
         <div>
           <ul id="version-items">
@@ -640,8 +631,7 @@
                 <option value="0" selected="true" disabled="disabled">Veuillez choisir une option</option>
               </select>
             </div>
-
-          </div> 
+          </div>
         </div>
     </div>
 
@@ -672,5 +662,4 @@
     </div>
 
 </body>
-
 </html>

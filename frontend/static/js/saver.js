@@ -168,6 +168,29 @@ saver = (function () {
         return Object.assign({}, this);
     };
 
+    /*
+     * JSON object methods to return only one dataviz
+     */
+
+    JsonReport.prototype.findDataviz = function(ref) {
+        if (this.blocs) for (let bloc of this.blocs) {
+            if (! bloc.layout) continue;
+            let res = bloc.layout.findDataviz(ref);
+            if (res) return res;
+        }
+    };
+
+    JsonLayout.prototype.findDataviz = function(ref) {
+        if (this.data) for (let item of this.data) {
+            if (item.type === "dataviz" && item.ref === ref) return item;
+        }
+        if (this.node) for (let item of this.node) {
+            let res = item.findDataviz(ref);
+            if (res) return res;
+        }
+        return false;
+    };
+
     /**
      * _saveJsonReport : Send report JSON definition to the server (store a new version in database).
      */
@@ -219,7 +242,7 @@ saver = (function () {
                 // Load composition from JSON
                 let report_json = new JsonReport(data.report_backup);
                 if (_debug) console.debug("Import JSON de la composition :\n", report_json);
-                if (callback) callback(true, report_json.exportData());
+                if (callback) callback(true, report_json);
             } else {
                 Swal.fire("Une erreur s'est produite", "La définition du rapport n'a pas pu être chargée :<br>" + (data.error || data.response), 'error');
                 if (callback) callback(false);
@@ -330,7 +353,7 @@ saver = (function () {
             // Load composition from HTML
             let report_json = new JsonReport(composition);
             if (_debug) console.debug("Import JSON de la composition :\n", report_json);
-            if (callback) callback(true, report_json.exportData());
+            if (callback) callback(true, report_json);
         })
         .fail(function (xhr, status, err) {
             Swal.fire("Une erreur s'est produite", "L'API ne réponds pas :<br>" + _parseError(xhr.responseText), 'error');

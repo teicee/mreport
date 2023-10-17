@@ -138,32 +138,38 @@ composer = (function () {
         
         // remove/empty actions
         $composerMain.on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
-            const $bloc = $(e.currentTarget).closest(".structure-item, .element-item, .dataviz-item");
+            let $bloc = $(e.currentTarget).closest(".structure-item, .element-item, .dataviz-item");
             $bloc.remove();
             _countUsedDataviz();
         });
         $composerMain.on('click', '.cell-tools .cell-empty', function(e){
-            const $data = $(e.currentTarget).closest(".layout-cell").find('.components-container');
+            let $data = $(e.currentTarget).closest(".layout-cell").find('.components-container');
             $data.empty();
             _countUsedDataviz();
         });
         $composerMain.on('click', '.cell-tools .cell-delete', function(e){
-            const $cell = $(e.currentTarget).closest(".layout-cell");
-            const $cols = $cell.closest(".layout-cols");
-            const $rows = $cols.closest(".layout-rows");
+            let $cell = $(e.currentTarget).closest(".layout-cell");
+            let $cols = $cell.closest(".layout-cols");
+            let $rows = $cols.closest(".layout-rows");
+            let $others;
+            let colSize = _getColSize($cell[0]);
+            // suppression sauf si la row parente est en fixed-layout ou si dernier élément restant
+            if ($cols.hasClass('fixed-layout')) return;
+            if ($rows.children('.layout-cols').children('.layout-cell, .layout-rows').length == 1) return;
             $cell.remove();
             // ajustements sur le layout-cols selon son nombre d'enfants (layout-cell ou layout-rows)
-            var $others = $cols.children('.layout-cell, .layout-rows');
-            if ($others.length == 0) $cols.remove();
-            else if ($others.length == 1) {
-                // remplacer la classe de largeur "col-##" en "col-12"
-                $others.attr('class',$others.attr('class').replace(_reSize, '$1col-12$3'));
-            }
+            $others = $cols.children('.layout-cell, .layout-rows');
+            if ($others.length) {
+                // la dernière colonne récupère la largeur de la cellule supprimée
+                let child = $others.get(-1);
+                let newSize = _getColSize(child) + colSize;
+                child.className = child.className.replace(_reSize, '$1col-' + newSize + '$3');
+            } else $cols.remove();
             // nettoyage des conteneurs superflus (rows-# / cols / rows|cell-12 => rows|cell-#)
-            var $others = $rows.children('.layout-cols').children('.layout-cell, .layout-rows');
-            if ($others.length == 1) {
+            $others = $rows.children('.layout-cols').children('.layout-cell, .layout-rows');
+            if ($others.length == 1 && ! $rows.hasClass('bloc-layout')) {
                 // le layout-rows grand-parent récupère directement le contenu de l'unique petit-enfant layout-rows|layout-cell
-                var $contents = $others.children().detach();
+                let $contents = $others.children().detach();
                 $rows.empty().append($contents);
                 $rows.removeClass("layout-rows").addClass($others.hasClass("layout-rows") ? "layout-rows" : "layout-cell");
             }
@@ -180,7 +186,7 @@ composer = (function () {
                 $cell.removeClass("layout-cell").addClass("layout-rows");
                 $cell.find(".cell-tools").remove();
                 $cell.wrapInner('<div class="row layout-cols"><div class="col-12 layout-cell"></div></div>');
-                $cell.append( _configureCellContainer($cell.find(".layout-cols").clone(), true) );
+                $cell.append( _configureCellContainer($cell.find(".row.layout-cols").clone(), true) );
                 _configureComposerTools($cell);
             } else {
                 // sinon si le layout-cols parent ne contient que cet unique layout-cell (en col-12)...
@@ -313,20 +319,23 @@ composer = (function () {
      * _renderDataviz - Display dataviz component for the composer
      */
     var _renderDataviz = function ($node) {
-        $node.find('.components-container .dataviz-proxy').each( function(){
+        $node.find('.dataviz-proxy').each( function(){
             let ref = this.getAttribute('data-ref');
+            // utilisation du code HTML correspondant dans les dataviz disponibles du composer
             let $dataviz = $('#dataviz-items .dataviz-item[data-dataviz="'+ ref +'"]').clone();
             if (! $dataviz.length) return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ ref +")");
-            try {
-                let definition = JSON.parse( this.innerText );
-                this.replaceWith( _configDataviz($dataviz[0], definition) );
-            } catch (err) { console.warn("Invalid dataviz definition: ", err); }
+            // récupération et vérification de la définition JSON pour le dataviz
+            let definition = null;
+            try { definition = JSON.parse( this.innerText ); }
+            catch (err) { console.warn("Invalid dataviz definition: ", err); }
+            // remplacement du code proxy par le code HTML du composer configuré avec sa définition
+            this.replaceWith( _configDataviz($dataviz[0], definition) );
         });
         return $node;
     };
 
     /*
-     * _configDataviz - 
+     * _configDataviz - Update a dataviz component in the composition interface (store the JSON definition)
      */
     var _configDataviz = function (node, viz) {
         if (viz.type) {
@@ -509,8 +518,7 @@ composer = (function () {
             // prendre uniquement les enfants ayant la classe "layout-cell" ou "layout-rows"
             if (! _reTest.test(col.className)) continue;
             // récupération de la taille à partir de la classe "col-##"
-            var result = _reSize.exec(col.className);
-            colsList.push( (result !== null) ? result[2] : 1 );
+            colsList.push( _getColSize(col) );
         }
         // mise à jour du formulaire des dimensions
         var $colsForm = $(this).find('#grid-columns-size').empty();
@@ -584,6 +592,15 @@ composer = (function () {
             if (doCellConfig) _configureCellContainer($cell);
             $cell.appendTo(node);
         }
+    }
+
+    /*
+     *
+     */
+    var _getColSize = function (node, def = null) {
+        let result = _reSize.exec( node.className );
+        if (result !== null) return parseInt(result[2]);
+        return (def) ? def : 1;
     }
 
 // =============================================================================

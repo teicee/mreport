@@ -665,19 +665,25 @@ wizard = (function () {
      */
     var _renderDatavizPreview = function () {
         if (_debug) console.debug('CALL _renderDatavizPreview');
-        let viz = _form2json();
+        let container = document.getElementById("wizard-result");
+        
+        // use the render model cell wrapper for the dataviz preview
+        if (_model.page_layouts['wcell']) {
+            container.insertAdjacentHTML("beforeend", _model.page_layouts['wcell']);
+            let el = container.querySelector(".components-container");
+            if (el) container = el;
+        }
         
         // get dataviz component herited from template and set attributes with properties object
+        let viz = _form2json();
         let html = _model.renderDataviz(viz);
-        document.getElementById("wizard-code").innerText = html.outerHTML;
+        container.classList.remove("preloader");
         
         // render result in wizard modal
-        let container = document.getElementById("wizard-result");
-        if (container) {
-            container.innerHTML = "";
-            container.appendChild(html);
-            container.classList.remove("preloader");
-        }
+        if (! (html instanceof Node)) { container.innerText = "ERROR: " + component; return; }
+        document.getElementById("wizard-code").innerText = html.outerHTML;
+        container.innerHTML = "";
+        container.appendChild(html);
         
         // draw dataviz with data, type and properties
         let fdata = {}; fdata[ viz.properties.id ] = _dataviz_data;
@@ -693,7 +699,8 @@ wizard = (function () {
         if (! _dataviz_composer) { console.error("Dataviz en cours d'édition à configurer non disponible"); return; }
         // update dataviz definition in the composer
         composer.configDataviz(_dataviz_composer, _dataviz_definition);
-        // close wizard modal (clean on close event)
+        // close wizard modal (clean on close event, without confirmation)
+        _close_confirmation = true;
         $("#wizard-panel").modal("hide");
     };
 

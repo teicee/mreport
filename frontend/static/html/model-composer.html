@@ -40,7 +40,7 @@
             <div class="data-tools btn-group btn-group-sm">
                 <!--button class="btn btn-light drag"><i class="fas fa-arrows-alt"></i><b>&nbsp;déplacer</b></button-->
                 <button class="btn btn-warning edit" data-toggle="modal" data-target="#wizard-panel" data-component="composer" data-related-id="{{REF}}"><i class="fas fa-cog"></i><b>&nbsp;éditer</b></button>
-                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i><b>&nbsp;supprimer</b></button>
+                <button class="btn btn-danger bloc-remove"><i class="fas fa-times"></i><b>&nbsp;retirer</b></button>
             </div>
             <span class="dataviz-label"><i class="dvz-icon {{ICON}}" title="{{TYPE}}"></i>&nbsp;{{LABEL}}</span>
             <code class="dataviz-definition"></code>
@@ -183,7 +183,7 @@
                 <!-- this text is editable in composer -->Titre du bloc
             </div>
             <div class="bloc-layout layout-rows container-fluid">
-                <div class="layout-cols row">
+                <div class="layout-cols fixed-layout row">
                     <div class="layout-cell col-12">
                         <!-- components container is injected here -->
                     </div>

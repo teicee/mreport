@@ -2,12 +2,25 @@
 
     <!-- HTML wrapper used to construct the main report container in the composer interface -->
     <template class="report-layout" id="wmain">
-        <div class="container-fluid model-a">
-            <div class="container report" id="report-composition">
-                <!-- blocs are injected here -->
-            </div>
+        <div class="container report model-a" id="report-composition">
+            <!-- blocs are injected here -->
+        </div>
+        <a class="printButton" href="javascript:window.print();">
+            <i class="fas fa-print"></i>
+        </a>
+        <div class="container footer invisible" id="report-generated-date">
+            Région Bretagne &mdash; <!-- date is injected here -->
         </div>
     </template>
+
+    <!-- HTML wrapper used to construct the report container to share ony one dataviz -->
+    <template class="report-layout" id="wshare">
+        <div class="container-fluid report filtered model-a" id="report-composition">
+            <!-- dataviz component is injected here -->
+        </div>
+    </template>
+
+
 
     <!-- HTML wrapper used to construct structural blocks -->
     <template class="report-layout" id="wstructure">
@@ -281,13 +294,13 @@
     margin-top: 10px;
 }
 
-.report-bloc .components-container {
+.components-container {
     height: 100%;
     border:none;
     border-radius:0;
     box-shadow:0 0 5px #ddd;
 }
-.report-bloc .components-container .card-body {
+.components-container .card-body {
     display: flex;
     align-items: center;
     justify-content: center;

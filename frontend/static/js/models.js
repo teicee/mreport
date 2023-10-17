@@ -294,35 +294,42 @@ models = (function () {
         if (_debug) console.debug("Définition JSON de la dataviz à générer en HTML :\n", viz);
         if (! this.dataviz_components[ viz.type ]) return '[DATAVIZ NOT FOUND: '+ viz.type +']';
         
+        let html = this.dataviz_components[ viz.type ].trim();
+        if ('wdataviz' in this.page_layouts) html = this.page_layouts['wdataviz'].replaceAll("{{HTML}}", html);
+        
         // generate HTML element from the model dataviz template
         let template = document.createElement('template');
-        template.innerHTML = this.dataviz_components[ viz.type ].replace("{{dataviz}}", viz.properties.id).trim();
+        template.innerHTML = html.replace("{{dataviz}}", viz.properties.id);
         let component = template.content.firstChild;
         
-        // populate HTML data attributes from JSON properties
         let dataviz = component.querySelector(".dataviz");
-        for (const [attribute, value] of Object.entries(viz.properties)) {
-            if (attribute !== "id") dataviz.dataset[attribute] = value;
-        }
+        if (! dataviz) return '[DATAVIZ NOT VALID: '+ viz.type +']';
+        [...dataviz.classList].forEach((c) => { if (c.startsWith('icon-')) dataviz.classList.remove(c); });
         
-        // set icon class from icon attribute for figures components
-        if (viz.properties.icon && viz.type === "figure") {
-            [...dataviz.classList].forEach((c) => { if (c.startsWith('icon-')) dataviz.classList.remove(c); });
-            dataviz.classList.add(viz.properties.icon);
-            dataviz.classList.add("custom-icon");
-            if (viz.properties.iconposition) switch (viz.properties.iconposition) {
-                case "custom-icon-left"  : dataviz.classList.add("custom-icon-left");  break;
-                case "custom-icon-right" : dataviz.classList.add("custom-icon-right"); break;
-            }
+        // populate HTML data attributes from JSON properties
+        for (const [attribute, value] of Object.entries(viz.properties)) switch (attribute) {
+            case "id":
+                break;
+            case "title":
+                component.querySelectorAll(".report-dataviz-title").forEach((el) => {
+                    el.innerText = viz.properties.title;
+                });
+                break;
+            case "description":
+                component.querySelectorAll(".report-dataviz-description").forEach((el) => {
+                    el.innerHTML = viz.properties.description;
+                });
+                break;
+            case "icon":
+                dataviz.classList.add("custom-icon");
+                dataviz.classList.add(viz.properties.icon);
+                break;
+            case "iconposition":
+                dataviz.classList.add(viz.properties.iconposition);
+                break;
+            default:
+                dataviz.dataset[attribute] = value;
         }
-        
-        // set optional title and description
-        component.querySelectorAll(".report-dataviz-title").forEach((el) => {
-            el.innerText = viz.properties.title;
-        });
-        component.querySelectorAll(".report-dataviz-description").forEach((el) => {
-            el.innerHTML = viz.properties.description;
-        });
         
         return component;
     };

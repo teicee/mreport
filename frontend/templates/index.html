@@ -1,35 +1,38 @@
 <!DOCTYPE html>
 <html lang="fr">
-		<head>
-			<title>mReport</title>
-			<meta charset="utf-8" />
+        <head>
+            <title>mReport</title>
+            <meta charset="utf-8" />
             <meta http-equiv="X-UA-Compatible" content="IE=edge" />
             <meta name="mobile-web-app-capable" content="yes" />
             <meta name="apple-mobile-web-app-capable" content="yes" />
             <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-            <script src="/static/js/extLibs/navigo.min.js"></script>
-            <script src="/static/js/extLibs/jquery.min.js"></script>
-            <script src="/static/js/extLibs/popper.min.js"></script>
-            <script src="/static/js/extLibs/bootstrap.min.js"></script>
-            <script src="/static/js/extLibs/papaparse.min.js"></script>
-            <script src="/static/js/extLibs/Chart.min.js"></script>
-            <script src="/static/js/extLibs/chartjs-plugin-datalabels.js"></script>
-            <link rel="stylesheet" href="/static/js/extLibs/leaflet.css"/>
-            <script src="/static/js/extLibs/leaflet.js"></script>
+            <script type="text/javascript" src="/static/js/extLibs/navigo.min.js"></script>
+            <script type="text/javascript" src="/static/js/extLibs/jquery.min.js"></script>
+            <script type="text/javascript" src="/static/js/extLibs/popper.min.js"></script>
+            <script type="text/javascript" src="/static/js/extLibs/bootstrap.min.js"></script>
+            <script type="text/javascript" src="/static/js/extLibs/papaparse.min.js"></script>
+            <script type="text/javascript" src="/static/js/extLibs/Chart.min.js"></script>
+            <script type="text/javascript" src="/static/js/extLibs/chartjs-plugin-datalabels.js"></script>
+            <link rel="stylesheet" href="/static/js/extLibs/leaflet.css" />
+            <script type="text/javascript" src="/static/js/extLibs/leaflet.js"></script>
             <script type="text/javascript" src="/static/js/extLibs/accounting.min.js"></script>
             <script type="text/javascript" src="/static/js/wizard.js"></script>
             <script type="text/javascript" src="/static/js/report.js"></script>
             <script type="text/javascript" src="/static/js/saver.js"></script>
             <script type="text/javascript" src="/static/js/models.js"></script>
-            <link href="/static/css/bootstrap/bootstrap.min.css" rel="stylesheet">
-            <link href="/static/css/mreport.css" rel="stylesheet">
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="/static/css/bootstrap/bootstrap.min.css" />
+            <link rel="stylesheet" href="/static/css/mreport.css" />
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
         </head>
+
         <body>
             <div id="preloader"></div>
+
             <!-- Flask inject data below -->
             <div id="backend" data-backend='{{ options|tojson }}'></div>
             <!---->
+
             <script>
                 $(document).ready(function() {
                     report.init();

@@ -459,11 +459,6 @@ h5>.badge {
   /*border: 2px solid #006878;*/
   transition: 0.4s;
 }
-#wizard-result{
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-}
 
 /**
  * Wizard colors choser

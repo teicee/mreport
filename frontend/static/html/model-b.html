@@ -6,8 +6,25 @@
             <div class="container report" id="report-composition">
                 <!-- blocs are injected here -->
             </div>
+            <a class="printButton" href="javascript:window.print();">
+                <i class="fas fa-print"></i>
+            </a>
+            <div class="container footer invisible" id="report-generated-date">
+                Région Bretagne &mdash; <!-- date is injected here -->
+            </div>
         </div>
     </template>
+
+    <!-- HTML wrapper used to construct the report container to share ony one dataviz -->
+    <template class="report-layout" id="wshare">
+        <div class="container-fluid filtered model-b">
+            <div class="container report" id="report-composition">
+                <!-- dataviz component is injected here -->
+            </div>
+        </div>
+    </template>
+
+
 
     <!-- HTML wrapper used to construct structural blocks -->
     <template class="report-layout" id="wstructure">
@@ -262,10 +279,10 @@
     padding: 0;
 }
 
-.report-bloc .components-container {
+.components-container {
     height: 100%;
 }
-.report-bloc .components-container .card-body {
+.components-container .card-body {
     display: flex;
     align-items: center;
     justify-content: center;

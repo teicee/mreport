@@ -353,34 +353,21 @@ report = (function () {
 
     };
 
-    var _printDate = function () {
-        let a = document.createElement("span");
-        a.textContent = "Région Bretagne - document généré le "  + new Date().toLocaleDateString();
-        a.classList.add("print-date");
-        let b = document.getElementsByClassName("container-fluid")[0];
-        b.appendChild(a);
-
-    };
-
-    var _print = function () {
-        let a = document.createElement("a");
-        a.href = "javascript:window.print();";
-        let b = document.createElement("span");
-        b.classList.add("printButton");
-        let c = document.createElement("span");
-        c.classList.add("fas");
-        c.classList.add("fa-print");
-        b.appendChild(c);
-        a.appendChild(b);
-        let d = document.getElementsByClassName("container-fluid")[0];
-        d.appendChild(a);
-
+    var _displayDate = function () {
+        let container = document.getElementById("report-generated-date");
+        if (! container) return;
+        let element = document.createElement("span");
+        element.innerHTML = "document généré le "  + new Date().toLocaleDateString();
+        element.classList.add("print-date");
+        container.appendChild(element);
+        container.classList.remove('invisible');
     };
 
     /*
      * TODO
      */
     var _getDom = function () {
+        $(".report-alert").remove();
 //      _getDomFromHtml();
         _getDomFromJson();
     };
@@ -391,7 +378,7 @@ report = (function () {
             if (! success) return;
             _rawReport = {
                 "name": _reportName,
-                "json": reportJson,
+                "json": reportJson.exportData(),
                 "html": null //html
             };
             // chargement du modèle utilisé par le rapport
@@ -399,52 +386,55 @@ report = (function () {
                 if (_debug) console.debug("Récupération des données du modèle de rendu :\n", data);
                 if (! success) return;
                 _HTMLTemplates = data;
-                // initialisation des éléments du composer dans la page
-                let composition = $("body").append( _HTMLTemplates.page_layouts['wmain'] ).find('#report-composition')[0];
-                if (! composition) return _alert("L'interface du composeur n'est pas valide", 'error', true);
-                // application dans le composer des blocs chargés
-                reportJson.blocs.forEach((bloc) => {
-                    let $bloc = _HTMLTemplates.buildReportBloc(bloc);
-                    if ($bloc) {
-                        _renderDataviz( $bloc );
-                        $bloc.appendTo(composition);
-                    }
-                });
-                _printDate();
-                _print();
-                //append _config
+                if (APIRequest.dataviz) {
+                    // Soit affichage d'une dataviz seule
+                    _config.share = false;
+                    // recherche du dataviz demandé dans les données JSON du rapport
+                    let jsonComponent = reportJson.findDataviz(APIRequest.dataviz);
+                    if (! jsonComponent)
+                        return _alert("Le dataviz demandé n'a pas été trouvé dans ce rapport", 'error', true);
+                    if (! jsonComponent.opts || ! jsonComponent.opts.type)
+                        return _alert("Le dataviz demandé n'a pas été configuré dans ce rapport", 'error', true);
+                    // initialisation des éléments du composer dans la page
+                    let composition = $("body").append( _HTMLTemplates.page_layouts['wshare'] ).find('#report-composition')[0];
+                    if (! composition)
+                        return _alert("Composeur non fonctionnel", 'error', true);
+                    // génération du code HTML à partir de la définition du dataviz
+                    let component = _HTMLTemplates.renderDataviz(jsonComponent.opts);
+                    if (! (component instanceof Node))
+                        return _alert("Le dataviz demandé n'est pas valide : " + component, 'error', true);
+                    // affichage du dataviz (avec ou sans son wrapper, pouvant contenir titre et description ?)
+//                  composition.appendChild( component );
+                    composition.appendChild( component.querySelector('.dataviz') );
+                } else {
+                    // Soit affichage du rapport complet
+                    _config.share = true;
+                    // initialisation des éléments du composer dans la page
+                    let composition = $("body").append( _HTMLTemplates.page_layouts['wmain'] ).find('#report-composition')[0];
+                    if (! composition) return _alert("L'interface du composeur n'est pas valide", 'error', true);
+                    // application dans le composer des blocs chargés
+                    reportJson.blocs.forEach((bloc) => {
+                        let $bloc = _HTMLTemplates.buildReportBloc(bloc);
+                        if ($bloc && $bloc.length) composition.appendChild($bloc[0]);
+                    });
+                    // remplacement des codes proxy par les codes HTML générés à partir des défitions des dataviz configurés
+                    composition.querySelectorAll('.dataviz-proxy').forEach((item) => {
+                        try {
+                            let definition = JSON.parse( item.innerText );
+                            if (! definition || ! definition.type) return item.remove();
+                            item.replaceWith( _HTMLTemplates.renderDataviz(definition) );
+                        }
+                        catch (err) { console.warn("Invalid dataviz definition: ", err); }
+                    });
+                    _displayDate();
+                }
+                // append _config
                 _merge_config();
                 _getCss();
                 _getData();
             });
         });
     };
-
-    var _renderDataviz = function ($node) {
-        $node.find('.components-container .dataviz-proxy').each( function(){
-            let viz = JSON.parse(this.innerText);
-            
-            // get dataviz component herited from template
-            let tpl = _HTMLTemplates.dataviz_components[ viz.type ];
-            if (! tpl) return console.warn("Dataviz invalide: aucune dataviz disponible correspondant ("+ viz.type +")");
-            if ('wdataviz' in _HTMLTemplates.page_layouts) tpl = _HTMLTemplates.page_layouts['wdataviz'].replaceAll("{{HTML}}", tpl);
-            
-            // set attributes with properties object
-            let $dvz = $( tpl.replace("{{dataviz}}", viz.properties.id).trim() );
-            for (const [attribute, value] of Object.entries(viz.properties)) switch (attribute) {
-                case "id": break;
-                case "title":        $dvz.find(".report-dataviz-title").text(value); break;
-                case "description":  $dvz.find(".report-dataviz-description").html(value); break;
-                case "icon":         if (value) $dvz.find('.dataviz').addClass(value).addClass("custom-icon").removeClass("icon-default"); break;
-                case "iconposition": if (value) $dvz.find('.dataviz').addClass(value); break;
-                default:             $dvz.find('.dataviz').attr('data-' + attribute, value);
-            }
-            this.replaceWith( $dvz[0] );
-        });
-        return $node;
-    };
-
-
 
     var _getDomFromHtml = function () {
         const dc = Date.parse(new Date());
@@ -463,12 +453,10 @@ report = (function () {
                         '</div>'
                     ].join("");
                     $("body").append(block);
-                    $(".alert").remove();
                     _config.share = false;
                 } else {
                     $("body").append(html);
                     _printDate();
-                    _print();
                 }
                 //append _config
                 _merge_config();
@@ -1291,9 +1279,6 @@ report = (function () {
         /* used by admin.js, wizard.js */
         testViz:               _testViz,
         /* unused */
-//      drawViz:               _drawViz,
-//      setTitle:              _setTitle,
-//      addTitleOrDescription: _addTitleOrDescription,
 //      getReport:             function() { return _rawReport; },
     };
 
