@@ -1237,7 +1237,7 @@ report = (function () {
                         } else {
                             obj.push($(e.currentTarget).parent().attr("id"));
                         }
-                        var url = $(location).attr('href') + "/" + obj.join(",");
+                        var url = window.location.href.replace(/\/$/, "") + "/" + obj.join(",");
 
                         $(".report-share-info").attr("href", url);
 

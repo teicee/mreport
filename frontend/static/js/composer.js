@@ -595,7 +595,7 @@ composer = (function () {
     }
 
     /*
-     *
+     * _getColSize - Retourne la largeur Bootstrap de l'élément (selon sa classe 'col-##')
      */
     var _getColSize = function (node, def = null) {
         let result = _reSize.exec( node.className );
