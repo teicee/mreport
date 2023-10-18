@@ -330,9 +330,9 @@ wizard = (function () {
         
         // disable some input fields
         input = document.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="stacked"]');
-        if (input) input.setAttribute("disabled", (nb_dataset > 1) ? false : true);
+        if (input) input.disabled = (nb_dataset > 1) ? false : true;
         input = document.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="extracolumn"]');
-        if (input) input.setAttribute("disabled", (with_label) ? false : true);
+        if (input) input.disabled = (with_label) ? false : true;
         
         // show fields linked to dataviz type (table, figure, chart...)
         _showFormParameters(cfg.type);
