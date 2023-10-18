@@ -13,7 +13,7 @@ saver = (function () {
      */
 
     // Représentation JSON de la composition d'un rapport (constitué d'une suite de JsonBloc)
-    var JsonReport = function(data, model = "") {
+    var JsonReport = function(data = null, model = "") {
         this.model   = model;   // pour init depuis le composer
         this.blocs   = [];      // liste de JsonBloc
         if (data instanceof Node) this.parseNode(data); else if (data) this.loadJson(data);
@@ -236,6 +236,7 @@ saver = (function () {
         .done(function (data, status, xhr) {
             if (_debug) console.debug("Résultat du téléchargement JSON :\n", data);
             if (status === 'nocontent') {
+//              if (callback) callback(true, new JsonReport());
                 // No database version, try to import from old HTML composer
                 _loadHtmlReport(report_id, callback);
             } else if (data.response === "success" && data.report_backup) {
@@ -265,10 +266,8 @@ saver = (function () {
         })
         .done(function (html, status, xhr) {
             if (_debug) console.debug("Résultat du téléchargement HTML :\n", html);
-            if (! html) {
-                if (callback) callback(false);
-                return;
-            }
+            if (! html) return (callback) ? callback(true, new JsonReport()) : null;
+            
             // Alter HTML for compatibility with the new composition parser
             let composition = document.createRange().createContextualFragment(
                 html.replaceAll('col-md', 'col').replaceAll('editable-text titre-', 'editable-text style-titre-')
@@ -356,6 +355,7 @@ saver = (function () {
             if (callback) callback(true, report_json);
         })
         .fail(function (xhr, status, err) {
+            if (xhr.status == 404) return (callback) ? callback(true, new JsonReport()) : null;
             Swal.fire("Une erreur s'est produite", "L'API ne réponds pas :<br>" + _parseError(xhr.responseText), 'error');
         });
     };
