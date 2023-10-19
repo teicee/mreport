@@ -608,6 +608,17 @@ h5>.badge {
   padding-top: 1em;
 }
 
+#wizard-result {
+  border: 2px dotted #212529;
+  background: #dee2e6;
+  padding: 1em;
+}
+#dataviz-result {
+  border: 2px dotted #212529;
+  background: #fff;
+  padding: 0;
+}
+
 .preloader {
   min-height: 10em;
   background: #ffffff url('../img/loader.svg') no-repeat center center;

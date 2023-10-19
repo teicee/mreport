@@ -699,11 +699,10 @@ admin = (function () {
             $(e.currentTarget).attr("data-related-id", datavizId);
             $("#dataviz_configure").attr("data-related-id", datavizId);
             $(e.currentTarget).find(".dataviz-title").text(datavizId);
-            //Remove existing visualization
-            document.getElementById("xviz").innerHTML = '';
             if (_debug) console.debug("Informations sur la dataviz :\n", _dataviz_data[datavizId]);
+            // display dataviz fields and render preview
             _populateForm('#dataviz-form', _dataviz_data[datavizId]);
-            if (visualization.value) _visualizeDataviz();
+            _visualizeDataviz(visualization.value);
         });
         /* Select all visible items in the list and trigger the cahnge event on checkbox to add them in the cart */
         $("#checkAll").click(function () {
@@ -1320,40 +1319,32 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
         return _dataviz_data[datavizid];
     };
 
-    var _visualizeDataviz = function () {
-        let container = document.getElementById("xviz");
-        container.innerHTML = '';
+    var _visualizeDataviz = function (definition) {
+        if (! definition) return;
+        let container = document.getElementById("dataviz-result");
+        if (! container) return;
+        container.innerHTML = "";
+        
         models.load( composer.getModelId() || 'composer', function(success, model){
             if (_debug) console.debug("Chargement du modèle pour le rendu de la dataviz :\n", model);
             if (! success) return;
-
-            let viz = JSON.parse(visualization.value);
-            if (_debug) console.debug("Configuration JSON pour la dataviz :\n", viz);
-
-            let component = model.renderDataviz(viz);
-            if (! (component instanceof Node)) {
-                container.innerText = "ERROR: " + component; return;
-            }
-
-            let style = document.createElement("style");
-            style.type = 'text/css';
-//          style.appendChild(document.createTextNode(model.page_styles));
-
-            let dataviz = document.createElement("div");
-            dataviz.id = "yviz";
-            dataviz.className = "col";
-            dataviz.appendChild(style);
-            dataviz.appendChild(component);
-
-            if (_debug) console.debug("Version HTML générée pour la dataviz :\n", dataviz);
-            container.appendChild(dataviz);
+            
+            // load render model CSS
+            document.querySelector("#xviz style").innerHTML = model.page_styles;
+            container.className = model.id;
+            
+            // get dataviz component herited from template and set attributes with properties object
+            let viz = JSON.parse(definition);
+            let html = model.renderDataviz(viz);
+            
+            // render result in wizard modal
+            if (! (html instanceof Node)) { container.innerText = "ERROR: " + html; return; }
+            container.appendChild(html);
             report.testViz(viz.data, viz.type, viz.properties);
-
+            
             //Hack to avoid many div with the same id
-            dataviz.querySelector(".dataviz").id += ".tmp";
-            if (dataviz.querySelector("canvas")) {
-                dataviz.querySelector("canvas").id += ".tmp";
-            }
+            html.querySelector(".dataviz").id += ".tmp";
+            html.querySelectorAll("canvas").forEach((el) => { el.id += ".tmp"; });
         });
     };
 
@@ -1380,8 +1371,8 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
                     admin.getDataviz(datavizId).viz = response.data.viz;
                     //Refresh dataviz in dataviz-modal-form
                     if (document.getElementById("dataviz-modal-form").classList.contains("show")) {
+                        _visualizeDataviz(response.data.viz);
                         visualization.value = response.data.viz;
-                        _visualizeDataviz();
                     }
                     Swal.fire({
                         title: 'Sauvegardé',

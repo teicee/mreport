@@ -35,7 +35,7 @@ models = (function () {
         
         // sinon analyse du fichier contenant les templates sur le serveur
         $.ajax({
-            url: "/static/html/model-" + model_ref + ".html",
+            url: "/static/html/model-" + model_ref + ".html?dc=" + Date.now(),
             dataType: "html"
         })
         .fail(function (xhr, status, err) {
@@ -305,11 +305,11 @@ models = (function () {
         
         let dataviz = component.querySelector(".dataviz");
         if (! dataviz) return '[DATAVIZ NOT VALID: '+ viz.type +']';
-        [...dataviz.classList].forEach((c) => { if (c.startsWith('icon-')) dataviz.classList.remove(c); });
         
         // populate HTML data attributes from JSON properties
         for (const [attribute, value] of Object.entries(viz.properties)) switch (attribute) {
             case "id":
+            case "model":
                 break;
             case "title":
                 component.querySelectorAll(".report-dataviz-title").forEach((el) => {
@@ -322,11 +322,15 @@ models = (function () {
                 });
                 break;
             case "icon":
-                dataviz.classList.add("custom-icon");
-                dataviz.classList.add(viz.properties.icon);
+                component.querySelectorAll(".custom-icon").forEach((el) => {
+//                  [...el.classList].forEach((c) => { if (c.startsWith('icon-')) el.classList.remove(c); });
+                    el.classList.add(viz.properties.icon);
+                });
                 break;
             case "iconposition":
-                dataviz.classList.add(viz.properties.iconposition);
+                component.querySelectorAll(".custom-icon").forEach((el) => {
+                    el.classList.add(viz.properties.iconposition);
+                });
                 break;
             default:
                 dataviz.dataset[attribute] = value;

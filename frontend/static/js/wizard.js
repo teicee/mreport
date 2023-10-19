@@ -209,12 +209,11 @@ wizard = (function () {
         // remove dataviz id references
         document.getElementById("wizard-panel").dataset.relatedId = "";
         document.getElementById("wizard-panel").querySelector(".modal-title tt").innerText = "";
-        // remove existing result
-        document.getElementById("wizard-code").innerText = "";
-        $("#wizard-result div").remove();
+        // remove existing result (dataviz preview with css)
+        $("#wizard-result").empty();
         $("#wizard-result").addClass("preloader");
-        // remove preview css from selected template
-        document.getElementById("wizard-view").querySelector("STYLE").innerHTML = "";
+        document.querySelector("#wizard-view style").innerHTML = "";
+        document.getElementById("wizard-code").innerText = "";
     };
 
     /**
@@ -517,6 +516,8 @@ wizard = (function () {
     };
 
     /**
+     * _onChangeModel - Linked with the render model selector
+     * TODO: update piklor palettes
      * @param  {event} ev
      */
     var _onChangeModel = function (ev) {
@@ -524,8 +525,8 @@ wizard = (function () {
         models.load(ev.target.value, function(success, data){
             // apply render model for wizard
             _initRenderModel(success ? data : null);
-            
-            // TODO: update piklor palettes
+            // update dataviz preview
+            _renderDatavizPreview();
         });
     };
 
@@ -536,8 +537,9 @@ wizard = (function () {
         if (_debug) console.debug('CALL _initRenderModel', model);
         if (! model) return;
         _model = model;
-        document.getElementById("selectedModelWizard").value = _model.ref;
         document.querySelector("#wizard-view style").innerHTML = _model.page_styles;
+        document.getElementById("wizard-result").className = _model.id;
+        document.getElementById("selectedModelWizard").value = _model.ref;
         if (_debug) console.debug("Changement du modèle pour le rendu de la dataviz :\n", _model);
     };
 
@@ -558,6 +560,7 @@ wizard = (function () {
                     if (! folders[icon.folder]) folders[icon.folder] = [];
                     folders[icon.folder].push(icon);
                     styles.push('.' + icon.id + ' { background-image: url(' + icon.url + '); }');
+                    styles.push('img.' + icon.id + ' { background: transparent; content: url(' + icon.url + '); }');
                 });
                 // insertion du code CSS pour les icones dans la balise head de l'interface
                 document.head.appendChild(document.createElement("style")).innerHTML = styles.join('\n');
@@ -636,24 +639,26 @@ wizard = (function () {
      */
     var _renderDatavizPreview = function () {
         if (_debug) console.debug('CALL _renderDatavizPreview');
-        let container = document.getElementById("wizard-result");
+        let w_result = document.getElementById("wizard-result");
+        w_result.classList.add("preloader");
+        w_result.innerHTML = "";
         
         // use the render model cell wrapper for the dataviz preview
+        let container;
         if (_model.page_layouts['wcell']) {
-            container.insertAdjacentHTML("beforeend", _model.page_layouts['wcell']);
-            let el = container.querySelector(".components-container");
-            if (el) container = el;
+            w_result.insertAdjacentHTML("beforeend", _model.page_layouts['wcell']);
+            container = w_result.querySelector(".components-container");
         }
+        if (! container) container = w_result;
         
         // get dataviz component herited from template and set attributes with properties object
         let viz = _form2json();
         let html = _model.renderDataviz(viz);
-        container.classList.remove("preloader");
+        w_result.classList.remove("preloader");
         
         // render result in wizard modal
-        if (! (html instanceof Node)) { container.innerText = "ERROR: " + component; return; }
+        if (! (html instanceof Node)) { container.innerText = "ERROR: " + html; return; }
         document.getElementById("wizard-code").innerText = html.outerHTML;
-        container.innerHTML = "";
         container.appendChild(html);
         
         // draw dataviz with data, type and properties

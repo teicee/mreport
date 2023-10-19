@@ -8,16 +8,10 @@
 
 button.report-share {
     display: none;
-}
-
-button.report-share.btn.btn-outline-info {
-    top: 0;
     position: absolute;
-    float: right;
-    left: 0;
-    margin: 5px;
     z-index: 1000;
 }
+
 div#preloader {
     position: fixed;
     left: 0;
@@ -27,31 +21,6 @@ div#preloader {
     height: 100%;
     overflow: visible;
     background: #ffffff url('../img/loader.svg') no-repeat center center;
-}
-
-.wizard-indicateurs {
-    border-right: 1px solid #e9ecef;
-}
-
-.wizard-code {
-    margin-top: 20px;
-    display: none;
-}
-
-.wizard {
-    position: fixed;
-    bottom: 30px;
-    float: right;
-    right: 30px;
-    z-index: 50;
-}
-
-.wizard2 {
-    position: fixed;
-    float: right;
-    right: 87px;
-    bottom: 30px;
-    z-index: 50;
 }
 
 .map-marker-circle-1 {
@@ -67,3 +36,8 @@ div#preloader {
     border: 4px solid #E91E63;
     opacity: 0.50;
 }
+
+.full-width {
+    width: 100%;
+}
+

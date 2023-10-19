@@ -2,20 +2,22 @@
 
     <!-- HTML wrapper used to construct the main report container in the composer interface -->
     <template class="report-layout" id="wmain">
-        <div class="container report model-a" id="report-composition">
-            <!-- blocs are injected here -->
-        </div>
-        <a class="printButton" href="javascript:window.print();">
-            <i class="fas fa-print"></i>
-        </a>
-        <div class="container footer invisible" id="report-generated-date">
-            Région Bretagne &mdash; <!-- date is injected here -->
+        <div class="model-a">
+            <div class="report container" id="report-composition">
+                <!-- blocs are injected here -->
+            </div>
+            <a class="printButton" href="javascript:window.print();">
+                <i class="fas fa-print"></i>
+            </a>
+            <div class="footer container invisible" id="report-generated-date">
+                Région Bretagne &mdash; <!-- date is injected here -->
+            </div>
         </div>
     </template>
 
     <!-- HTML wrapper used to construct the report container to share ony one dataviz -->
     <template class="report-layout" id="wshare">
-        <div class="container-fluid report filtered model-a" id="report-composition">
+        <div class="model-a report filtered container-fluid" id="report-composition">
             <!-- dataviz component is injected here -->
         </div>
     </template>
@@ -24,24 +26,24 @@
 
     <!-- HTML wrapper used to construct structural blocks -->
     <template class="report-layout" id="wstructure">
-            <!-- report-structure template is injected here -->{{HTML}}
+        <!-- report-structure template is injected here -->{{HTML}}
     </template>
 
     <!-- HTML wrapper used to construct elements components -->
     <template class="report-layout" id="welement">
-            <!-- report-element template is injected here -->{{HTML}}
+        <!-- report-element template is injected here -->{{HTML}}
     </template>
 
     <!-- HTML wrapper used to construct dataviz components -->
     <template class="report-layout" id="wdataviz">
-        <div class="card list-group-item flex-fill">
+        <div class="card list-group-item">
             <!-- dataviz component is injected here -->{{HTML}}
         </div>
     </template>
 
     <!-- HTML wrapper used as a container for dataviz|element components inside a bloc layout (cell or data) -->
     <template class="report-layout" id="wcell">
-        <div class="components-container d-flex flex-column justify-content-center">
+        <div class="components-container">
             <!-- dataviz|element components are injected here -->
         </div>
     </template>
@@ -51,16 +53,18 @@
     <template class="report-structure" id="btitle">
         <div class="report-bloc-title">
             <div class="bloc-layout">
-                <div class="components-container"></div>
+                <div class="components-container">
+                    <!-- dataviz|element components are injected here -->
+                </div>
             </div>
         </div>
     </template>
 
     <template class="report-structure" id="bsimple">
-        <div class="lyrow report-bloc bsimple">
-            <div class="bloc-layout layout-rows view">
+        <div class="report-bloc bsimple">
+            <div class="bloc-layout layout-rows">
                 <div class="layout-cols row">
-                    <div class="layout-cell col-12 customBaseColumn">
+                    <div class="layout-cell col-12">
                         <!-- components container is injected here -->
                     </div>
                 </div>
@@ -70,13 +74,13 @@
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-structure" id="b12">
-        <div class="lyrow report-bloc b12">
+        <div class="report-bloc b12">
             <h4 class="bloc-title">
                 <!-- this text is editable in composer -->
             </h4>
-            <div class="bloc-layout layout-rows view">
+            <div class="bloc-layout layout-rows">
                 <div class="layout-cols row">
-                    <div class="layout-cell col-12 customBaseColumn">
+                    <div class="layout-cell col-12">
                         <!-- components container is injected here -->
                     </div>
                 </div>
@@ -89,16 +93,16 @@
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-structure" id="b6-6">
-        <div class="lyrow report-bloc b6-6">
+        <div class="report-bloc b6-6">
             <h4 class="bloc-title">
                 <!-- this text is editable in composer -->
             </h4>
-            <div class="bloc-layout layout-rows view">
+            <div class="bloc-layout layout-rows">
                 <div class="layout-cols row">
-                    <div class="layout-cell col-6 customBaseColumn">
+                    <div class="layout-cell col-6">
                         <!-- components container is injected here -->
                     </div>
-                    <div class="layout-cell col-6 customBaseColumn">
+                    <div class="layout-cell col-6">
                         <!-- components container is injected here -->
                     </div>
                 </div>
@@ -111,19 +115,19 @@
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-structure" id="b4-4-4">
-        <div class="lyrow report-bloc b4-4-4">
+        <div class="report-bloc b4-4-4">
             <h4 class="bloc-title">
                 <!-- this text is editable in composer -->
             </h4>
-            <div class="bloc-layout layout-rows view">
+            <div class="bloc-layout layout-rows">
                 <div class="layout-cols row">
-                    <div class="layout-cell col-4 customBaseColumn">
+                    <div class="layout-cell col-4">
                         <!-- components container is injected here -->
                     </div>
-                    <div class="layout-cell col-4 customBaseColumn">
+                    <div class="layout-cell col-4">
                         <!-- components container is injected here -->
                     </div>
-                    <div class="layout-cell col-4 customBaseColumn">
+                    <div class="layout-cell col-4">
                         <!-- components container is injected here -->
                     </div>
                 </div>
@@ -136,28 +140,28 @@
 
     <!-- REQUERY (n) template report-bloc is a report bloc -->
     <template class="report-structure" id="b4-4-4_2">
-        <div class="lyrow report-bloc b4-4-4_2">
+        <div class="report-bloc b4-4-4_2">
             <!-- REQUERY bloc-title, editable-text means that is editable in composer -->
             <h4 class="bloc-title">
                 <!-- this text is editable in composer -->
             </h4>
             <!-- REQUERY bloc-layout -->
-            <div class="bloc-layout layout-rows view">
+            <div class="bloc-layout layout-rows">
                 <div class="layout-cols row">
-                    <div class="layout-cell col-4 customBaseColumn">
+                    <div class="layout-cell col-4">
                         <!-- components container is injected here -->
                     </div>
-                    <div class="layout-cell col-4 customBaseColumn">
+                    <div class="layout-cell col-4">
                         <!-- components container is injected here -->
                     </div>
-                    <div class="col-4 layout-rows customBaseColumn">
-                        <div class="layout-cols row lyrow h-50 verticalDivision">
-                             <div class="layout-cell col-12 customBaseColumn">
+                    <div class="col-4 layout-rows">
+                        <div class="layout-cols row">
+                             <div class="layout-cell col-12">
                                   <!-- components container is injected here -->
                              </div>
                         </div>
-                        <div class="layout-cols row lyrow h-50 verticalDivision">
-                             <div class="layout-cell col-12 customBaseColumn">
+                        <div class="layout-cols row">
+                             <div class="layout-cell col-12">
                                   <!-- components container is injected here -->
                              </div>
                         </div>
@@ -174,8 +178,10 @@
 
 
     <template class="report-element" id="btexte">
-        <div class="bloc-content">
-            <!-- this text is editable in composer -->
+        <div class="list-group-item free-text">
+            <div class="bloc-content">
+                <!-- this text is editable in composer -->
+            </div>
         </div>
     </template>
 
@@ -184,17 +190,17 @@
     <!-- REQUERY title component -->
     <template class="report-component dataviz" id="dvz-title" data-ref="title">
         <div class="report-component.title">
-            <h1 id="{{dataviz}}" class="dataviz report-title"></h1>
+            <h1 class="dataviz report-title" id="{{dataviz}}"><!-- Intitulé --></h1>
         </div>
     </template>
 
     <!-- REQUERY figure component -->
     <template class="report-component dataviz" id="dvz-figure" data-ref="figure">
         <div class="report-component.figure card-body">
-            <div id="{{dataviz}}" class="dataviz report-figure custom-icon icon-default">
+            <div class="dataviz report-figure custom-icon" id="{{dataviz}}">
                 <figure>
-                    <h1 class="report-figure-chiffre"></h1>
-                    <figcaption class="report-figure-caption"></figcaption>
+                    <strong class="report-figure-chiffre"><!-- Chiffre clé --></strong>
+                    <figcaption class="report-figure-caption"><!-- Commentaires --></figcaption>
                 </figure>
             </div>
         </div>
@@ -203,47 +209,52 @@
     <!-- REQUERY chart component -->
     <template class="report-component dataviz" id="dvz-chart" data-ref="chart">
         <div class="report-component.chart card-body">
-            <div class="report-dataviz-title" ><!-- Titre --></div>
-            <div id="{{dataviz}}" class="dataviz report-chart"></div>
-            <div class="report-dataviz-description mt-auto"><!-- Description --></div>
+            <div class="report-dataviz-title"><!-- Titre --></div>
+            <div class="dataviz report-chart" id="{{dataviz}}"></div>
+            <div class="report-dataviz-description"><!-- Description --></div>
         </div>
     </template>
 
     <!-- REQUERY table component -->
     <template class="report-component dataviz" id="dvz-table" data-ref="table">
-        <div class="report-component.chart card-body">
-            <div class="report-dataviz-title" ><!-- Titre --></div>
-            <div id="{{dataviz}}" class="dataviz report-table"></div>
-            <div class="report-dataviz-description mt-auto"><!-- Description --></div>
+        <div class="report-component.table card-body">
+            <div class="report-dataviz-title"><!-- Titre --></div>
+            <div class="dataviz report-table" id="{{dataviz}}"></div>
+            <div class="report-dataviz-description"><!-- Description --></div>
         </div>
     </template>
+
     <!-- REQUERY text component -->
     <template class="report-component dataviz" id="dvz-text" data-ref="text">
         <div class="report-component.text card-body">
-            <div id="{{dataviz}}" class="dataviz report-text">
-                <h3 class="report-text-title"></h3>
-                <p class="report-text-text"></p>
+            <div class="dataviz report-text" id="{{dataviz}}">
+                <h3 class="report-text-title"><!-- Intitulé --></h3>
+                <p class="report-text-text"><!-- Contenu --></p>
             </div>
         </div>
     </template>
+
     <!-- REQUERY image component -->
     <template class="report-component dataviz" id="dvz-image" data-ref="image">
         <div class="report-component.image card-body">
-            <div id="{{dataviz}}" class="dataviz report-image">
-                <img src="" class="img-fluid" alt="" />
+            <div class="dataviz report-image" id="{{dataviz}}">
+                <!-- img src="" class="img-fluid" alt="" /-->
             </div>
         </div>
     </template>
+
     <!-- REQUERY map component -->
     <template class="report-component dataviz" id="dvz-map" data-ref="map">
         <div class="report-component.map card-body">
-            <div id="{{dataviz}}" class="dataviz report-map"></div>
+            <div class="dataviz report-map" id="{{dataviz}}"><!-- Carte --></div>
         </div>
     </template>
+
     <!-- REQUERY iframe component -->
     <template class="report-component dataviz" id="dvz-iframe" data-ref="iframe">
         <div class="report-component.iframe card-body">
-            <div id="{{dataviz}}" class="dataviz report-iframe .hidden-md-down embed-responsive embed-responsive-16by9">
+            <div class="dataviz report-iframe embed-responsive" id="{{dataviz}}">
+                 <!-- IFrame -->
             </div>
         </div>
     </template>
@@ -252,271 +263,284 @@
 
     <!-- STYLE USED BY this TEMPLATE -->
     <style>
-/* Couleur de fond de la page*/
 .model-a {
-    background-color: #f5f5f5;
-    padding:15px;
+	font-family: 'Open Sans', sans-serif;
+	background-color: #222;
 }
-/* Font */
-.report {
-    font-family: 'Open Sans', sans-serif;
+.model-a .report {
+	background-color: #f5f5f5;
+	padding: 1em 2em;
 }
-
-/* Eléments structurants */
-
-/* titre du rapport */
-.report-bloc-title{
-    padding:30px 0;
+.model-a .footer {
+	padding: 1em 0;
+	text-align: right;
+	color: #999;
 }
 
-/* Texte libre */
-.free-text,
-.titleBloc {
-    font-size: 12px;
+/* blocs et layouts */
+.model-a .report-bloc {
+	margin: 1em 0;
+}
+.model-a .layout-cols + .layout-cols {
+	margin-top: 0.5em;
+}
+.model-a .layout-cols {
+	margin-left: -0.5em;
+	margin-right: -0.5em;
+}
+.model-a .layout-cols .layout-rows,
+.model-a .layout-cols .layout-cell {
+	padding: 0 0.5em;
 }
 
-/*div[class*='col-'] {
-    padding-right:0;
-    padding-left:0;
-}*/
-.view, .lyrow{
-    height: 100%;
+/* étirement vertical des row pour remplir toute la hauteur de leur conteneur */
+.model-a .bloc-layout .layout-cols .layout-rows {
+	display: flex;
+	flex-flow: column wrap;
+	justify-content: stretch;
 }
-.view .layout-cols.row {
-    margin-left:  -10px;
-    margin-right: -10px;
-}
-.view .layout-rows,
-.view .layout-cell {
-    padding: 0 10px;
-}
-.view .row + .row {
-    margin-top: 10px;
+.model-a .bloc-layout .layout-cols .layout-rows .row {
+	flex-grow: 1;
 }
 
-.components-container {
-    height: 100%;
-    border:none;
-    border-radius:0;
-    box-shadow:0 0 5px #ddd;
+/* conteneurs de composants */
+.model-a .components-container {
+	height: 100%;
+	box-shadow: 0 0 0.5em #ddd;
+	display: flex;
+	flex-direction: column;
 }
-.components-container .card-body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
+.model-a .components-container:empty {
+	min-height: 3.5em;
+	border: 1px dashed #fff;
+}
+.model-a .components-container:empty:after {
+	content: "En construction";
+	margin-top: 1em;
+	text-align: center;
+	font-style: italic;
+	color: #999;
+}
+.model-a .components-container .card {
+	flex: 1 1 auto;
+}
+.model-a .components-container .card-body {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	padding: 0;
 }
 
-/* titre des blocs */
-.bloc-title {
-    font-weight: 700;
-    padding: 15px;
-    margin:15px;
-    text-transform: capitalize;
-    letter-spacing: 0.2px;
-    color: #213042;
+/* structure : titre de bloc */
+.model-a .bloc-title {
+	margin: 1em 0;
+	padding: 0;
+	text-transform: capitalize;
+	font-weight: 700;
+	color: #213042;
 }
-/* sources des blocs */
-.bloc-sources {
-    font-size: 12px;
-    margin-top:30px;
-    text-align: right;
-}
-.bloc-sources p{
-    color:#0094ab;
-    font-size:12px;
+
+/* structure : sources de bloc */
+.model-a .bloc-sources {
+	margin: 0.5em 0 1em;
+	font-size: 12px;
+	font-style: italic;
+	color: #0094ab;
 }
 
 /* titre-n can be used with .bloc-title, .bloc-sources, .free-text */
-.style-titre-1 {
-    font-size: 20px;
-    font-weight: 800;
+.model-a .style-titre-1 {
+	font-size: 1.8em;
+	font-weight: 800;
 }
-.style-titre-2 {
-    font-size: 20px;
-    font-weight: 700;
-    font-style:italic;
+.model-a .style-titre-2 {
+	font-size: 1.6em;
+	font-weight: 700;
 }
-.style-titre-3 {
-    font-size: 16px;
-    font-weight: 600;
+.model-a .style-titre-3 {
+	font-size: 1.4em;
+	font-weight: 600;
 }
-.style-titre-4 {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.full-width{
-    width: 100%;
-}
-.components-container:hover .report-share{
-    display: block;
-}
-.no-data{
-    text-align: center;
+.model-a .style-titre-4 {
+	font-size: 1.2em;
+	font-weight: 500;
 }
 
-/* DATAVIZ CONTAINERS*/
-
-.report-dataviz-title,
-.report-dataviz-description{
-    margin-right: 15px;
-    margin-left: 15px;
-}
-.report-dataviz-title{
-    margin-top: 15px;
-    text-align: center;
-    color: #0094ab;
-    font-weight: 600;
-}
-.report-dataviz-description{
-    margin-bottom: 5px;
-    text-align: justify;
-    font-size: smaller;
+/* composant : élément texte */
+.model-a .list-group-item.free-text {
+	border: 0 none;
+	background: #ddd;
 }
 
-.report-title {
-    font-size: 30px;
-    text-align:center;
+/* composant : dataviz */
+.model-a .list-group-item .dataviz {
+	width: 100%;
+}
+.model-a .list-group-item .report-dataviz-title {
+	margin: 0 0.5em 1em 0.5em;
+	text-align: center;
+	font-weight: 600;
+	color: #0094ab;
+}
+.model-a .list-group-item .report-dataviz-description {
+	margin: 1em 0.5em;
+	text-align: justify;
+	font-size: smaller;
+	color: #333;
 }
 
-.report-chart,
-.report-figure {
-    padding-top: 20px;
+/* composant : dataviz titre */
+.model-a .report-bloc-title .list-group-item {
+	border: 0 none;
+	padding: 1em;
+	background: #0094ab;
+	color: #fff;
 }
-.report-chart {
-    width: 100%;
-}
-/* DATAVIZ MAP */
-.report-map {
-    width: 100%;
-}
-.map-marker-circle-1 {
-    background-color: #E91E63;
-    border-radius: 18px;
-    border: 4px solid #eaebf0;
-    opacity: 0.50;
-}
-/* DATAVIZ FIGURE */
-.report-figure-chiffre {
-    color:#ab1700;
-    font-size: 40px;
-    font-weight: 900;
-    text-align: left;
-    padding-top: 30px;
-}
-.report-figure-caption {
-    color:#000000;
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1;
-    text-align: left;
+.model-a .report-title {
+	font-size: 2em;
+	text-align: center;
 }
 
-.custom-icon {
-    background-repeat: no-repeat;
-    background-position: center;
-    background-position-y: top;
-    background-size:75px;
-}
-.custom-icon-left {
-    left:0;
-}
-.custom-icon-left .report-figure-chiffre{
-    margin-left: 50px;
-}
-.custom-icon-right .report-figure-chiffre{
-    margin-right: 50px;
+/* composant : dataviz map */
+.model-a .report-map .map-marker-circle-1 {
+	background-color: #0094ab;
+	border: 0.25em solid #fff;
+	border-radius: 50%;
+	opacity: 0.50;
 }
 
-/* used to test custom-icon in model-checker" */
-.icon-default::before {
-    content: " ";
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    z-index: -1;
-    background-size: 50px;
-    background-repeat: no-repeat;
-  /*background-image: url(globe-people.svg);*/
-    left: 50%;
-    top: -40px;
-    transform: translateX(-50%);
+/* composant : dataviz figure */
+.model-a .dataviz figure {
+	margin: 0;
 }
-.icon-default.custom-icon-right::before{
-    left: unset;
-    right: 0px;
-    top: 0;
-    transform: none;
+.model-a .report-figure .report-figure-chiffre {
+	display: block;
+	margin: 0;
+	padding: 0;
+	line-height: 1;
+	font-size: 2em;
+	font-weight: 900;
+	color: #0094ab;
 }
-.icon-default.custom-icon-left::before{
-    left:0px;
-    top:0;
-    transform: none;
+.model-a .report-figure .report-figure-caption {
+	margin: 0;
+	padding: 0;
+	line-height: 1;
+	font-size: 1em;
+	font-weight: 500;
+	color: #333;
 }
 
-/* Icon & text used with empty dataviz */
-.model-a div.components-container:empty {
-    min-height: 100px;
-    background-image: url(/static/picto/black/travaux.svg);
-    background-repeat: no-repeat;
-    background-size: 75px;
-    background-position-x: center;
-    background-position-y: center;
+/* picto de dataviz (background sur div ou content/src sur img) */
+.model-a img.custom-icon {
+	display: block;
+	margin: auto;
+	width: auto;
+	height: 2.5em;
+	max-width: 5em;
+	border: 0 none;
+	background: transparent;
+}
+.model-a img.custom-icon.custom-icon-left {
+	float: left;
+	margin: 0 0.5em 0 0;
+	width: 5em;
+	height: auto;
+	max-height: 10em;
+}
+.model-a img.custom-icon.custom-icon-right {
+	float: right;
+	margin: 0 0 0 0.5em;
+	width: 5em;
+	height: auto;
+	max-height: 10em;
+}
+.model-a div.custom-icon {
+	background-repeat: no-repeat;
+	background-position: center top;
+	background-size: auto 2.5em;
+	padding: 3em 0 0 0;
+	min-height: 5em;
+}
+.model-a div.custom-icon.custom-icon-left {
+	background-position: left center;
+	background-size: 5em auto;
+	padding: 0 0 0 6em;
+}
+.model-a div.custom-icon.custom-icon-right {
+	background-position: right center;
+	background-size: 5em auto;
+	padding: 0 6em 0 0;
+}
+.model-a div.custom-icon figure {
+	text-align: center;
+}
+.model-a div.custom-icon.custom-icon-left figure {
+	text-align: left;
+}
+.model-a div.custom-icon.custom-icon-right figure {
+	text-align: right;
 }
 
-.model-a div.components-container:empty:after {
-    content: "En construction";
-    text-align: center;
-    padding-left: 180px;
+/* boutons d'action : partages */
+.model-a .list-group-item:hover .report-share {
+	display: block;
+	top: 0;
+	right: 0;
+	margin: 0.5em;
 }
 
-/* IMPRESSION */
-.printButton{
-    width: 60px;
-    height: 60px;
-    position: fixed;
-    right: 30px;
-    bottom: 30px;
-    background-color: #eee;
-    color: #555;
-    padding: 10px;
-    border-radius: 35px;
-    box-shadow: 0 0 5px #ccc;
-    font-size: 24px;
-    text-align: center;
+/* boutons d'action : impression */
+.model-a .printButton {
+	position: fixed;
+	right: 1em;
+	bottom: 1em;
+	width: 2em;
+	height: 2em;
+	border-radius: 50%;
+	box-shadow: 0 0 0.2em 0.1em #000;
+	line-height: 2em;
+	font-size: 2em;
+	text-align: center;
+	background-color: #f5f5f5;
+	color: #555;
 }
-.fa-print:before{
-    margin: 0 auto;
+.model-a .printButton:hover {
+	background-color: #0094ab;
+	color: #fff;
+	box-shadow: 0 0 0.2em 0.1em #fff;
 }
-.printButton:hover{
-    background-color:#555;
-    color:#eee;
-}
+
 @media print {
-    @page {
-    size: A4 portrait;
-    -webkit-print-color-adjust: exact !important;   /* Chrome, Safari */
-    color-adjust: exact !important;
-  }
-  canvas {
-        min-height: 100%;
-        max-width: 100%;
-        max-height: 100%;
-        height: auto!important;
-        width: auto!important;
-    }
-    .printButton{
-        display: none !important;
-    }
-    .lyrow {
-        page-break-inside: avoid;
-    }
-    .model-a {
-        background-color: #ffffff;
-    }
+	@page {
+		/*size: A4 portrait;*/
+		color-adjust: exact !important;
+		-webkit-print-color-adjust: exact !important;
+	}
+	canvas {
+		min-height: 100%;
+		max-width: 100%;
+		max-height: 100%;
+		height: auto!important;
+		width: auto!important;
+	}
+	.printButton {
+		display: none !important;
+	}
+	.list-group-item {
+		page-break-inside: avoid;
+	}
+	.model-a, .model-a .report,
+	.model-a .list-group-item.free-text,
+	.model-a .report-bloc-title .list-group-item {
+		background-color: #fff;
+	}
+	.model-a .report-bloc-title .list-group-item {
+		color: #000;
+	}
 }
 
     </style>
