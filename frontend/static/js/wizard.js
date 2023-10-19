@@ -103,7 +103,7 @@ wizard = (function () {
                 if (callback) callback(false);
                 return;
             }
-            if (_debug) console.debug("Réponse pour l'échantillon :\n", data);
+            if (_debug) console.debug("Réponse du backend pour l'échantillon :\n", data);
             
             //update local data
             let tmp_data = {
@@ -214,7 +214,6 @@ wizard = (function () {
         $("#wizard-result div").remove();
         $("#wizard-result").addClass("preloader");
         // remove preview css from selected template
-        $("#wizard-result style").remove();
         document.getElementById("wizard-view").querySelector("STYLE").innerHTML = "";
     };
 
@@ -493,13 +492,8 @@ wizard = (function () {
             
             // use active model then initialize the wizard form and renderer
             models.load(modelId, function(success, data){
-                if (_debug) console.debug("Chargement du modèle pour le rendu de la dataviz :\n", data);
-                if (! success) return;
-                _model = data;
-                document.getElementById("selectedModelWizard").value = _model.ref;
-                _updateIconList();
-                _updateStyle();
-                
+                // apply render model for wizard
+                _initRenderModel(success ? data : null);
                 // configure wizard options with dataviz capabilities
                 _initDatavizTypeOptions(datavizId);
                 // apply config if exists
@@ -522,106 +516,83 @@ wizard = (function () {
         _renderDatavizPreview();
     };
 
-    /** TODO
+    /**
      * @param  {event} ev
      */
     var _onChangeModel = function (ev) {
         if (_debug) console.debug('CALL _onChangeModel', ev);
         models.load(ev.target.value, function(success, data){
-            if (_debug) console.debug("Changement du modèle pour le rendu de la dataviz :\n", data);
-            if (! success) return;
-            _model = data;
-            document.getElementById("selectedModelWizard").value = _model.ref;
-            _updateIconList(); // TODO: utilité ? (les pictos sont communes aux modèles, seules les CSS peuvent changer)
-            _updateStyle();
+            // apply render model for wizard
+            _initRenderModel(success ? data : null);
+            
             // TODO: update piklor palettes
         });
     };
 
-    /** TODO
-     * this method get icons list from api and show them in wizard
-     * and update css model with all icons
+    /**
+     * _initRenderModel - Set selected render model and load CSS for dataviz preview
      */
-    var _updateIconList = function () {
-        if (_debug) console.debug('CALL _updateIconList');
-        if (_model.icon_styles) return;
-        //update icon store in wizard modal
-        var style = "";
-        folders = {};
-        var tabs = ['<nav><div class="nav nav-tabs" id="icon-nav-tab" role="tablist">'];
-        var tabs_content = ['<div class="tab-content" id="icon-nav-tabContent">'];
+    var _initRenderModel = function (model) {
+        if (_debug) console.debug('CALL _initRenderModel', model);
+        if (! model) return;
+        _model = model;
+        document.getElementById("selectedModelWizard").value = _model.ref;
+        document.querySelector("#wizard-view style").innerHTML = _model.page_styles;
+        if (_debug) console.debug("Changement du modèle pour le rendu de la dataviz :\n", _model);
+    };
+
+    /**
+     * _initIconList - This method get icons list from api to add CSS and show them in wizard
+     */
+    var _initIconList = function () {
+        if (_debug) console.debug('CALL _initIconList');
         $.ajax({
             dataType: "json",
             type: "GET",
             url: [report.getAppConfiguration().api, "picto"].join("/"),
             success: function (icons) {
-                var style = "";
-                // group icons by folder
-                icons.forEach(function(icon) {
-                    if (folders[icon.folder]) {
-                        folders[icon.folder].push(icon);
-                    } else {
-                        folders[icon.folder] = [icon];
-                    }
+                if (_debug) console.debug("Réponse du backend pour la liste des icones :\n", icons);
+                // rangement des icones par dossiers (affichage en onglets) et génération des CSS
+                let folders = {}, styles = [];
+                icons.forEach((icon) => {
+                    if (! folders[icon.folder]) folders[icon.folder] = [];
+                    folders[icon.folder].push(icon);
+                    styles.push('.' + icon.id + ' { background-image: url(' + icon.url + '); }');
                 });
-                var first = true;
-                var tab_class_base = 'nav-item nav-link';
-                var tab_class = '';
-                var content_class_base = 'tab-pane fade';
-                var content_class ='';
-                for (const [folder, icons] of Object.entries(folders).sort()) {
-                    var icon_list = ['<ul class="icon-picker-list">'];
-                    icons.forEach(function(icon) {
-                        style += '\n.'+icon.id+' { background-image: url('+icon.url+');}';
-                        icon_list.push('<li data-class="'+icon.id+'" class="custom-icon ' + icon.id + '"></li>');
-                    });
-                    //close icon-picker-list
-                    icon_list.push('</ul>');
-                    var items = icon_list.join("");
-                    tab_class = tab_class_base;
-                    content_class = content_class_base;
-                    if (first) {
-                        tab_class += ' active';
-                        content_class += ' show active';
+                // insertion du code CSS pour les icones dans la balise head de l'interface
+                document.head.appendChild(document.createElement("style")).innerHTML = styles.join('\n');
+                // génération du code HTML du sélecteur d'icone (tabs Bootstrap)
+                let container = document.getElementById('wizard-icons');
+                if (container) {
+                    let tabs_head = [], tabs_body = [], first = true;
+                    for (const [folder, icons] of Object.entries(folders).sort()) {
+                        // code HTML de l'onglet
+                        let html_head = '<a role="tab" data-toggle="tab"';
+                        html_head+= (first) ? ' class="nav-item nav-link active" aria-selected="true"' : ' class="nav-item nav-link" aria-selected="false"';
+                        html_head+= ` id="icon-${folder}-tab" href="#icon-${folder}-pane" aria-controls="icon-${folder}-pane">${folder}</a>`;
+                        tabs_head.push(html_head);
+                        // code HTML du panneau
+                        let html_body = '<div role="tabpanel" class="tab-pane fade'+ ((first)?" show active":"") + '"';
+                        html_body+= ` id="icon-${folder}-pane" aria-labelledby="icon-${folder}-pane">`;
+                        html_body+= '<ul class="icon-picker-list">';
+                        html_body+= icons.map((icon) => { return `<li class="custom-icon ${icon.id}" data-class="${icon.id}"></li>`; }).join('\n');
+                        html_body+= '</ul></div>';
+                        tabs_body.push(html_body);
                         first = false;
                     }
-                    tabs.push(`<a class="${tab_class}" id="icon-${folder}-tab"
-                        data-toggle="tab" href="#icon-${folder}-content"
-                        role="tab" aria-controls="icon-${folder}-content"
-                        aria-selected="true">${folder}</a>`);
-                    tabs_content.push(`<div class="${content_class}" id="icon-${folder}-content"
-                        role="tabpanel" aria-labelledby="icon-${folder}-tab">${items}</div>`);
+                    container.innerHTML = '<nav><div class="nav nav-tabs" id="icon-nav-tab" role="tablist">\n' + tabs_head.join('\n') + '</div></nav>\n';
+                    container.innerHTML+= '<div class="tab-content" id="icon-nav-tabContent">\n' + tabs_body.join('\n') + '</div>\n';
+                    $(".icon-picker-list li.custom-icon").on('click', function(e) {
+                        let input = document.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="icon"]');
+                        if (input) input.value = e.currentTarget.dataset.class;
+                        document.getElementById('wizard-view').classList.remove('backcard');
+                    });
                 }
-
-                //close tabs elements
-                tabs_content.push('</div>');
-                tabs.push('</div></nav>');
-                var html = tabs.join(" ") + "\n" + tabs_content.join(" ");
-                $("#wizard-icons").html("");
-                $("#wizard-icons").append(html);
-                $(".icon-picker-list li.custom-icon").click(function (e) {
-                    var icon = e.currentTarget.dataset.class;
-                    $("#w_icon").val(icon);
-                    document.querySelector(".card-container").classList.toggle('backcard');
-                })
-                _model.icon_styles = style;
-                _updateStyle();
             },
             error: function (xhr, status, error) {
-                console.log(error);
+                console.warn("Échec lors de la récupération de la liste des icones disponibles du serveur :\n" + error);
             }
         });
-    };
-
-    /** TODO
-     * Update style in wizard modal
-     */
-    var _updateStyle = function () {
-        if (_debug) console.debug('CALL _updateStyle');
-        document.querySelector("#wizard-view style").innerHTML = [
-            _model.page_styles,  //get current/default style
-            _model.icon_styles,  //add icon style
-        ]. join("\n");
     };
 
     /**
@@ -754,6 +725,8 @@ wizard = (function () {
             dataType: "text",
             success: function (html) {
                 $("body").append(html);
+                // liste des pictos
+                _initIconList();
                 // events management
                 $('#wizard-panel').on('show.bs.modal', _onWizardOpened);
                 $('#wizard-panel').on('hide.bs.modal', _onWizardClose);

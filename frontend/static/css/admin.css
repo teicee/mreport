@@ -601,7 +601,8 @@ h5>.badge {
 #wizard-panel input:disabled{
   background-color: unset;
 }
-#dataviz-attributes.tab-content {
+
+#wizard-panel .tab-content {
   border: 1px solid #dee2e6;
   border-top-color: #fff;
   padding-top: 1em;
@@ -610,10 +611,6 @@ h5>.badge {
 .preloader {
   min-height: 10em;
   background: #ffffff url('../img/loader.svg') no-repeat center center;
-}
-
-#modal-icon-picker {
-  z-index: 10000;
 }
 
 /* flip the wizard result card / icon selector when back class */
@@ -662,29 +659,26 @@ h5>.badge {
   width: 100%;
 }
 
-#wizard-icons li .custom-icon {
-  height: 50px;
-  width: 15px;
-}
-
-.icon-picker-list {
+ul.icon-picker-list {
   display: flex;
   flex-flow: row wrap;
+  justify-content: flex-start;
+  align-content: flex-start;
   list-style: none;
   padding-left: 0;
   max-height: 300px;
   overflow-y: auto;
 }
-
-.icon-picker-list li {
-  display: flex;
-  flex: 0 0 10%;
-  float: left;
-  width: 20%;
-  height: 50px;
+ul.icon-picker-list li.custom-icon {
+  flex: 0 0 4em;
+  width: 4em;
+  height: 4em;
+  margin: 0.25em;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
-
-.icon-picker-list li.custom-icon:hover {
+ul.icon-picker-list li.custom-icon:hover {
   background-color: #dee2e6;
   cursor: pointer;
 }

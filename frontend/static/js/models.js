@@ -41,6 +41,7 @@ models = (function () {
         .fail(function (xhr, status, err) {
             console.error("Erreur au chargement du fichier html/model-" + model_ref + ".html :\n", err);
             _cache[ model_ref ] = false;
+            if (callback) callback(false, null);
         })
         .done(function (data, status, xhr) {
             if (_debug) console.debug("Chargement du fichier html du modèle '" + model_ref + "' :\n", data);
@@ -338,7 +339,7 @@ models = (function () {
      * Public
      */
     return {
-        /* used by composer.js & report.js */
+        /* used by composer.js, wizard.js, admin.js & report.js */
         load:   _loadHtml,
         /* unused */
         data:   function(model_ref) { return _cache[model_ref]; },

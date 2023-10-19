@@ -26,7 +26,7 @@ admin = (function () {
     var _initMenu = function () {
         $("ul.navbar-nav li").each(function () {
             $(this).on("click", function () {
-                $(".container-fluid.page, .nav-item").removeClass("active");
+                $(".container-fluid.page, #navbarSupportedContent .nav-item").removeClass("active");
                 $("#" + $(this).attr("data-page")).addClass("active");
                 if($(this).attr("data-page")=="home"){
                   $("#home-page").addClass("active");

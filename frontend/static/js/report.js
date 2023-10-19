@@ -102,9 +102,17 @@ report = (function () {
 
     var _getCss = function () {
         const dc = Date.parse(new Date());
-        $('head').prepend('<link rel="stylesheet" href="' + _getReportRessource("custom.css?dc=" + dc) + '" type="text/css" />');
-//      $('head').prepend('<link rel="stylesheet" href="' + _getReportRessource("report.css?dc=" + dc) + '" type="text/css" />');
-        $('head').prepend('<style>' + _HTMLTemplates.page_styles + '</style>');
+        // recherche les classes custom-icon présentes dans la composition pour générer les classes CSS des pictos
+        let classIcons = {};
+        document.querySelectorAll('#report-composition .dataviz.custom-icon').forEach((dataviz) => {
+            let res = dataviz.className.match(/^(.* )?(icon-([^-]+)-([^ ]+))( .*)?$/);
+            if (res) classIcons[ res[2] ] = '.' + res[2] + ' { background-image: url(/static/picto/' + res[3] + '/' + res[4] + '.svg); }';
+        });
+        if (_debug) console.debug("Liste des styles CSS générés pour les pictos trouvés :\n", classIcons);
+        // ajout par ordre de priorités des CSS des pictos, du modèle de rendu, puis le fichier custom du rapport
+        $('head').append('<style>\n' + Object.values(classIcons).join('\n') + '\n</style>');
+        $('head').append('<style>\n' + _HTMLTemplates.page_styles + '\n</style>');
+        $('head').append('<link rel="stylesheet" href="' + _getReportRessource("custom.css?dc=" + dc) + '" type="text/css" />');
     };
 
     var _showAvailableReports = function () {

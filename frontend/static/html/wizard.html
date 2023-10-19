@@ -54,7 +54,8 @@
                                                             class="form-control dataviz-attributes" id="w_icon">
                                                         </input>
                                                         <div class="input-group-append">
-                                                            <button type="button" class="btn mreport-primary-color-1-bg" onclick="document.querySelector('.card-container').classList.toggle('backcard');">...</button>
+                                                            <button type="button" class="btn mreport-primary-color-1-bg"
+                                                             onclick="document.getElementById('wizard-view').classList.toggle('backcard');">...</button>
                                                         </div>
                                                     </div>
 
@@ -236,7 +237,8 @@
                                 <div class="back">
                                     <div class="card-body">
                                         <h6 class="card-title">Icônes
-                                            <button type="button" class="close" onclick="document.querySelector('.card-container').classList.toggle('backcard');" aria-label="Close">
+                                            <button type="button" class="close" aria-label="Close"
+                                             onclick="document.getElementById('wizard-view').classList.remove('backcard');">
                                                 <span aria-hidden="true">×</span>
                                             </button>
                                         </h6>
