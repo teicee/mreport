@@ -110,32 +110,6 @@ composer = (function () {
             $modelSelector.prop("disabled", false);
         }
         
-        // load the composer model
-        models.load( 'composer', function(success, data){
-            if (_debug) console.debug("Récupération des données du modèle de composition :\n", data);
-            if (! success) return;
-            _HTMLTemplates = data;
-            
-            // generate structures blocks in sidebar from composer template
-            let $structures = $("#structure-models").remove('.list-group-item');
-            for (const ref in _HTMLTemplates.structure_blocs) {
-                $structures.append( _HTMLTemplates.makeStructureBloc(ref) );
-            }
-            _configureComposerTools($structures);
-            _configureCustomColumns($structures);
-            
-            // generate elements blocks in sidebar from composer template
-            let $elements = $("#element-models").remove('.list-group-item');
-            for (const ref in _HTMLTemplates.element_blocs) {
-                $elements.append( _HTMLTemplates.makeElementBloc(ref) );
-            }
-            _configureComposerTools($elements);
-            
-            // activation du sélecteur pour charger le rapport à composer
-            $reportSelector.on('change', _onSelectReport);
-            $reportSelector.prop("disabled", false);
-        });
-        
         // remove/empty actions
         $composerMain.on('click', '.bloc-tools .bloc-remove, .data-tools .bloc-remove', function(e){
             let $bloc = $(e.currentTarget).closest(".structure-item, .element-item, .dataviz-item");
@@ -207,7 +181,7 @@ composer = (function () {
         $('#text-validate').on('click', _textValidate);
         
         // save report buttons (json)
-        $("#save_report_json").on('click', function(e){
+        $("#save_report_json").on('click', function(evt){
             const report_id = $reportSelector.val();
             if (report_id) saver.saveJsonReport(report_id, document.getElementById("report-composition"));
         });
@@ -223,6 +197,32 @@ composer = (function () {
         // configure #dataviz-items to allow drag
         new Sortable(document.getElementById("dataviz-items"), {
             group: { name: 'component', pull: 'clone', put: false }, dataIdAttr: 'data-dataviz'
+        });
+        
+        // load the composer model to complete the initialization
+        models.load( 'composer', function(success, data){
+            if (_debug) console.debug("Récupération des données du modèle de composition :\n", data);
+            if (! success) return;
+            _HTMLTemplates = data;
+            
+            // generate structures blocks in sidebar from composer template
+            let $structures = $("#structure-models").remove('.list-group-item');
+            for (const ref in _HTMLTemplates.structure_blocs) {
+                $structures.append( _HTMLTemplates.makeStructureBloc(ref) );
+            }
+            _configureComposerTools($structures);
+            _configureCustomColumns($structures);
+            
+            // generate elements blocks in sidebar from composer template
+            let $elements = $("#element-models").remove('.list-group-item');
+            for (const ref in _HTMLTemplates.element_blocs) {
+                $elements.append( _HTMLTemplates.makeElementBloc(ref) );
+            }
+            _configureComposerTools($elements);
+            
+            // activation du sélecteur pour charger le rapport à composer
+            $reportSelector.on('change', _onSelectReport);
+            $reportSelector.prop("disabled", false);
         });
     };
 
@@ -339,6 +339,8 @@ composer = (function () {
      */
     var _configDataviz = function (node, viz) {
         if (viz.type) {
+            // remove samples data from dataviz definition
+            if (viz.data) delete viz.data;
             // copy paste generated code in <code> element
             node.querySelector('code.dataviz-definition').innerText = JSON.stringify(viz);
             // update dataviz element icon (chart for chart, table for table...)
@@ -353,8 +355,8 @@ composer = (function () {
      * _onSelectReport - This method is linked to #selectedReportComposer -event change-
      * to update dataviz items linked to selected report and load the report composition
      */
-    var _onSelectReport = function (e) {
-        let reportId = $(this).val();
+    var _onSelectReport = function (evt) {
+        let reportId = this.value;
         if (! reportId) return;
         
         // clear composition
@@ -362,7 +364,7 @@ composer = (function () {
         let $rootContainer = $("#composer .main").empty();
         
         // check report exists
-        var reportData = admin.getReportData(reportId);
+        let reportData = admin.getReportData(reportId);
         if (_debug) console.debug("Configuration du rapport (avec liste des dataviz disponibles) :\n", reportData);
         if (! reportData) return _alert("Rapport sélectionné non disponible !", "danger", true);
         
@@ -462,11 +464,9 @@ composer = (function () {
 
         let curText = saver.getTextData(source);
         if (source.classList.contains('bloc-title')) {
-//          evt.target.querySelector("#text-edit-level").disabled = false;
             evt.target.querySelector("input[value='text']").checked = true;
             evt.target.querySelector("input[value='html']").disabled = true;
         } else {
-//          evt.target.querySelector("#text-edit-level").disabled = true;
             evt.target.querySelector("input[value='html']").disabled = false;
             evt.target.querySelector("input[value='" + (curText.isHTML ? "html" : "text") +"']").checked = true;
         }
@@ -481,7 +481,7 @@ composer = (function () {
      * _textValidate - Application des modifications du texte dans le composer.
      */
     var _textValidate = function (evt) {
-        var data = {}, input, modal = evt.target.closest('.modal');
+        let data = {}, input, modal = evt.target.closest('.modal');
         if (! modal) { console.warn("Impossible de retrouver le contexte du bouton !"); return false; }
         if (_textSelected) {
             if (input = modal.querySelector('#text-edit-level')) data.style = input.value;
@@ -503,25 +503,25 @@ composer = (function () {
      */
     var _gridOpenForm = function (evt) {
         // groupes de lignes et de colonnes sélectionnées
-        var colsDiv = evt.relatedTarget.closest('.layout-cols');
-        var rowsDiv = evt.relatedTarget.closest('.layout-rows');
+        let colsDiv = evt.relatedTarget.closest('.layout-cols');
+        let rowsDiv = evt.relatedTarget.closest('.layout-rows');
         _gridSelected = colsDiv;
         // comptage du nombre de lignes
-        var rowsNum = 0;
+        let rowsNum = 0;
         for (let i = 0; i < rowsDiv.childElementCount; i++) {
             if (rowsDiv.children[i].classList.contains('layout-cols')) rowsNum++;
         }
         // liste des colonnes (avec leurs largeurs bs)
-        var colsList = [];
+        let colsList = [];
         for (let i = 0; i < colsDiv.childElementCount; i++) {
-            var col = colsDiv.children[i];
+            let col = colsDiv.children[i];
             // prendre uniquement les enfants ayant la classe "layout-cell" ou "layout-rows"
             if (! _reTest.test(col.className)) continue;
             // récupération de la taille à partir de la classe "col-##"
             colsList.push( _getColSize(col) );
         }
         // mise à jour du formulaire des dimensions
-        var $colsForm = $(this).find('#grid-columns-size').empty();
+        let $colsForm = $(this).find('#grid-columns-size').empty();
         colsList.forEach(function(size) {
             $colsForm.append( _composerTemplates.grid_col_input.replace('{{VAL}}', size) );
         });
@@ -534,8 +534,8 @@ composer = (function () {
      * _gridAddNewCol - Ajout d'une cellule dans le formulaire (avec saisie de la largeur bs)
      */
     var _gridAddNewCol = function (evt) {
-        var $btncol = $(this).closest('.col');
-        var size = Math.max(1, 12 - _gridCheckCols($btncol.parent().find('input')));
+        let $btncol = $(this).closest('.col');
+        let size = Math.max(1, 12 - _gridCheckCols($btncol.parent().find('input')));
         $btncol.before( _composerTemplates.grid_col_input.replace('{{VAL}}', size) );
         if ($btncol.siblings('.col').length >= 12) $btncol.remove();
     }
@@ -544,7 +544,7 @@ composer = (function () {
      * _gridCheckCols - Vérification des dimensions horizontales (total 12 pour grid bs)
      */
     var _gridCheckCols = function ($inputs) {
-        var total = 0;
+        let total = 0;
         $inputs.each( function(){
             let n = Number.parseInt(this.value, 10);
             n = isNaN(n) ? 1 : Math.max(1, Math.min(12, n));
@@ -611,22 +611,19 @@ composer = (function () {
     return {
         /* used by composer.js */
         init:           _init,
+        /* used by wizard.js */
+        configDataviz:  _configDataviz,
+        /* used by saver.js, wizard.js & admin.js */
+        getModelId:     function() { return _selectedModel; },
         /* used by admin.js */
         compose:        function(reportId) {
             $("#btn-composer").click(); // show composer page
             $('#selectedReportComposer').val(reportId).trigger("change"); // set report select value
-        },
-        /* used by saver.js & wizard.js */
-        getModelId:     function() { return _selectedModel; },
-        configDataviz:  _configDataviz,
-        /* used by wizard.js & textConfiguration.js */
-        getTemplates:   function() { return _HTMLTemplates; },
+        }
     };
 
 })();
 
-$(document).ready(function () {
+$(document).ready(function() {
     composer.init();
-    wizard.init();
-//  textedit.init();
 });

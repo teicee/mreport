@@ -680,29 +680,34 @@ admin = (function () {
         });
     };
 
-    _initCatalogOptions  = function () {
-      $('#dataviz-modal-form').on('show.bs.modal', function (e) {
-            var newDataviz = $(e.relatedTarget).attr('data-dataviz-state');
-            $(e.currentTarget).attr("data-dataviz-state", newDataviz);
-            var $input = $(e.currentTarget).find('.form-control');
-            var confirmed = $("#dataviz_confirmed");
+    var _initCatalogOptions = function () {
+        if (_debug) document.getElementById('visualization').closest('.row').classList.remove('hidden');
+        $('#dataviz-modal-form').on('show.bs.modal', function(ev) {
+            let newDataviz = ev.relatedTarget.dataset.datavizState;
+            ev.currentTarget.dataset.datavizState = newDataviz;
+            let input = ev.currentTarget.querySelector('.form-control');
+            let confirmed = document.getElementById("dataviz_confirmed");
             if (newDataviz === "edit") {
-                confirmed.attr("onclick", "admin.updateDataviz();");
-                $input.prop("disabled", false);
-                confirmed.html("Enregistrer");
+                confirmed.addEventListener('click', admin.updateDataviz);
+                confirmed.innerText = "Enregistrer";
+                if (input) input.disabled = false;
             } else if (newDataviz === "delete") {
-                confirmed.attr("onclick", "admin.deleteDataviz();");
-                $input.prop("disabled", true);
-                confirmed.html("Supprimer");
+                confirmed.addEventListener('click', admin.deleteDataviz);
+                confirmed.innerText = "Supprimer";
+                if (input) input.disabled = true;
             }
-            var datavizId = $(e.relatedTarget).attr('data-related-id');
-            $(e.currentTarget).attr("data-related-id", datavizId);
-            $("#dataviz_configure").attr("data-related-id", datavizId);
-            $(e.currentTarget).find(".dataviz-title").text(datavizId);
+            let datavizId = ev.relatedTarget.dataset.relatedId;
+            ev.currentTarget.dataset.relatedId = datavizId;
+            document.getElementById("dataviz_configure").dataset.relatedId = datavizId;
+            ev.currentTarget.querySelector(".dataviz-title").innerText = datavizId;
             if (_debug) console.debug("Informations sur la dataviz :\n", _dataviz_data[datavizId]);
             // display dataviz fields and render preview
             _populateForm('#dataviz-form', _dataviz_data[datavizId]);
-            _visualizeDataviz(visualization.value);
+            _visualizeDataviz(_dataviz_data[datavizId].viz, "#dataviz-modal-form .xviz .dataviz-result");
+        });
+        $('#dataviz-modal-form').on('hide.bs.modal', function(ev) {
+            let styles = document.querySelector("style#model-slot1");
+            if (styles) styles.innerHTML = "";
         });
         /* Select all visible items in the list and trigger the cahnge event on checkbox to add them in the cart */
         $("#checkAll").click(function () {
@@ -1319,30 +1324,46 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
         return _dataviz_data[datavizid];
     };
 
-    var _visualizeDataviz = function (definition) {
-        if (! definition) return;
-        let container = document.getElementById("dataviz-result");
-        if (! container) return;
-        container.innerHTML = "";
+    /*
+     * _visualizeDataviz. This method apply a dataviz definition to render a preview
+     * TODO: si absence de data (sample) dans la definition => appel à getSampleData() ?
+     */
+    var _visualizeDataviz = function (definition, targetRoot) {
+        let container = document.querySelector(targetRoot);
+        if (! container) { console.warn("Conteneur de preview non disponible !\n", targetRoot); return; }
         
-        models.load( composer.getModelId() || 'composer', function(success, model){
+        if (! definition) {
+            container.innerHTML = "<i class=\"no-preview\">Aucune prévisualisation : dataviz non configurée</i>";
+            return;
+        }
+        container.innerHTML = "";
+        container.classList.add('preloader');
+        
+        let viz = {};
+        try { viz = JSON.parse(definition); } catch (err) { console.warn("Invalid dataviz JSON definition:\n", err); return; }
+        if (! viz || ! viz.type || ! viz.properties) { console.warn("Invalid dataviz type definition:\n", viz); return; }
+        if (_debug) console.debug("Génération de la preview du dataviz :\n", viz);
+        
+        models.load( viz.properties.model || composer.getModelId() || 'composer', function(success, model){
             if (_debug) console.debug("Chargement du modèle pour le rendu de la dataviz :\n", model);
             if (! success) return;
             
-            // load render model CSS
-            document.querySelector("#xviz style").innerHTML = model.page_styles;
-            container.className = model.id;
-            
             // get dataviz component herited from template and set attributes with properties object
-            let viz = JSON.parse(definition);
             let html = model.renderDataviz(viz);
+            if (! (html instanceof Node)) { container.innerText = "ERROR: " + html; return; }
+            if (_debug) console.debug("Code HTML de la preview du dataviz :\n", html.cloneNode(true));
+            
+            // load render model CSS
+            container.className = "dataviz-result " + model.id;
+            let styles = document.querySelector("style#model-slot1");
+            if (styles) styles.innerHTML = model.page_styles;
             
             // render result in wizard modal
-            if (! (html instanceof Node)) { container.innerText = "ERROR: " + html; return; }
             container.appendChild(html);
-            report.testViz(viz.data, viz.type, viz.properties);
+            if (viz.data) report.testViz(viz.data, viz.type, viz.properties);
+            else container.appendChild(document.createElement("div")).innerHTML = '<i class="no-data">Aucune donnée disponible pour la preview</i>';
             
-            //Hack to avoid many div with the same id
+            // hack to avoid many div with the same id (ex: render same dataviz preview in the wizard modal)
             html.querySelector(".dataviz").id += ".tmp";
             html.querySelectorAll("canvas").forEach((el) => { el.id += ".tmp"; });
         });
@@ -1350,9 +1371,7 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
 
     /*
      * _saveDataviz. This method get dataviz definition in wizard and save it in viz dataiz field
-     *
      */
-
     var _saveDataviz = function (definition) {
         var datavizId = definition.properties.id;
         //get dataviz definition
@@ -1368,11 +1387,11 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
             success: function (response) {
                 if (response.response === "success" && response.data.viz) {
                     //Append local stored viz
-                    admin.getDataviz(datavizId).viz = response.data.viz;
+                    _dataviz_data[datavizId].viz = response.data.viz;
                     //Refresh dataviz in dataviz-modal-form
                     if (document.getElementById("dataviz-modal-form").classList.contains("show")) {
-                        _visualizeDataviz(response.data.viz);
-                        visualization.value = response.data.viz;
+                        document.getElementById('visualization').value = response.data.viz;
+                        _visualizeDataviz(response.data.viz, "#dataviz-modal-form .xviz .dataviz-result");
                     }
                     Swal.fire({
                         title: 'Sauvegardé',
@@ -1532,38 +1551,44 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
         });
     };
 
+
+    /*
+     * _init - This method initializes the admin interface.
+     */
+    var _init = function () {
+        _initCatalog();
+        _initReports();
+        _initMenu();
+        _initLevels();
+        _initReportOptions();
+        _initCatalogOptions();
+        $("body").tooltip({ selector: '[data-toggle=tooltip]' });
+    };
+
     /*
      * Public
      */
-
     return {
-        initCatalog: _initCatalog,
-        initReports: _initReports,
-        initMenu: _initMenu,
-        addReport: _addReport,
-        updateReport: _updateReport,
-        deleteReport: _deleteReport,
-        deleteReports: _deleteReports,
-        deleteDataviz: _deleteDataviz,
-        updateDataviz: _updateDataviz,
-        getDataviz: _getDataviz,
-        createReport: _createReport,
-        getReportData: _getReportData,
+        /* used by admin.js & admin.html */
+        init:           _init,
+        addReport:      _addReport,
+        createReport:   _createReport,
+        updateReport:   _updateReport,
+        deleteReport:   _deleteReport,
+        deleteReports:  _deleteReports,
+        updateDataviz:  _updateDataviz,
+        deleteDataviz:  _deleteDataviz,
+
+        /* used by composer.js */
+        getReportData:  _getReportData,
+
+        /* used by wizard.js */
+        getDataviz:     _getDataviz,
         saveVisualization: _saveDataviz,
-        initLevels: _initLevels,
-        initReportsVersion: _initReportsVersion,
-        initReportOptions: _initReportOptions,
-        initCatalogOptions: _initCatalogOptions
-    }; // fin return
+    };
 
 })();
 
-$(document).ready(function () {
-    admin.initCatalog();
-    admin.initReports();
-    admin.initMenu();
-    admin.initLevels();
-    admin.initReportOptions();
-    admin.initCatalogOptions();
-    $("body").tooltip({ selector: '[data-toggle=tooltip]' });
+$(document).ready(function() {
+    admin.init();
 });

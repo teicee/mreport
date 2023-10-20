@@ -321,4 +321,7 @@ import_wizard = (function () {
     }; // fin return
 
 })();
-import_wizard.init();
+
+$(document).ready(function() {
+    import_wizard.init();
+});

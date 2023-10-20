@@ -29,7 +29,7 @@ models = (function () {
     /*
      * _loadHtml : Load HTML templates and parameters from server model file
      */
-    var _loadHtml = function (model_ref, callback) {
+    var _loadHtml = function (model_ref, callback = null) {
         // retourne directement les données du modèle s'il a déjà été chargé
         if (model_ref in _cache) return (callback) ? callback(true, _cache[ model_ref ]) : true;
         
@@ -44,7 +44,7 @@ models = (function () {
             if (callback) callback(false, null);
         })
         .done(function (data, status, xhr) {
-            if (_debug) console.debug("Chargement du fichier html du modèle '" + model_ref + "' :\n", data);
+//          if (_debug) console.debug("Chargement du fichier html du modèle '" + model_ref + "' :\n", data);
             const parser = new DOMParser();
             _cache[ model_ref ] = _parseHtml( parser.parseFromString(data, "text/html") );
             _cache[ model_ref ].ref = model_ref;
@@ -345,9 +345,6 @@ models = (function () {
     return {
         /* used by composer.js, wizard.js, admin.js & report.js */
         load:   _loadHtml,
-        /* unused */
-        data:   function(model_ref) { return _cache[model_ref]; },
-        exists: function(model_ref) { if (model_ref in _cache) return (_cache[model_ref]) ? true : false; },
     };
 
 })();

@@ -6,13 +6,6 @@ body {
   height: 100%;
 }
 
-.card {
-  /*box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);*/
-  border: unset;
-  border-radius: 2px;
-  height: 100%;
-}
-
 .btn {
   border: none;
   border-radius: 2px;
@@ -47,8 +40,7 @@ font-weight: 700;
 .container-fluid.page {
   display: none;
 }
-
-.active.container-fluid.page {
+.container-fluid.page.active {
   display: block;
 }
 
@@ -135,6 +127,7 @@ h5>.badge {
 .modal[data-report-state="add"] .mreport-secondary-color-1-bg{
   display: inline-block;
 }
+
 /*
 .container-fluid {
   padding: 15px;
@@ -142,15 +135,18 @@ h5>.badge {
   padding-left: 0;
 }
 */
+.card {
+  border: unset;
+  border-radius: 2px;
+  height: 100%;
+}
 .card-body {
   padding: 1rem;
   width: 100%;
 }
-
 .card-link{
   font-size:0.85rem;
 }
-
 
 .cards {
   /*padding-left: 5px;*/
@@ -565,9 +561,6 @@ h5>.badge {
   transition: 0.2s;
 }
 
-#yviz .btn {
-  margin-top: 10px;
-}
 .duplicate{
   /* position: absolute;
   top:10px;
@@ -598,30 +591,40 @@ h5>.badge {
   display: inline-block;
   width: 20%;
 }
-#wizard-panel input:disabled{
-  background-color: unset;
-}
-
-#wizard-panel .tab-content {
-  border: 1px solid #dee2e6;
-  border-top-color: #fff;
-  padding-top: 1em;
-}
-
-#wizard-result {
-  border: 2px dotted #212529;
-  background: #dee2e6;
-  padding: 1em;
-}
-#dataviz-result {
-  border: 2px dotted #212529;
-  background: #fff;
-  padding: 0;
-}
 
 .preloader {
   min-height: 10em;
   background: #ffffff url('../img/loader.svg') no-repeat center center;
+}
+
+.dataviz-result {
+  border: 2px dotted #212529;
+  background: #fff;
+  padding: 0;
+  max-height: 400px;
+  overflow: scroll;
+}
+#wizard-view .dataviz-result {
+  background: #dee2e6;
+  padding: 1em;
+  max-height: 800px;
+}
+.dataviz-result .no-preview,
+.dataviz-result .no-data {
+  display: block;
+  padding: 1em;
+  text-align: center;
+  background: #eee;
+  color: #999;
+}
+
+#visualization {
+  height: 4rem;
+  font-size: 0.6rem;
+  line-height: 1.2;
+  background: #ffe;
+  color: #666;
+  word-break: break-word;
 }
 
 /* flip the wizard result card / icon selector when back class */

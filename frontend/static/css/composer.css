@@ -76,15 +76,17 @@
 .builder .sidenav .element-label {
   font-size: small;
 }
+
+.builder .sidenav .dataviz-item.dvz-used {
+  display: none; /* tant que le front n'est pas capable de gérer plusieurs exemplaires */
+  filter: alpha(opacity=75);
+  opacity: 0.75;
+}
 .builder .sidenav .dataviz-item .counters {
+  display: none; /* tant que le front n'est pas capable de gérer plusieurs exemplaires */
   position: absolute;
   right: 0;
   bottom: 0;
-}
-.builder .sidenav .dataviz-item.dvz-used {
-/*display: none;*/
-  filter: alpha(opacity=75);
-  opacity: 0.75;
 }
 
 .builder .sidenav .list-group-item .bloc-tools,
@@ -485,10 +487,32 @@
   justify-content: center;
 }
 
-#wizard-panel #wizard-code {
-  font-size: 10px;
-  line-height: 12px;
-  display: none;
+.wizard-panel input:disabled {
+  background-color: unset;
+}
+.wizard-panel .tab-content {
+  border: 1px solid #dee2e6;
+  border-top-color: #fff;
+  padding-top: 1em;
+}
+.wizard-panel .card-body {
+  padding: 0;
+}
+.wizard-panel .card-flip .back {
+  min-height: 100%;
+}
+.wizard-panel .wizard-code code {
+  border: 1px solid #dee2e6;
+  padding: 15px;
+  font-size: 9px;
+  line-height: 10px;
+  max-height: 10em;
+  overflow: scroll;
+  background: #ffe;
+  color: #666;
+}
+#wizard-icons .nav-link {
+  padding: 0.25em 0.5em;
 }
 
 .style-titre-1:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "I"; }

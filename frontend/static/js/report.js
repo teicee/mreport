@@ -360,8 +360,7 @@ report = (function () {
             _config[element + "s"] = _updateElementsConf(html_conf, json_conf);
         });
 
-        console.log("CONFIGURATION", _config);
-
+        if (_debug) console.debug("CONFIGURATION:\n", _config);
     };
 
     var _displayDate = function () {
@@ -692,12 +691,11 @@ report = (function () {
         }
     };
 
-    const hexToRgb = hex =>
-        hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => '#' + r + r + g + g + b + b)
-        .substring(1).match(/.{2}/g)
-        .map(x => parseInt(x, 16))
-
-
+    const _hex2rgb = (hex) => hex
+        .replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => '#' + r + r + g + g + b + b)
+        .concat('000000').match(/[a-f0-9]{2}/ig)
+        .slice(0,3).map(x => parseInt(x, 16))
+    ;
 
     var _setTitle = function (title) {
         document.getElementsByClassName("report-title")[0].textContent = title;
@@ -795,7 +793,7 @@ report = (function () {
 
             }
 
-            console.log(commonOptions);
+            if (_debug) console.debug("createChart common options :\n", commonOptions);
 
             var colors = ["#36A2EB"];
             var backgroundColors = []
@@ -804,8 +802,8 @@ report = (function () {
                 colors = chart.colors;
             }
             colors.forEach(function (color) {
-                backgroundColors.push('rgba(' + hexToRgb(color).join(',') + ',' + (chart.opacity || 0.5) + ')');
-                borderColors.push('rgba(' + hexToRgb(color).join(',') + ', 1)');
+                backgroundColors.push('rgba(' + _hex2rgb(color).join(',') + ',' + (chart.opacity || 0.5) + ')');
+                borderColors.push('rgba(' + _hex2rgb(color).join(',') + ', 1)');
             });
             var datasets = [];
             var _labels;
@@ -842,8 +840,7 @@ report = (function () {
             var w = base * ratio[0];
             var h = base * ratio[1];
             $(el).prepend('<canvas id="' + chart.id + '-canvas" width="' + w + '" height="' + h +'"></canvas>');
-            // Add Title and Description to the preview
-            //_configTitleDesc(chart.title, chart.description);
+
             var options = $.extend(commonOptions, chart.options);
             var plugins = [];
             if (chart.plugins && chart.plugins[0] === "ChartDataLabels") {
@@ -879,8 +876,6 @@ report = (function () {
                 figure.textContent = data[chiffrecle.id].label[0];
 
             }
-            // Add Title and Description to the preview
-            //_configTitleDesc(chiffrecle.title, chiffrecle.description);
         } else {
             _handleVizError(el, chiffrecle.id, data);
         }
@@ -936,34 +931,13 @@ report = (function () {
                 '<tr>' + columns.join("") + '</tr></thead>',
                 '<tbody>' + rows.join("") + '</tbody></table>'
             ].join("");
-            // Add Title and Description to the preview
-            //_configTitleDesc(table.title, table.description);
             $(el).append(html);
 
         } else {
             _handleVizError(el, table.id, data);
         }
     };
-    /*var _configTitleDesc = function (title, description) {
-        var parent = document.querySelector("#wizard-result div[class^='report-component']");
-        // Add title and description
-        if (parent && title) {
-            _addTitleOrDescription(title, "title", false, parent);
-        }
-        if (parent &&  description) {
-            _addTitleOrDescription(description, "summary", true, parent);
-        }
-    }
-    var _addTitleOrDescription = function (text, type, append, parent) {
-        var parser = new DOMParser();
-        let elementDiv = textedit.textPatterns[type];
-        elementDiv = parser.parseFromString(elementDiv, "text/html").getElementsByClassName("report-chart-" + type)[0];
-        elementDiv.getElementsByClassName("editable-text")[0].innerHTML = text;
-        if (append)
-            parent.append(elementDiv);
-        else
-            parent.prepend(elementDiv);
-    }*/
+
     var _createText = function (data, text) {
         var el = _getDomElement("text", text.id);
         if (el && data[text.id]) {
@@ -1266,16 +1240,11 @@ report = (function () {
 
         }
 
-        if (_config.wizard || APIRequest.wizard) {
-            wizard.init(_data);
-        }
-
         if (errors && _config.debug) {
             $(".report-alert").show();
         }
 
         $(".report").fadeTo("slow", 1);
-
     };
 
 

@@ -5,20 +5,20 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <script src="/static/js/extLibs/jquery.min.js"></script>
-    <script src="/static/js/extLibs/popper.min.js"></script>
-    <script src="/static/js/extLibs/bootstrap.min.js"></script>
-    <script src="/static/js/extLibs/Chart.min.js"></script>
-    <script src="/static/js/extLibs/chartjs-plugin-datalabels.js"></script>
     <link rel="stylesheet" href="/static/js/extLibs/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" />
     <link rel="stylesheet" href="/static/js/extLibs/leaflet.css" />
-    <script src="/static/js/extLibs/leaflet.js"></script>
     <link rel="stylesheet" href="/static/css/admin.css" />
     <link rel="stylesheet" href="/static/css/composer.css" />
     <link rel="stylesheet" href="/static/css/import.css" />
     <link rel="stylesheet" href="/static/fonts/04b_30/stylesheet.css" />
     <link rel="stylesheet" href="/static/css/colors.css" />
+    <script src="/static/js/extLibs/jquery.min.js"></script>
+    <script src="/static/js/extLibs/popper.min.js"></script>
+    <script src="/static/js/extLibs/bootstrap.min.js"></script>
+    <script src="/static/js/extLibs/Chart.min.js"></script>
+    <script src="/static/js/extLibs/chartjs-plugin-datalabels.js"></script>
+    <script src="/static/js/extLibs/leaflet.js"></script>
     <script src="/static/js/extLibs/mustache.min.js"></script>
     <script src="/static/js/extLibs/fuse.min.js"></script>
     <script src="/static/js/extLibs/Sortable.js"></script>
@@ -28,13 +28,16 @@
     <script src="/static/js/extLibs/indent.min.js"></script>
     <script src="/static/js/extLibs/bs-custom-file-input.min.js"></script>
     <script src="/static/js/extLibs/papaparse.min.js"></script>
-    <script src="/static/js/composer.js"></script>
-    <script src="/static/js/saver.js"></script>
     <script src="/static/js/models.js"></script>
+    <script src="/static/js/saver.js"></script>
     <script src="/static/js/wizard.js"></script>
-    <script src="/static/js/report.js"></script>
-    <script src="/static/js/admin.js"></script>
+    <script src="/static/js/composer.js"></script>
     <script src="/static/js/import.js"></script>
+    <script src="/static/js/admin.js"></script>
+    <script src="/static/js/report.js"></script>
+    <style id="picto-css">/* svg picto css is injected here */</style>
+    <style id="model-slot1">/* render model css is injected here (used by dataviz form preview) */</style>
+    <style id="model-slot2">/* render model css is injected here (used by wizard form preview) */</style>
 </head>
 
 <body class="mreport-grey6-bg">
@@ -287,14 +290,13 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row" id="xviz">
-                        <div class="col" id="yviz">
-                            <style><!-- render model css is injected here --></style>
-                            <div id="dataviz-result"><!--code is injected here --></div>
-                        </div>
-                    </div>
                     <form class="form" id="dataviz-form" role="form" autocomplete="off">
-                        <div class="form-group row">
+                        <div class="row form-group xviz">
+                            <div class="col yviz">
+                                <div class="dataviz-result"><!--code is injected here --></div>
+                            </div>
+                        </div>
+                        <div class="row form-group">
                             <div class="col">
                                 <label for="inputTitle"><span class="badge mreport-grey1-bg">Nom</span></label>
                                 <input type="text" class="form-control" name="title" id="inputTitle"
@@ -310,9 +312,8 @@
                                 <input type="text" class="form-control" name="source" id="inputSource"
                                     placeholder="Source" required="">
                             </div>
-
                         </div>
-                        <div class="form-group row">
+                        <div class="row form-group">
                             <div class="col">
                                 <label for="inputDescription"><span class="badge mreport-grey1-bg">Description</span></label>
                                 <p class="invalid-feedback">500 caractères max.</p>
@@ -320,10 +321,7 @@
                                     placeholder="Description">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <input type="text" class="form-control hidden" name="viz" id="visualization" required="">
-                        </div>
-                        <div class="form-group row">
+                        <div class="row form-group">
                             <div class="col">
                                 <label for="inputLevel"><span class="badge mreport-grey1-bg">Niveau</span></label>
                                 <select class="form-control" name="level" id="inputLevel"
@@ -355,10 +353,13 @@
                                     required="">
                             </div>
                         </div>
-
-
+                        <div class="row form-group hidden">
+                            <div class="col">
+                                <label for="visualization"><span class="badge mreport-grey1-bg">Configuration JSON de la représentation par défaut</span></label>
+                                <textarea class="form-control text-monospace" name="viz" id="visualization" required=""></textarea>
+                            </div>
+                        </div>
                     </form>
-
                 </div>
                 <div class="modal-footer">
                     <button id="dataviz_configure" class="btn mreport-grey1-bg" data-toggle="modal" data-target="#wizard-panel"
