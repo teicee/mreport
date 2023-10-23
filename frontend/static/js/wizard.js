@@ -498,7 +498,7 @@ wizard = (function () {
                 break;
             case "columns" :  // hugly
                 input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="'+attribute+'"]');
-                if (! input) console.warn("json2form error : aucun input pour la propriété " + attribute);
+                if (! input) console.warn("json2form : aucun input pour la propriété " + attribute);
                 else input.value = ( (value[0] === 1) ? value.map(x => x - 1) : value );
                 break;
             case "colors" :
@@ -510,7 +510,7 @@ wizard = (function () {
                 value = value.join(',');
             default:
                 input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="'+attribute+'"]');
-                if (! input) console.warn("json2form error : aucun input pour la propriété " + attribute);
+                if (! input) console.warn("json2form : aucun input pour la propriété " + attribute);
                 else if (input.type == "checkbox") input.checked = value;
                 else input.value = value;
         }
@@ -700,7 +700,6 @@ wizard = (function () {
 
     /**
      * _onChangeModel - Linked with the render model selector
-     * TODO: update piklor palettes
      * @param  {event} evt
      */
     var _onChangeModel = function (evt) {
@@ -709,6 +708,11 @@ wizard = (function () {
             _modal.classList.add('state-changed');
             // apply render model for wizard
             _initRenderModel(success ? data : null);
+            // update piklor instances palette
+            Object.keys(_piklor_instances).forEach((index) => {
+                _piklor_instances[ index ].colors = _model.colors || [];
+                _piklor_instances[ index ].render();
+            });
             // refresh dataviz preview
             _renderDatavizPreview();
         });
@@ -785,20 +789,19 @@ wizard = (function () {
         if (! _close_confirmation) {
             // affiche le dialogue de confirmation
             Swal.fire({
+                icon: 'warning',
                 title: "Êtes-vous sûr de vouloir quitter l'assistant ?",
                 text: "Il semble que vous ayez effectué des modifications non enregistrées...",
-                icon: 'warning',
-                buttonsStyling: false,
-                customClass: {
-                  cancelButton: 'btn btn-secondary mr-2',
-                  confirmButton: 'btn btn-danger ml-2',
-                },
                 showCancelButton: true,
                 cancelButtonText: "Rester",
                 confirmButtonText: "Quitter",
                 reverseButtons: true,
+                customClass: {
+                  cancelButton: 'btn btn-secondary mr-2',
+                  confirmButton: 'btn btn-danger ml-2',
+                },
+                buttonsStyling: false,
                 focusCancel: true,
-                allowOutsideClick: false,
             }).then((result) => {
                 // code exécuté après la fermeture de la boîte de dialogue Swal
                 if (_debug) console.debug("onModalclose result:", result);

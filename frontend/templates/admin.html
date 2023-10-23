@@ -276,7 +276,7 @@
     </div>
     <!-- Composer end -->
 
-    <!-- Modal dataviz -->
+    <!-- Modal dataviz form -->
     <div class="modal fade" id="dataviz-modal-form" data-related-id="" tabindex="-1" data-backdrop="static"
         role="dialog" aria-labelledby="datavizModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
@@ -300,20 +300,20 @@
                         </div>
                     <form class="form" id="dataviz-form" role="form" autocomplete="off">
                         <div class="row form-group">
-                            <div class="col-6">
+                            <div class="col-md-6">
                                 <label for="inputTitle"><span class="badge mreport-grey1-bg">Intitulé</span></label>
                                 <input type="text" class="form-control" name="title" id="inputTitle"
                                     placeholder="Nom de la dataviz">
                             </div>
-                            <div class="col-3">
-                                <label for="inputYear"><span class="badge mreport-grey1-bg">Millésime</span></label>
-                                <input type="text" class="form-control" name="year" id="inputYear"
-                                    placeholder="Millésime" required="">
-                            </div>
-                            <div class="col-3">
+                            <div class="col-sm-8 col-md-3">
                                 <label for="inputSource"><span class="badge mreport-grey1-bg">Source</span></label>
                                 <input type="text" class="form-control" name="source" id="inputSource"
                                     placeholder="Source" required="">
+                            </div>
+                            <div class="col-sm-4 col-md-3">
+                                <label for="inputYear"><span class="badge mreport-grey1-bg">Millésime</span></label>
+                                <input type="text" class="form-control" name="year" id="inputYear"
+                                    placeholder="Millésime" required="">
                             </div>
                         </div>
                         <div class="row form-group">
@@ -325,13 +325,18 @@
                             </div>
                         </div>
                         <div class="row form-group">
-                            <div class="col-3">
+                            <div class="col-sm-8 col-md-6 col-lg-3">
                                 <label for="inputLevel"><span class="badge mreport-grey1-bg">Niveau</span></label>
                                 <select class="form-control" name="level" id="inputLevel"
                                     placeholder="Référentiel" required="">
                                 </select>
                             </div>
-                            <div class="col-3">
+                            <div class="col-sm-4 col-md-6 col-lg-3">
+                                <label for="inputJob"><span class="badge mreport-grey1-bg">Job</span></label>
+                                <input type="text" class="form-control" name="job" id="inputJob" placeholder="Type"
+                                    required="">
+                            </div>
+                            <div class="col-sm-8 col-md-6 col-lg-3">
                                 <label for="inputType"><span class="badge mreport-grey1-bg">Mode de représentation</span></label>
                                 <select class="form-control" name="type" id="inputType" placeholder="Mode de Réprésentation par défault"
                                     required="">
@@ -345,14 +350,9 @@
                                     <option value="titre">titre</option>
                                 </select>
                             </div>
-                            <div class="col-3">
+                            <div class="col-sm-4 col-md-6 col-lg-3">
                                 <label for="inputUnit"><span class="badge mreport-grey1-bg">Unité</span></label>
                                 <input type="text" class="form-control" name="unit" id="inputUnit" placeholder="Type"
-                                    required="">
-                            </div>
-                            <div class="col-3">
-                                <label for="inputJob"><span class="badge mreport-grey1-bg">Job</span></label>
-                                <input type="text" class="form-control" name="job" id="inputJob" placeholder="Type"
                                     required="">
                             </div>
                         </div>

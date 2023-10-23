@@ -29,7 +29,7 @@
         options.style = Object(options.style);
         options.style.display = options.style.display || "block";
         options.closeOnBlur = options.closeOnBlur || false;
-        options.template = options.template || "<div class=\"btn-color\" data-col=\"{color}\" style=\"background-color: {color}\"></div>";
+		options.template = options.template || "<div class=\"btn-color\" data-col=\"{color}\" style=\"background-color: {color}\" title=\"{color}\"></div>";
 		options.manualInput = options.manualInput || false;
 		options.removeColor = options.removeColor || false;
         self.elm = self.getElm(sel);

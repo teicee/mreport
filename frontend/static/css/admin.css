@@ -885,3 +885,18 @@ a:focus{
 /* font-weight:600; */
 text-decoration:underline!important;
 }
+
+/* gestion du backdrop avec double ouverture de modal */
+#dataviz-modal-form.modal.show {
+  z-index: 1045;
+}
+#wizard-panel.modal.show {
+  z-index: 1050;
+}
+.modal-backdrop.show {
+  z-index: 1040;
+}
+.modal-backdrop.show + .modal-backdrop.show {
+  z-index: 1049;
+}
+
