@@ -682,30 +682,28 @@ admin = (function () {
 
     var _initCatalogOptions = function () {
         if (_debug) document.getElementById('visualization').closest('.row').classList.remove('hidden');
-        $('#dataviz-modal-form').on('show.bs.modal', function(ev) {
-            let newDataviz = ev.relatedTarget.dataset.datavizState;
-            ev.currentTarget.dataset.datavizState = newDataviz;
-            let input = ev.currentTarget.querySelector('.form-control');
-            let confirmed = document.getElementById("dataviz_confirmed");
-            if (newDataviz === "edit") {
-                confirmed.addEventListener('click', admin.updateDataviz);
-                confirmed.innerText = "Enregistrer";
-                if (input) input.disabled = false;
-            } else if (newDataviz === "delete") {
-                confirmed.addEventListener('click', admin.deleteDataviz);
-                confirmed.innerText = "Supprimer";
-                if (input) input.disabled = true;
+        /* Ouverture du formulaire d'édition/suppression d'une dataviz */
+        $('#dataviz-modal-form').on('show.bs.modal', function(evt) {
+            // récupération des infos depuis le bouton appellant (action & dataviz)
+            let datavizState = evt.relatedTarget.dataset.datavizState;
+            evt.currentTarget.dataset.datavizState = datavizState;
+            let datavizId = evt.relatedTarget.dataset.relatedId;
+            evt.currentTarget.dataset.relatedId = datavizId;
+            evt.currentTarget.querySelector(".dataviz-title").innerText = datavizId;
+            document.getElementById("dataviz-configure").dataset.relatedId = datavizId;
+            // désactivation des champs du formulaire pour la popup de suppression
+            let inputs = evt.currentTarget.querySelectorAll('.form-control');
+            switch (datavizState) {
+                case "edit"   : inputs.forEach((el) => { el.disabled = false; }); break;
+                case "delete" : inputs.forEach((el) => { el.disabled = true;  }); break;
             }
-            let datavizId = ev.relatedTarget.dataset.relatedId;
-            ev.currentTarget.dataset.relatedId = datavizId;
-            document.getElementById("dataviz_configure").dataset.relatedId = datavizId;
-            ev.currentTarget.querySelector(".dataviz-title").innerText = datavizId;
-            if (_debug) console.debug("Informations sur la dataviz :\n", _dataviz_data[datavizId]);
             // display dataviz fields and render preview
+            if (_debug) console.debug("Informations sur la dataviz :\n", _dataviz_data[datavizId]);
             _populateForm('#dataviz-form', _dataviz_data[datavizId]);
             _visualizeDataviz(_dataviz_data[datavizId].viz, "#dataviz-modal-form .xviz .dataviz-result");
         });
-        $('#dataviz-modal-form').on('hide.bs.modal', function(ev) {
+        /* Fermeture du formulaire d'édition/suppression d'une dataviz */
+        $('#dataviz-modal-form').on('hidden.bs.modal', function(evt) {
             let styles = document.querySelector("style#model-slot1");
             if (styles) styles.innerHTML = "";
         });
@@ -1370,46 +1368,43 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
     };
 
     /*
-     * _saveDataviz. This method get dataviz definition in wizard and save it in viz dataiz field
+     * _saveDataviz. This method get dataviz definition in wizard and save it in viz dataviz field (default representation)
      */
-    var _saveDataviz = function (definition) {
-        var datavizId = definition.properties.id;
-        //get dataviz definition
-        var viz = JSON.stringify(definition);
+    var _saveDataviz = function (definition, callback = null) {
+        if (_debug) console.debug('_saveDataviz definition :', definition);
+        let datavizId = definition.properties.id;
         $.ajax({
-            dataType: "json",
             type: "POST",
-            contentType: 'application/json',
-            url: [report.getAppConfiguration().api, "store", datavizId].join("/"),
+            dataType: "json",
+            contentType: "application/json",
             data: JSON.stringify({
-                "viz": viz
+                "viz": JSON.stringify(definition)
             }),
-            success: function (response) {
-                if (response.response === "success" && response.data.viz) {
-                    //Append local stored viz
-                    _dataviz_data[datavizId].viz = response.data.viz;
-                    //Refresh dataviz in dataviz-modal-form
-                    if (document.getElementById("dataviz-modal-form").classList.contains("show")) {
-                        document.getElementById('visualization').value = response.data.viz;
-                        _visualizeDataviz(response.data.viz, "#dataviz-modal-form .xviz .dataviz-result");
-                    }
-                    Swal.fire({
-                        title: 'Sauvegardé',
-                        text: "La dataviz \'" + datavizId + "\' a été sauvegardée comme représentation par défaut.",
-                        icon: 'success',
-                        showCancelButton: false
-                    });
-                } else {
-                    alert("enregistrement échec :" + response.response);
+            url: [report.getAppConfiguration().api, "store", datavizId].join("/"),
+        })
+        .done(function (json, status, xhr) {
+            if (_debug) console.debug("Résultat de l'enregistrement :\n", json);
+            if (json.response === "success" && json.data && json.data.viz) {
+                // append local stored viz
+                _dataviz_data[datavizId].viz = json.data.viz;
+                // refresh dataviz in dataviz-modal-form
+                if (document.getElementById("dataviz-modal-form").classList.contains("show")) {
+                    document.getElementById('visualization').value = json.data.viz;
+                    _visualizeDataviz(json.data.viz, "#dataviz-modal-form .xviz .dataviz-result");
                 }
-            },
-            error: function (a, b, c) {
-                console.log(a, b, c);
+                Swal.fire("Sauvegardé", "Enregistrement de la définition par défaut du dataviz : " + datavizId, 'success');
+                if (callback) callback(true, json.data.viz);
+            } else {
+                Swal.fire("Une erreur s'est produite", "La définition du dataviz n'a pas pu être enregistrée :<br>" + (json.error || json.response), 'error');
+                if (callback) callback(false);
             }
+        })
+        .fail(function (xhr, status, error) {
+            Swal.fire("Une erreur s'est produite", "L'API ne réponds pas :<br>" + _parseError(xhr.responseText), 'error');
+            if (callback) callback(false);
         });
-
-
     };
+
     var _duplicateReport = function (event) {
         var parent = event.currentTarget.parentNode
         var report_title = parent.firstElementChild.innerHTML;
@@ -1551,7 +1546,6 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
         });
     };
 
-
     /*
      * _init - This method initializes the admin interface.
      */
@@ -1578,13 +1572,11 @@ $(".card.dataviz").parent().removeClass("hidden").removeClass("filterLevelCatalo
         deleteReports:  _deleteReports,
         updateDataviz:  _updateDataviz,
         deleteDataviz:  _deleteDataviz,
-
         /* used by composer.js */
         getReportData:  _getReportData,
-
         /* used by wizard.js */
         getDataviz:     _getDataviz,
-        saveVisualization: _saveDataviz,
+        saveDataviz:    _saveDataviz,
     };
 
 })();

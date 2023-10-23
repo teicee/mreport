@@ -88,44 +88,41 @@ h5>.badge {
   display: none;
 }
 
-
-.modal[data-dataviz-state="new"] .mreport-secondary-color-1-bg {
+.modal[data-report-state="add"] .mreport-secondary-color-1-bg {
   display: inline-block;
 }
 
-.modal[data-dataviz-state="edit"] .mreport-secondary-color-1-bg {
-  display: none;
-}
-
-.modal[data-dataviz-state="delete"] .mreport-secondary-color-1-bg {
-  display: none;
-}
-
-.modal[data-dataviz-state="new"] .mreport-secondary-color-2-bg {
-  display: none;
-}
-
-.modal[data-dataviz-state="delete"] .mreport-secondary-color-2-bg {
-  display: none;
-}
-
-.modal[data-dataviz-state="edit"] .mreport-error-color-bg {
+.modal[data-dataviz-state="new"] .badge.mreport-secondary-color-1-bg,
+.modal[data-dataviz-state="new"] .btn.mreport-primary-color-1-bg {
   display: inline-block;
 }
-
-.modal[data-dataviz-state="new"] .mreport-error-color-bg {
+.modal[data-dataviz-state="new"] .badge.mreport-secondary-color-2-bg,
+.modal[data-dataviz-state="new"] .badge.mreport-error-color-bg,
+.modal[data-dataviz-state="new"] .btn.mreport-primary-color-2-bg,
+.modal[data-dataviz-state="new"] .btn.mreport-error-color-bg {
   display: none;
 }
 
-.modal[data-dataviz-state="delete"] .mreport-error-color-bg {
+.modal[data-dataviz-state="edit"] .badge.mreport-secondary-color-2-bg,
+.modal[data-dataviz-state="edit"] .btn.mreport-primary-color-1-bg,
+.modal[data-dataviz-state="edit"] .btn.mreport-primary-color-2-bg {
   display: inline-block;
 }
-
-.modal[data-dataviz-state="edit"] .mreport-error-color-bg {
+.modal[data-dataviz-state="edit"] .badge.mreport-secondary-color-1-bg,
+.modal[data-dataviz-state="edit"] .badge.mreport-error-color-bg,
+.modal[data-dataviz-state="edit"] .btn.mreport-error-color-bg {
   display: none;
 }
-.modal[data-report-state="add"] .mreport-secondary-color-1-bg{
+
+.modal[data-dataviz-state="delete"] .badge.mreport-error-color-bg,
+.modal[data-dataviz-state="delete"] .btn.mreport-error-color-bg {
   display: inline-block;
+}
+.modal[data-dataviz-state="delete"] .badge.mreport-secondary-color-1-bg,
+.modal[data-dataviz-state="delete"] .badge.mreport-secondary-color-2-bg,
+.modal[data-dataviz-state="delete"] .btn.mreport-primary-color-1-bg,
+.modal[data-dataviz-state="delete"] .btn.mreport-primary-color-2-bg {
+  display: none;
 }
 
 /*
@@ -597,7 +594,8 @@ h5>.badge {
   background: #ffffff url('../img/loader.svg') no-repeat center center;
 }
 
-.dataviz-result {
+.dataviz-result,
+.modal .dataviz-result {
   border: 2px dotted #212529;
   background: #fff;
   padding: 0;
@@ -626,6 +624,21 @@ h5>.badge {
   color: #666;
   word-break: break-word;
 }
+
+#wizard-panel       h5 > .badge,
+#dataviz-modal-form h5 > .badge {
+  margin: 0;
+}
+#dataviz-modal-form .modal-body {
+  padding: 0 1em;
+}
+#dataviz-form .form-group {
+  margin-bottom: 0.25em;
+}
+#dataviz-form label {
+  margin-bottom: 0;
+}
+
 
 /* flip the wizard result card / icon selector when back class */
 .card-container.backcard.flip .card{

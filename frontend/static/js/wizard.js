@@ -10,6 +10,7 @@ wizard = (function () {
     var _dataviz_composer = null;       /* the DOM element configured from the composer */
     var _dataviz_data = null;           /* current dataviz sample data */
     var _default_definition = {};       /* dataviz configuration from the store */
+    var _compose_definition = {};       /* dataviz configuration from the composer */
 
     /*
      * Wizard needs data to vizualize dataviz configuration
@@ -100,7 +101,10 @@ wizard = (function () {
                     container.innerHTML+= '<div class="tab-content" id="icon-nav-tabContent">\n' + tabs_body.join('\n') + '</div>\n';
                     $(".icon-picker-list li.custom-icon").on('click', function(e) {
                         let input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="icon"]');
-                        if (input) input.value = e.currentTarget.dataset.class;
+                        if (input) {
+                            input.value = e.currentTarget.dataset.class;
+                            input.dispatchEvent(new Event('change'));
+                        }
                         document.getElementById('wizard-view').classList.remove('backcard');
                     });
                 }
@@ -182,11 +186,16 @@ wizard = (function () {
         _dataviz_composer = null;
         _dataviz_data = null;
         _dataviz_infos = {};
-        _dataviz_definition = {};
         _default_definition = {};
+        _compose_definition = {};
+        _dataviz_definition = {};
         $("#wizard-parameters .nav-tabs .nav-link").first().tab('show');
         document.getElementById("dataviz-attributes").classList.add('d-none');
         document.getElementById("wizard-form-apply").disabled = true;
+        // remove state class
+        _modal.classList.remove('state-changed');
+        _modal.classList.remove('state-modified');
+        _modal.classList.remove('state-configured');
         // remove all form values
         document.getElementById("w_dataviz_type").value = "";
         _modal.querySelectorAll(".dataviz-attributes").forEach((el) => {
@@ -326,18 +335,17 @@ wizard = (function () {
         if (_debug) console.debug('Wizard _initDatavizDefinition');
         
         // get the current report dataviz definition (if called from the composer)
-        let compose_definition = {};
         if (_dataviz_composer) {
             let compose_code = _dataviz_composer.querySelector("code.dataviz-definition");
             let viz = (compose_code) ? compose_code.innerText.trim() : "";
             if (viz) try {
-                compose_definition = JSON.parse( viz );
-                if (_debug) console.debug("Dataviz composer definition:\n", compose_definition);
+                _compose_definition = JSON.parse( viz );
+                if (_debug) console.debug("Dataviz composer definition:\n", _compose_definition);
                 // use sample data from composer definition (only if no sample yet) ?
-                if (compose_definition.data && ! _dataviz_data) _dataviz_data = compose_definition.data[ _dataviz_infos.dataviz ];
+                if (_compose_definition.data && ! _dataviz_data) _dataviz_data = _compose_definition.data[ _dataviz_infos.dataviz ];
             } catch (err) { console.warn("Dataviz compose definition is invalid", viz, err); }
         }
-        if (! compose_definition.properties) compose_definition.properties = {};
+        if (! _compose_definition.properties) _compose_definition.properties = {};
         
         // get default dataviz configuration (stored if needed later for a reset to default action)
         if (_dataviz_infos.viz) {
@@ -382,8 +390,8 @@ wizard = (function () {
         };
         
         // and merge with the current definition from composer
-        let definition = Object.assign({}, _default_definition, compose_definition);
-        definition.properties = Object.assign(properties, _default_definition.properties, compose_definition.properties);
+        let definition = Object.assign({}, _default_definition, _compose_definition);
+        definition.properties = Object.assign(properties, _default_definition.properties, _compose_definition.properties);
         if (! definition.type) definition.type = _dataviz_infos.type;
         return definition;
     };
@@ -469,6 +477,7 @@ wizard = (function () {
         
         // show fields linked to dataviz type (table, figure, chart...)
         _showFormParameters(cfg.type);
+        _modal.classList.remove('state-changed');
     };
 
     /**
@@ -515,6 +524,7 @@ wizard = (function () {
      */
     var _createColorPicker = function (color_code = null, nb_datasets = null) {
         if (_debug) console.debug('Wizard _createColorPicker', color_code, nb_datasets);
+        let is_new = (color_code === null) ? true : false;
         if (! color_code) color_code = (_model.colors) ? _model.colors[0] : '#ffffff';
 //      if (! nb_datasets) nb_datasets = (typeof _data !== "undefined") ? _data.dataset.length : 1; // TODO: pour limiter le add ?
         let index = (Math.max(0, Math.max(...Object.keys( _piklor_instances ))) || 0) + 1;
@@ -539,11 +549,17 @@ wizard = (function () {
         pk.colorChosen(function (color) {
             if (this.options.open) this.options.open.style.backgroundColor = (color !== false) ? color : "";
             let colors = Array.from(wrapper.querySelectorAll("button.btn-color"), (btn) => btn.dataset.color);
-            if (input) input.value = colors.join(",");
+            if (input) {
+                input.value = colors.join(",");
+                input.dispatchEvent(new Event('change'));
+            }
         });
         _piklor_instances[ index ] = pk;
         
-        if (input) input.style.display = "none";
+        if (input) {
+            input.style.display = "none";
+            if (is_new) input.dispatchEvent(new Event('change'));
+        }
     };
 
     /**
@@ -587,23 +603,35 @@ wizard = (function () {
         if (! container) container = w_result;
         
         // get dataviz component herited from template and set attributes with properties object
-        let viz = _form2json(true /* sample data included */);
-        _modal.querySelector(".wizard-code code").innerText = JSON.stringify(viz);
-        let html = _model.renderDataviz(viz);
+        _dataviz_definition = _form2json(true /* sample data included */);
+        _modal.querySelector(".wizard-code code").innerText = JSON.stringify(_dataviz_definition);
+        let html = _model.renderDataviz(_dataviz_definition);
         w_result.classList.remove("preloader");
+        
+        // détermine si le wizard à générer une configuration différente de celle sauvegardée
+        if (_compare_definitions(_default_definition, _dataviz_definition))
+            _modal.classList.remove('state-modified');
+        else _modal.classList.add('state-modified');
+        if (_dataviz_composer) {
+            if (_compare_definitions(_compose_definition, _dataviz_definition))
+                _modal.classList.remove('state-configured');
+            else _modal.classList.add('state-configured');
+        }
         
         // render result in wizard modal
         if (! (html instanceof Node)) { container.innerText = "ERROR: " + html; return; }
         container.appendChild(html);
         
         // draw dataviz with data, type and properties
-//      let viz_data = {}; viz_data[ viz.properties.id ] = _dataviz_data;
-        report.testViz(/*viz_data*/ viz.data, viz.type, viz.properties);
+//      let viz_data = {}; viz_data[ _dataviz_definition.properties.id ] = _dataviz_data;
+        report.testViz(/*viz_data*/ _dataviz_definition.data, _dataviz_definition.type, _dataviz_definition.properties);
+        _modal.classList.remove('state-changed');
     };
 
     /**
      * _form2json - This method get values from wizard form parameters
      * and populate a json config object (dataviz definition)
+     * @param  {bool} with_data : true to include sample data in definition
      */
     var _form2json = function (with_data = false) {
         if (_debug) console.debug('Wizard _form2json', with_data);
@@ -628,17 +656,46 @@ wizard = (function () {
             }
         });
         // store config dataviz in json object
-        _dataviz_definition = {
+        let definition = {
             "type": dvz_type,
             "properties": properties,
             "data": {}
         };
         // add the samples data to the JSON definition (saved in store or composer) ?
-        if (with_data) _dataviz_definition.data[ _dataviz_definition.properties.id ] = _dataviz_data;
-        else delete _dataviz_definition.data;
+        if (with_data) definition.data[ definition.properties.id ] = _dataviz_data;
+        else delete definition.data;
         
-        if (_debug) console.debug("Configuration JSON générée par le formulaire :\n", _dataviz_definition);
-        return _dataviz_definition;
+        if (_debug) console.debug("Configuration JSON générée par le formulaire :\n", definition);
+        return definition;
+    };
+
+    /**
+     * _compare_definitions
+     * @param  {object} viz1
+     * @param  {object} viz2
+     */
+    var _compare_definitions = function (viz1, viz2) {
+        // fonction de tri récursive des propriétés
+        const jsonSortReplacer = (key, val) =>
+          ((val instanceof Object) && !(val instanceof Array))
+          ? Object.keys(val).sort().reduce((sorted, key) => {
+              sorted[key] = val[key]; return sorted;
+          }, {})
+          : val;
+        // clonage des objets avec leurs propriétés
+        let def1 = Object.assign({}, viz1);
+        let def2 = Object.assign({}, viz2);
+        // retrait des propriétés non déterminantes
+        if ('data' in def1) delete def1.data;
+        if ('data' in def2) delete def2.data;
+        ['model','plugins'].forEach((prop) => {
+            if (prop in def1.properties) delete def1.properties[prop];
+            if (prop in def2.properties) delete def2.properties[prop];
+        });
+        // comparaison des chaines JSON
+        if (_debug) console.debug(JSON.stringify(def1, jsonSortReplacer));
+        if (_debug) console.debug(JSON.stringify(def2, jsonSortReplacer));
+        return (JSON.stringify(def1, jsonSortReplacer) == JSON.stringify(def2, jsonSortReplacer));
     };
 
     /**
@@ -649,9 +706,10 @@ wizard = (function () {
     var _onChangeModel = function (evt) {
         if (_debug) console.debug('Wizard _onChangeModel', evt);
         models.load(evt.target.value, function(success, data){
+            _modal.classList.add('state-changed');
             // apply render model for wizard
             _initRenderModel(success ? data : null);
-            // update dataviz preview
+            // refresh dataviz preview
             _renderDatavizPreview();
         });
     };
@@ -662,6 +720,7 @@ wizard = (function () {
      */
     var _onChangeDatavizType = function (evt) {
         if (_debug) console.debug('Wizard _onChangeDatavizType', evt);
+        _modal.classList.add('state-changed');
         // show fields linked to dataviz type
         _showFormParameters( evt.target.value );
         // refresh dataviz renderer
@@ -669,14 +728,38 @@ wizard = (function () {
     };
 
     /**
-     * _saveDatavizComposer - This method copy paste dataviz html code between  wizard result and composition
-     * @param  {string} datavizId
+     * _onChangeDatavizForm - This method is linked to all dataviz attributes event change
+     * @param  {event} evt
+     */
+    var _onChangeDatavizForm = function (evt) {
+        if (_debug) console.debug("Wizard _onChangeParameter", evt);
+        _modal.classList.add('state-changed');
+    };
+
+    /**
+     * _saveDatavizStore - This method call the dataviz default representation save from the wizard definition result
+     */
+    var _saveDatavizStore = function () {
+        if (_debug) console.debug('Wizard _saveDatavizStore');
+        admin.saveDataviz(_dataviz_definition, function(success, viz){
+            if (! success) return;
+            _modal.classList.remove('state-modified');
+            if (_dataviz_composer) return;
+            // fermeture automatique de la modal si enregistrement store réussi (sans venir du composer)
+            _close_confirmation = true;
+            $(_modal).modal("hide");
+        });
+    };
+
+    /**
+     * _saveDatavizComposer - This method copy paste dataviz json definition from wizard result to composition
      */
     var _saveDatavizComposer = function () {
         if (_debug) console.debug('Wizard _saveDatavizComposer');
         if (! _dataviz_composer) { console.error("Dataviz en cours d'édition à configurer non disponible"); return; }
         // update dataviz definition in the composer
         composer.configDataviz(_dataviz_composer, _dataviz_definition);
+        _modal.classList.remove('state-configured');
         // close wizard modal (clean on close event, without confirmation)
         _close_confirmation = true;
         $(_modal).modal("hide");
@@ -687,11 +770,23 @@ wizard = (function () {
      * it can prevent closing the modal with a confirmation dialog, or execute end actions
      */
     var _onModalClose = function () {
-        if (_debug) console.debug('Wizard _onModalClose');
+        if (! _close_confirmation) {
+            // fermeture sans configuration si aucun état de modification non enregistrée
+            if (_dataviz_composer) {
+                if (! _modal.classList.contains('state-changed') && ! _modal.classList.contains('state-configured'))
+                    _close_confirmation = true;
+            } else {
+                if (! _modal.classList.contains('state-changed') && ! _modal.classList.contains('state-modified'))
+                    _close_confirmation = true;
+            }
+        }
+        if (_debug) console.debug('Wizard _onModalClose', _close_confirmation);
+        
         if (! _close_confirmation) {
             // affiche le dialogue de confirmation
             Swal.fire({
                 title: "Êtes-vous sûr de vouloir quitter l'assistant ?",
+                text: "Il semble que vous ayez effectué des modifications non enregistrées...",
                 icon: 'warning',
                 buttonsStyling: false,
                 customClass: {
@@ -739,9 +834,10 @@ wizard = (function () {
                 $(_modal).on('hide.bs.modal', _onModalClose);
                 $("#selectedModelWizard").on('change', _onChangeModel);
                 $("#w_dataviz_type").on('change', _onChangeDatavizType);
+                $("#dataviz-attributes").find("input,textarea,select").on('change', _onChangeDatavizForm);
                 $("#wizard-form-apply").on('click', _renderDatavizPreview);
                 $("#wizard-compose-save").on('click', _saveDatavizComposer);
-                $("#wizard-default-save").on('click', function(evt){ admin.saveVisualization(_dataviz_definition); });
+                $("#wizard-default-save").on('click', _saveDatavizStore);
                 $("#color-pickers .color-picker-add").on('click', function(evt){ _createColorPicker(null); });
                 // initialisation de la liste des pictos (à partir du backend)
                 _initIconList();

@@ -515,6 +515,17 @@
   padding: 0.25em 0.5em;
 }
 
+#wizard-panel.state-changed #wizard-form-apply {
+  background-color: var(--warning) !important;
+}
+#wizard-panel.state-configured #wizard-compose-save {
+  background-color: var(--warning) !important;
+  color: #212529 !important;
+}
+#wizard-panel.state-modified #wizard-default-save {
+  color: var(--warning) !important;
+}
+
 .style-titre-1:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "I"; }
 .style-titre-2:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "II"; }
 .style-titre-3:before { margin: 10px; padding: 0 10px; text-align: center; background: #000; color: #fff; content: "III"; }

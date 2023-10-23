@@ -277,44 +277,47 @@
     <!-- Composer end -->
 
     <!-- Modal dataviz -->
-    <div class="modal fade" id="dataviz-modal-form" data-related-id="" tabindex="-1" role="dialog"
-        aria-labelledby="datavizModalLabel" aria-hidden="true">
+    <div class="modal fade" id="dataviz-modal-form" data-related-id="" tabindex="-1" data-backdrop="static"
+        role="dialog" aria-labelledby="datavizModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="datavizModalLabel"><span class="dataviz-title"></span></span><span
-                            class="badge mreport-secondary-color-1-bg">New</span><span class="badge mreport-secondary-color-2-bg">Edition</span><span
-                            class="badge mreport-error-color-bg">Supression</span></h5>
+                    <h5 class="modal-title" id="datavizModalLabel">
+                        <span class="badge mreport-secondary-color-1-bg">Nouveau</span>
+                        <span class="badge mreport-secondary-color-2-bg">Édition</span>
+                        <span class="badge mreport-error-color-bg">Suppression</span>
+                        <tt class="dataviz-title"><!-- modal title with dataviz ref is injected here --></tt>
+                    </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form class="form" id="dataviz-form" role="form" autocomplete="off">
                         <div class="row form-group xviz">
                             <div class="col yviz">
-                                <div class="dataviz-result"><!--code is injected here --></div>
+                                <div class="dataviz-result"><!-- code is injected here --></div>
                             </div>
                         </div>
+                    <form class="form" id="dataviz-form" role="form" autocomplete="off">
                         <div class="row form-group">
-                            <div class="col">
-                                <label for="inputTitle"><span class="badge mreport-grey1-bg">Nom</span></label>
+                            <div class="col-6">
+                                <label for="inputTitle"><span class="badge mreport-grey1-bg">Intitulé</span></label>
                                 <input type="text" class="form-control" name="title" id="inputTitle"
                                     placeholder="Nom de la dataviz">
                             </div>
-                            <div class="col">
-                                <label for="inputYear"><span class="badge mreport-grey1-bg">millésime</span></label>
+                            <div class="col-3">
+                                <label for="inputYear"><span class="badge mreport-grey1-bg">Millésime</span></label>
                                 <input type="text" class="form-control" name="year" id="inputYear"
                                     placeholder="Millésime" required="">
                             </div>
-                            <div class="col">
+                            <div class="col-3">
                                 <label for="inputSource"><span class="badge mreport-grey1-bg">Source</span></label>
                                 <input type="text" class="form-control" name="source" id="inputSource"
                                     placeholder="Source" required="">
                             </div>
                         </div>
                         <div class="row form-group">
-                            <div class="col">
+                            <div class="col-12">
                                 <label for="inputDescription"><span class="badge mreport-grey1-bg">Description</span></label>
                                 <p class="invalid-feedback">500 caractères max.</p>
                                 <input type="text" class="form-control" name="description" id="inputDescription"
@@ -322,14 +325,14 @@
                             </div>
                         </div>
                         <div class="row form-group">
-                            <div class="col">
+                            <div class="col-3">
                                 <label for="inputLevel"><span class="badge mreport-grey1-bg">Niveau</span></label>
                                 <select class="form-control" name="level" id="inputLevel"
                                     placeholder="Référentiel" required="">
                                 </select>
                             </div>
-                            <div class="col">
-                                <label for="inputType"><span class="badge mreport-grey1-bg">Mode de Réprésentation par défault</span></label>
+                            <div class="col-3">
+                                <label for="inputType"><span class="badge mreport-grey1-bg">Mode de représentation</span></label>
                                 <select class="form-control" name="type" id="inputType" placeholder="Mode de Réprésentation par défault"
                                     required="">
                                     <option value="chart">chart</option>
@@ -342,19 +345,19 @@
                                     <option value="titre">titre</option>
                                 </select>
                             </div>
-                            <div class="col">
+                            <div class="col-3">
                                 <label for="inputUnit"><span class="badge mreport-grey1-bg">Unité</span></label>
                                 <input type="text" class="form-control" name="unit" id="inputUnit" placeholder="Type"
                                     required="">
                             </div>
-                            <div class="col">
+                            <div class="col-3">
                                 <label for="inputJob"><span class="badge mreport-grey1-bg">Job</span></label>
                                 <input type="text" class="form-control" name="job" id="inputJob" placeholder="Type"
                                     required="">
                             </div>
                         </div>
                         <div class="row form-group hidden">
-                            <div class="col">
+                            <div class="col-12">
                                 <label for="visualization"><span class="badge mreport-grey1-bg">Configuration JSON de la représentation par défaut</span></label>
                                 <textarea class="form-control text-monospace" name="viz" id="visualization" required=""></textarea>
                             </div>
@@ -362,11 +365,11 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button id="dataviz_configure" class="btn mreport-grey1-bg" data-toggle="modal" data-target="#wizard-panel"
-                        data-component="store" data-related-id=""><i class="fas fa-cog"></i> Configurer la
-                        dataviz</button>
-                    <button id="dataviz_confirmed" type="button" class="btn mreport-primary-color-1-bg">Enregistrer</button>
-                    <button type="button" class="btn mreport-primary-color-2-bg" data-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn mreport-primary-color-2-bg btn-wizard mr-auto" data-toggle="modal" data-target="#wizard-panel"
+                        id="dataviz-configure" data-component="store" data-related-id=""><i class="fas fa-cog"></i> Configurer la dataviz</button>
+                    <button type="button" class="btn btn-secondary btn-close" data-dismiss="modal"><i class="fas fa-times-circle"></i> Fermer</button>
+                    <button type="button" class="btn mreport-error-color-bg btn-delete" onclick="admin.deleteDataviz();"><i class="fas fa-trash"></i> Supprimer</button>
+                    <button type="button" class="btn mreport-primary-color-1-bg btn-save" onclick="admin.updateDataviz();"><i class="fas fa-check"></i> Enregistrer</button>
                 </div>
             </div>
         </div>
