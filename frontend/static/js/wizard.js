@@ -56,6 +56,155 @@ wizard = (function () {
      */
     var _piklor_instances = {};
 
+    /**
+     * _initIconList - This method get icons list from api to add CSS and show them in wizard
+     */
+    var _initIconList = function () {
+        if (_debug) console.debug('Wizard _initIconList');
+        $.ajax({
+            dataType: "json",
+            type: "GET",
+            url: [report.getAppConfiguration().api, "picto"].join("/"),
+            success: function (icons) {
+                if (_debug) console.debug("Réponse du backend pour la liste des icones :\n", icons);
+                // rangement des icones par dossiers (affichage en onglets) et génération des CSS
+                let folders = {}, styles = [];
+                icons.forEach((icon) => {
+                    if (! folders[icon.folder]) folders[icon.folder] = [];
+                    folders[icon.folder].push(icon);
+                    styles.push('.' + icon.id + ' { background-image: url(' + icon.url + '); }');
+                    styles.push('img.' + icon.id + ' { background: transparent; content: url(' + icon.url + '); }');
+                });
+                // insertion du code CSS pour les icones dans la balise head de l'interface
+                document.querySelector("style#picto-css").innerHTML = styles.join('\n');
+                // génération du code HTML du sélecteur d'icone (tabs Bootstrap)
+                let container = document.getElementById('wizard-icons');
+                if (container) {
+                    let tabs_head = [], tabs_body = [], first = true;
+                    for (const [folder, icons] of Object.entries(folders).sort()) {
+                        // code HTML de l'onglet
+                        let html_head = '<a role="tab" data-toggle="tab"';
+                        html_head+= (first) ? ' class="nav-item nav-link active" aria-selected="true"' : ' class="nav-item nav-link" aria-selected="false"';
+                        html_head+= ` id="icon-${folder}-tab" href="#icon-${folder}-pane" aria-controls="icon-${folder}-pane">${folder}</a>`;
+                        tabs_head.push(html_head);
+                        // code HTML du panneau
+                        let html_body = '<div role="tabpanel" class="tab-pane fade'+ ((first)?" show active":"") + '"';
+                        html_body+= ` id="icon-${folder}-pane" aria-labelledby="icon-${folder}-pane">`;
+                        html_body+= '<ul class="icon-picker-list">';
+                        html_body+= icons.map((icon) => { return `<li class="custom-icon ${icon.id}" data-class="${icon.id}"></li>`; }).join('\n');
+                        html_body+= '</ul></div>';
+                        tabs_body.push(html_body);
+                        first = false;
+                    }
+                    container.innerHTML = '<nav><div class="nav nav-tabs" id="icon-nav-tab" role="tablist">\n' + tabs_head.join('\n') + '</div></nav>\n';
+                    container.innerHTML+= '<div class="tab-content" id="icon-nav-tabContent">\n' + tabs_body.join('\n') + '</div>\n';
+                    $(".icon-picker-list li.custom-icon").on('click', function(e) {
+                        let input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="icon"]');
+                        if (input) input.value = e.currentTarget.dataset.class;
+                        document.getElementById('wizard-view').classList.remove('backcard');
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.warn("Échec lors de la récupération de la liste des icones disponibles du serveur :\n" + error);
+            }
+        });
+    };
+
+    /**
+     * _onModalOpened - This method is linked to open wizard modal event,
+     * it initialize the form for the dataviz to configure and generate the preview
+     * @param  {event} evt
+     */
+    var _onModalOpened = function (evt) {
+        if (_debug) console.debug('Wizard _onModalOpened', evt);
+        // clear wizard form and current data
+        _clean();
+        
+        // detect wich component calls this and adapt the interface
+        if (evt.relatedTarget.dataset.component === "composer") {
+            // store dataviz DOM element edited from the composer
+            _dataviz_composer = evt.relatedTarget.closest(".dataviz-item");
+            if (! _dataviz_composer) { console.error("Wizard: dataviz non retrouvée dans le composer"); return; }
+            // buttons: enable "add to report" / disable "select model"
+            document.getElementById("wizard-compose-save").classList.remove("hidden");
+            document.getElementById("selectedModelWizard").disabled = true;
+        } else {
+            // buttons: disable "add to report" / enable "select model"
+            document.getElementById("wizard-compose-save").classList.add("hidden");
+            document.getElementById("selectedModelWizard").disabled = false;
+        }
+        
+        // get datavizid linked to the wizard modal (from button attribute data-related-id)
+        let datavizId = evt.relatedTarget.dataset.relatedId;
+        if (! datavizId) { console.error("Wizard: dataviz à configurer non spécifiée"); return; }
+        _modal.querySelector(".modal-title tt").innerText = datavizId;
+        _modal.dataset.relatedId = datavizId;
+        
+        // get dataviz infos (description, title, unit, viz...) if exists
+        _dataviz_infos = admin.getDataviz(datavizId);
+        if (_debug) console.debug("Dataviz store informations:\n", _dataviz_infos);
+        
+        // download data for this dataviz (new sample overrides data saved in the store)
+        _getSampleData(datavizId, function(success, data = null){
+            if (success) _dataviz_data = data;
+            
+            // get dataviz definition for wizard (form default + store + composer)
+            let definition = _initDatavizDefinition();
+            definition.properties.id = datavizId;
+            if (_debug) console.debug("Dataviz aggregated definition:\n", definition);
+            
+            // determine the render model to use for previews
+            let modelId = document.getElementById("selectedModelWizard").value;
+            if (_dataviz_composer) modelId = composer.getModelId() || definition.properties.model || modelId || "composer";
+            else                   modelId = definition.properties.model || composer.getModelId() || modelId || "composer";
+            
+            // load active model then initialize the wizard form and renderer
+            models.load(modelId, function(success, data = null){
+                // apply render model for wizard
+                _initRenderModel(success ? data : null);
+                // configure wizard options with dataviz capabilities
+                _initDatavizTypeOptions(datavizId);
+                // apply config if exists
+                _initFormParameters(definition);
+                // render dataviz in result panel
+                _renderDatavizPreview();
+            });
+        });
+    };
+
+    /**
+     * _clean - Method to clear wizard form and modal data
+     */
+    var _clean = function () {
+        if (_debug) console.debug('Wizard _clean');
+        _close_confirmation = false;
+        _dataviz_composer = null;
+        _dataviz_data = null;
+        _dataviz_infos = {};
+        _dataviz_definition = {};
+        _default_definition = {};
+        $("#wizard-parameters .nav-tabs .nav-link").first().tab('show');
+        document.getElementById("dataviz-attributes").classList.add('d-none');
+        document.getElementById("wizard-form-apply").disabled = true;
+        // remove all form values
+        document.getElementById("w_dataviz_type").value = "";
+        _modal.querySelectorAll(".dataviz-attributes").forEach((el) => {
+            if (el.type == 'checkbox') el.checked = false; else el.value = "";
+        });
+        // remove color pickers
+        _modal.querySelectorAll(".color-picker-wrapper .available-colors").forEach((el) => { el.remove(); });
+        _modal.querySelectorAll(".color-picker-wrapper .btn-color").forEach((el) => { el.remove(); });
+        Object.keys(_piklor_instances).forEach((index) => { delete _piklor_instances[ index ]; });
+        // remove dataviz id references
+        _modal.dataset.relatedId = "";
+        _modal.querySelector(".modal-title tt").innerText = "";
+        // remove existing result (dataviz preview with css)
+        _modal.querySelector("#wizard-view .dataviz-result").className = "dataviz-result preloader";
+        _modal.querySelector("#wizard-view .dataviz-result").innerHTML = "";
+        _modal.querySelector(".wizard-code code").innerText = "";
+        document.querySelector("style#model-slot2").innerHTML = "";
+    };
 
     /**
      * Method to extract a set of data in relation with dataviz
@@ -171,205 +320,6 @@ wizard = (function () {
     };
 
     /**
-     * _clean - Method to clear wizard form and modal data
-     */
-    var _clean = function () {
-        if (_debug) console.debug('Wizard _clean');
-        _close_confirmation = false;
-        _dataviz_composer = null;
-        _dataviz_data = null;
-        _dataviz_infos = {};
-        _dataviz_definition = {};
-        _default_definition = {};
-        $("#wizard-parameters .nav-tabs .nav-link").first().tab('show');
-        document.getElementById("dataviz-attributes").classList.add('d-none');
-        document.getElementById("wizard-form-apply").disabled = true;
-        // remove all form values
-        document.getElementById("w_dataviz_type").value = "";
-        _modal.querySelectorAll(".dataviz-attributes").forEach((el) => {
-            if (el.type == 'checkbox') el.checked = false; else el.value = "";
-        });
-        // remove color pickers
-        _modal.querySelectorAll(".color-picker-wrapper .available-colors").forEach((el) => { el.remove(); });
-        _modal.querySelectorAll(".color-picker-wrapper .btn-color").forEach((el) => { el.remove(); });
-        Object.keys(_piklor_instances).forEach((index) => { delete _piklor_instances[ index ]; });
-        // remove dataviz id references
-        _modal.dataset.relatedId = "";
-        _modal.querySelector(".modal-title tt").innerText = "";
-        // remove existing result (dataviz preview with css)
-        _modal.querySelector("#wizard-view .dataviz-result").className = "dataviz-result preloader";
-        _modal.querySelector("#wizard-view .dataviz-result").innerHTML = "";
-        _modal.querySelector(".wizard-code code").innerText = "";
-        document.querySelector("style#model-slot2").innerHTML = "";
-    };
-
-    /**
-     * _initDatavizTypeOptions - Method to configure wizard options with dataviz capabilities
-     * Update options in select control #w_dataviz_type
-     * @param  {string} datavizId
-     */
-    var _initDatavizTypeOptions = function (datavizId) {
-        if (_debug) console.debug('Wizard _initDatavizTypeOptions', datavizId);
-        let select = _modal.querySelector('select#w_dataviz_type');
-        if (! select) return console.error("Sélecteur du type de dataviz non disponible");
-        
-        // devine le type de données en examinant l'échantillon disponible
-        let data_type = "text";
-        let firstData = (_dataviz_data && _dataviz_data.data) ? _dataviz_data.data[0] : null;
-        if (firstData) {
-            if (_dataviz_data.dataset.length === 1) {
-                const reUrl = new RegExp(/^((http[s]?|ftp):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?$/);
-                if      (reUrl.test(firstData))            data_type = "url";
-                else if (firstData.startsWith("POINT"))    data_type = "geom";
-            } else if (firstData[0]) {
-                if      (firstData[0].startsWith("POINT")) data_type = "geom";
-            }
-        }
-        
-        let options = [];
-        if (data_type === "geom") options.push("map");
-        // many datasets || One dataset with multiple lines => table, chart
-        if (_dataviz_data && (_dataviz_data.dataset.length > 1 || _dataviz_data.rows > 1)) {
-            options.push("chart");
-            if (_dataviz_data.significative_label) options.push("table");
-        }
-        // one dataset only (1 dataset une seule ligne => figure, text, iframe, image)
-        else if (data_type === "text") options.push("figure", "text");
-        else if (data_type === "url")  options.push("iframe", "image");
-        
-        // remove all existing options and generate the new ones
-        while (select.options.length > 0) select.remove(0);
-        select.add(new Option("...", ""), undefined);
-        for (let i = 0; i < options.length; i++) select.add(new Option(options[i], options[i]), undefined);
-    };
-
-    /**
-     * _json2form - Method to populate wizard form parameters from dataviz definition
-     * @param  {object} viz
-     */
-    var _json2form = function (viz) {
-        if (_debug) console.debug('Wizard _json2form', viz);
-        let input;
-        for (let [attribute, value] of Object.entries(viz.properties)) switch (attribute) {
-            case "id":
-                input = _modal;
-                if (input && ! input.dataset.relatedId) input.dataset.relatedId = value;
-                break;
-            case "model":
-                input = document.getElementById("selectedModelWizard");
-                if (input && ! input.value) input.value = value;
-                break;
-            case "columns" :  // hugly
-                input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="'+attribute+'"]');
-                if (! input) console.warn("json2form error : aucun input pour la propriété " + attribute);
-                else input.value = ( (value[0] === 1) ? value.map(x => x - 1) : value );
-                break;
-            case "colors" :
-                if (Array.isArray(value)) value.forEach(function(color, i) {
-                    // replace empty color value with one from the model palette
-                    if ((! color) || (color == '#')) value[i] = _model.colors[i] || '#000';
-                });
-            case "label" :
-                value = value.join(',');
-            default:
-                input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="'+attribute+'"]');
-                if (! input) console.warn("json2form error : aucun input pour la propriété " + attribute);
-                else if (input.type == "checkbox") input.checked = value;
-                else input.value = value;
-        }
-        document.getElementById("w_dataviz_type").value = viz.type;
-    };
-
-    /**
-     * _showFormParameters - Method to show fields linked to dataviz type (table, figure, chart...)
-     * @param  {string} datavizType
-     */
-    var _showFormParameters = function (datavizType) {
-        // adaptation du libellé de la propriété "label" selon le type chart|table
-        let input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="label"]');
-        if (input) input = input.closest(".attribute");
-        if (input) input = input.querySelector(".input-group-text");
-        if (input) switch (datavizType) {
-            case "chart" : input.innerText = "séries"; break;
-            case "table" : input.innerText = "labels"; break;
-        }
-        // affichage uniquement des champs du formulaire correspondants au type
-        let container = document.getElementById("dataviz-attributes");
-        container.querySelectorAll(".attribute").forEach((el) => el.classList.add('d-none'));
-        container.querySelectorAll(".attribute.type-" + datavizType).forEach((el) => el.classList.remove('d-none'));
-        container.classList.remove('d-none');
-        document.getElementById("wizard-form-apply").disabled = false;
-    };
-
-    /**
-     * _initFormParameters - Method to set values from dataviz config and populate wizard form.
-     * @param  {object} cfg
-     * ex: { "type":"figure", "properties":{ "unit": "m²", "colors": "orange,blue" } }
-     */
-    var _initFormParameters = function (cfg) {
-        if (_debug) console.debug('Wizard _initFormParameters', cfg);
-        if (! cfg.properties || ! cfg.properties.id) return;
-        
-        let input;
-        let nb_dataset = _dataviz_data.dataset.length;
-        let with_label = _dataviz_data.significative_label;
-        
-        // update wizard form with dataviz values
-        _json2form(cfg);
-        
-        // set colors for Piklor lib
-        input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="colors"]');
-        if (input) input.value.split(',').forEach((color) => { if (color) _createColorPicker(color, nb_dataset); });
-        
-        // disable some input fields
-        input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="stacked"]');
-        if (input) input.disabled = (nb_dataset > 1) ? false : true;
-        input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="extracolumn"]');
-        if (input) input.disabled = (with_label) ? false : true;
-        
-        // show fields linked to dataviz type (table, figure, chart...)
-        _showFormParameters(cfg.type);
-    };
-
-    /**
-     * _createColorPicker - Method to set a new Piklor instance for a new color to edit
-     * @param  {string} color_code
-     * @param  {int} nb_datasets
-     */
-    var _createColorPicker = function (color_code = null, nb_datasets = null) {
-        if (_debug) console.debug('Wizard _createColorPicker', color_code, nb_datasets);
-        if (! color_code) color_code = (_model.colors) ? _model.colors[0] : '#ffffff';
-//      if (! nb_datasets) nb_datasets = (typeof _data !== "undefined") ? _data.dataset.length : 1; // TODO: pour limiter le add ?
-        let index = (Math.max(0, Math.max(...Object.keys( _piklor_instances ))) || 0) + 1;
-        
-        let button = document.createElement('button');
-        button.className = "btn-color piklor-" + index;
-        button.style.backgroundColor = button.dataset.color = color_code;
-        button.innerHTML = "&nbsp;";
-        let palette = document.createElement('div');
-        palette.className = "available-colors piklor-" + index;
-        let wrapper = _modal.querySelector("#color-pickers .color-picker-wrapper");
-        wrapper.appendChild(button);
-        wrapper.appendChild(palette);
-        
-        let input = _modal.querySelector("#color-pickers input.dataviz-attributes");
-        let pk = new Piklor(palette, (_model.colors) ? _model.colors : [], {
-            closeOnBlur: true,
-            manualInput: true,
-            removeColor: true,
-            open: button
-        })
-        pk.colorChosen(function (color) {
-            if (this.options.open) this.options.open.style.backgroundColor = (color !== false) ? color : "";
-            let colors = Array.from(wrapper.querySelectorAll("button.btn-color"), (btn) => btn.dataset.color);
-            if (input) input.value = colors.join(",");
-        });
-        _piklor_instances[ index ] = pk;
-        
-        if (input) input.style.display = "none";
-    };
-
-    /**
      * _initDatavizDefinition - Aggrégation des définitions par défaut et configurées pour l'initialisation du formulaire
      */
     var _initDatavizDefinition = function () {
@@ -439,95 +389,6 @@ wizard = (function () {
     };
 
     /**
-     * _onModalOpened - This method is linked to open wizard modal event,
-     * it initialize the form for the dataviz to configure and generate the preview
-     * @param  {event} evt
-     */
-    var _onModalOpened = function (evt) {
-        if (_debug) console.debug('Wizard _onModalOpened', evt);
-        // clear wizard form and current data
-        _clean();
-        
-        // detect wich component calls this and adapt the interface
-        if (evt.relatedTarget.dataset.component === "composer") {
-            // store dataviz DOM element edited from the composer
-            _dataviz_composer = evt.relatedTarget.closest(".dataviz-item");
-            if (! _dataviz_composer) { console.error("Wizard: dataviz non retrouvée dans le composer"); return; }
-            // buttons: enable "add to report" / disable "select model"
-            document.getElementById("wizard-compose-save").classList.remove("hidden");
-            document.getElementById("selectedModelWizard").disabled = true;
-        } else {
-            // buttons: disable "add to report" / enable "select model"
-            document.getElementById("wizard-compose-save").classList.add("hidden");
-            document.getElementById("selectedModelWizard").disabled = false;
-        }
-        
-        // get datavizid linked to the wizard modal (from button attribute data-related-id)
-        let datavizId = evt.relatedTarget.dataset.relatedId;
-        if (! datavizId) { console.error("Wizard: dataviz à configurer non spécifiée"); return; }
-        _modal.querySelector(".modal-title tt").innerText = datavizId;
-        _modal.dataset.relatedId = datavizId;
-        
-        // get dataviz infos (description, title, unit, viz...) if exists
-        _dataviz_infos = admin.getDataviz(datavizId);
-        if (_debug) console.debug("Dataviz store informations:\n", _dataviz_infos);
-        
-        // download data for this dataviz (new sample overrides data saved in the store)
-        _getSampleData(datavizId, function(success, data = null){
-            if (success) _dataviz_data = data;
-            
-            // get dataviz definition for wizard (form default + store + composer)
-            let definition = _initDatavizDefinition();
-            definition.properties.id = datavizId;
-            if (_debug) console.debug("Dataviz aggregated definition:\n", definition);
-            
-            // determine the render model to use for previews
-            let modelId = document.getElementById("selectedModelWizard").value;
-            if (_dataviz_composer) modelId = composer.getModelId() || definition.properties.model || modelId || "composer";
-            else                   modelId = definition.properties.model || composer.getModelId() || modelId || "composer";
-            
-            // load active model then initialize the wizard form and renderer
-            models.load(modelId, function(success, data = null){
-                // apply render model for wizard
-                _initRenderModel(success ? data : null);
-                // configure wizard options with dataviz capabilities
-                _initDatavizTypeOptions(datavizId);
-                // apply config if exists
-                _initFormParameters(definition);
-                // render dataviz in result panel
-                _renderDatavizPreview();
-            });
-        });
-    };
-
-    /**
-     * _onChangeDatavizType - This method is linked to #w_dataviz_type select control event change
-     * @param  {event} evt
-     */
-    var _onChangeDatavizType = function (evt) {
-        if (_debug) console.debug('Wizard _onChangeDatavizType', evt);
-        // show fields linked to dataviz type
-        _showFormParameters( evt.target.value );
-        // refresh dataviz renderer
-        _renderDatavizPreview();
-    };
-
-    /**
-     * _onChangeModel - Linked with the render model selector
-     * TODO: update piklor palettes
-     * @param  {event} evt
-     */
-    var _onChangeModel = function (evt) {
-        if (_debug) console.debug('Wizard _onChangeModel', evt);
-        models.load(evt.target.value, function(success, data){
-            // apply render model for wizard
-            _initRenderModel(success ? data : null);
-            // update dataviz preview
-            _renderDatavizPreview();
-        });
-    };
-
-    /**
      * _initRenderModel - Set selected render model and load CSS for dataviz preview
      */
     var _initRenderModel = function (model) {
@@ -541,58 +402,203 @@ wizard = (function () {
     };
 
     /**
-     * _initIconList - This method get icons list from api to add CSS and show them in wizard
+     * _initDatavizTypeOptions - Method to configure wizard options with dataviz capabilities
+     * Update options in select control #w_dataviz_type
+     * @param  {string} datavizId
      */
-    var _initIconList = function () {
-        if (_debug) console.debug('Wizard _initIconList');
-        $.ajax({
-            dataType: "json",
-            type: "GET",
-            url: [report.getAppConfiguration().api, "picto"].join("/"),
-            success: function (icons) {
-                if (_debug) console.debug("Réponse du backend pour la liste des icones :\n", icons);
-                // rangement des icones par dossiers (affichage en onglets) et génération des CSS
-                let folders = {}, styles = [];
-                icons.forEach((icon) => {
-                    if (! folders[icon.folder]) folders[icon.folder] = [];
-                    folders[icon.folder].push(icon);
-                    styles.push('.' + icon.id + ' { background-image: url(' + icon.url + '); }');
-                    styles.push('img.' + icon.id + ' { background: transparent; content: url(' + icon.url + '); }');
-                });
-                // insertion du code CSS pour les icones dans la balise head de l'interface
-                document.querySelector("style#picto-css").innerHTML = styles.join('\n');
-                // génération du code HTML du sélecteur d'icone (tabs Bootstrap)
-                let container = document.getElementById('wizard-icons');
-                if (container) {
-                    let tabs_head = [], tabs_body = [], first = true;
-                    for (const [folder, icons] of Object.entries(folders).sort()) {
-                        // code HTML de l'onglet
-                        let html_head = '<a role="tab" data-toggle="tab"';
-                        html_head+= (first) ? ' class="nav-item nav-link active" aria-selected="true"' : ' class="nav-item nav-link" aria-selected="false"';
-                        html_head+= ` id="icon-${folder}-tab" href="#icon-${folder}-pane" aria-controls="icon-${folder}-pane">${folder}</a>`;
-                        tabs_head.push(html_head);
-                        // code HTML du panneau
-                        let html_body = '<div role="tabpanel" class="tab-pane fade'+ ((first)?" show active":"") + '"';
-                        html_body+= ` id="icon-${folder}-pane" aria-labelledby="icon-${folder}-pane">`;
-                        html_body+= '<ul class="icon-picker-list">';
-                        html_body+= icons.map((icon) => { return `<li class="custom-icon ${icon.id}" data-class="${icon.id}"></li>`; }).join('\n');
-                        html_body+= '</ul></div>';
-                        tabs_body.push(html_body);
-                        first = false;
-                    }
-                    container.innerHTML = '<nav><div class="nav nav-tabs" id="icon-nav-tab" role="tablist">\n' + tabs_head.join('\n') + '</div></nav>\n';
-                    container.innerHTML+= '<div class="tab-content" id="icon-nav-tabContent">\n' + tabs_body.join('\n') + '</div>\n';
-                    $(".icon-picker-list li.custom-icon").on('click', function(e) {
-                        let input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="icon"]');
-                        if (input) input.value = e.currentTarget.dataset.class;
-                        document.getElementById('wizard-view').classList.remove('backcard');
-                    });
-                }
-            },
-            error: function (xhr, status, error) {
-                console.warn("Échec lors de la récupération de la liste des icones disponibles du serveur :\n" + error);
+    var _initDatavizTypeOptions = function (datavizId) {
+        if (_debug) console.debug('Wizard _initDatavizTypeOptions', datavizId);
+        let select = _modal.querySelector('select#w_dataviz_type');
+        if (! select) return console.error("Sélecteur du type de dataviz non disponible");
+        
+        // devine le type de données en examinant l'échantillon disponible
+        let data_type = "text";
+        let firstData = (_dataviz_data && _dataviz_data.data) ? _dataviz_data.data[0] : null;
+        if (firstData) {
+            if (_dataviz_data.dataset.length === 1) {
+                const reUrl = new RegExp(/^((http[s]?|ftp):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?$/);
+                if      (reUrl.test(firstData))            data_type = "url";
+                else if (firstData.startsWith("POINT"))    data_type = "geom";
+            } else if (firstData[0]) {
+                if      (firstData[0].startsWith("POINT")) data_type = "geom";
             }
+        }
+        
+        let options = [];
+        if (data_type === "geom") options.push("map");
+        // many datasets || One dataset with multiple lines => table, chart
+        if (_dataviz_data && (_dataviz_data.dataset.length > 1 || _dataviz_data.rows > 1)) {
+            options.push("chart");
+            if (_dataviz_data.significative_label) options.push("table");
+        }
+        // one dataset only (1 dataset une seule ligne => figure, text, iframe, image)
+        else if (data_type === "text") options.push("figure", "text");
+        else if (data_type === "url")  options.push("iframe", "image");
+        
+        // remove all existing options and generate the new ones
+        while (select.options.length > 0) select.remove(0);
+        select.add(new Option("...", ""), undefined);
+        for (let i = 0; i < options.length; i++) select.add(new Option(options[i], options[i]), undefined);
+    };
+
+    /**
+     * _initFormParameters - Method to set values from dataviz config and populate wizard form.
+     * @param  {object} cfg
+     * ex: { "type":"figure", "properties":{ "unit": "m²", "colors": "orange,blue" } }
+     */
+    var _initFormParameters = function (cfg) {
+        if (_debug) console.debug('Wizard _initFormParameters', cfg);
+        if (! cfg.properties || ! cfg.properties.id) return;
+        
+        let input;
+        let nb_dataset = _dataviz_data.dataset.length;
+        let with_label = _dataviz_data.significative_label;
+        
+        // update wizard form with dataviz values
+        _json2form(cfg);
+        
+        // set colors for Piklor lib
+        input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="colors"]');
+        if (input) input.value.split(',').forEach((color) => { if (color) _createColorPicker(color, nb_dataset); });
+        
+        // disable some input fields
+        input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="stacked"]');
+        if (input) input.disabled = (nb_dataset > 1) ? false : true;
+        input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="extracolumn"]');
+        if (input) input.disabled = (with_label) ? false : true;
+        
+        // show fields linked to dataviz type (table, figure, chart...)
+        _showFormParameters(cfg.type);
+    };
+
+    /**
+     * _json2form - Method to populate wizard form parameters from dataviz definition
+     * @param  {object} viz
+     */
+    var _json2form = function (viz) {
+        if (_debug) console.debug('Wizard _json2form', viz);
+        let input;
+        for (let [attribute, value] of Object.entries(viz.properties)) switch (attribute) {
+            case "id":
+                input = _modal;
+                if (input && ! input.dataset.relatedId) input.dataset.relatedId = value;
+                break;
+            case "model":
+                input = document.getElementById("selectedModelWizard");
+                if (input && ! input.value) input.value = value;
+                break;
+            case "columns" :  // hugly
+                input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="'+attribute+'"]');
+                if (! input) console.warn("json2form error : aucun input pour la propriété " + attribute);
+                else input.value = ( (value[0] === 1) ? value.map(x => x - 1) : value );
+                break;
+            case "colors" :
+                if (Array.isArray(value)) value.forEach(function(color, i) {
+                    // replace empty color value with one from the model palette
+                    if ((! color) || (color == '#')) value[i] = _model.colors[i] || '#000';
+                });
+            case "label" :
+                value = value.join(',');
+            default:
+                input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="'+attribute+'"]');
+                if (! input) console.warn("json2form error : aucun input pour la propriété " + attribute);
+                else if (input.type == "checkbox") input.checked = value;
+                else input.value = value;
+        }
+        document.getElementById("w_dataviz_type").value = viz.type;
+    };
+
+    /**
+     * _createColorPicker - Method to set a new Piklor instance for a new color to edit
+     * @param  {string} color_code
+     * @param  {int} nb_datasets
+     */
+    var _createColorPicker = function (color_code = null, nb_datasets = null) {
+        if (_debug) console.debug('Wizard _createColorPicker', color_code, nb_datasets);
+        if (! color_code) color_code = (_model.colors) ? _model.colors[0] : '#ffffff';
+//      if (! nb_datasets) nb_datasets = (typeof _data !== "undefined") ? _data.dataset.length : 1; // TODO: pour limiter le add ?
+        let index = (Math.max(0, Math.max(...Object.keys( _piklor_instances ))) || 0) + 1;
+        
+        let button = document.createElement('button');
+        button.className = "btn-color piklor-" + index;
+        button.style.backgroundColor = button.dataset.color = color_code;
+        button.innerHTML = "&nbsp;";
+        let palette = document.createElement('div');
+        palette.className = "available-colors piklor-" + index;
+        let wrapper = _modal.querySelector("#color-pickers .color-picker-wrapper");
+        wrapper.appendChild(button);
+        wrapper.appendChild(palette);
+        
+        let input = _modal.querySelector("#color-pickers input.dataviz-attributes");
+        let pk = new Piklor(palette, (_model.colors) ? _model.colors : [], {
+            closeOnBlur: true,
+            manualInput: true,
+            removeColor: true,
+            open: button
+        })
+        pk.colorChosen(function (color) {
+            if (this.options.open) this.options.open.style.backgroundColor = (color !== false) ? color : "";
+            let colors = Array.from(wrapper.querySelectorAll("button.btn-color"), (btn) => btn.dataset.color);
+            if (input) input.value = colors.join(",");
         });
+        _piklor_instances[ index ] = pk;
+        
+        if (input) input.style.display = "none";
+    };
+
+    /**
+     * _showFormParameters - Method to show fields linked to dataviz type (table, figure, chart...)
+     * @param  {string} datavizType
+     */
+    var _showFormParameters = function (datavizType) {
+        if (_debug) console.debug('Wizard _showFormParameters', datavizType);
+        // adaptation du libellé de la propriété "label" selon le type chart|table
+        let input = _modal.querySelector('#dataviz-attributes .dataviz-attributes[data-prop="label"]');
+        if (input) input = input.closest(".attribute");
+        if (input) input = input.querySelector(".input-group-text");
+        if (input) switch (datavizType) {
+            case "chart" : input.innerText = "séries"; break;
+            case "table" : input.innerText = "labels"; break;
+        }
+        // affichage uniquement des champs du formulaire correspondants au type
+        let container = document.getElementById("dataviz-attributes");
+        container.querySelectorAll(".attribute").forEach((el) => el.classList.add('d-none'));
+        container.querySelectorAll(".attribute.type-" + datavizType).forEach((el) => el.classList.remove('d-none'));
+        container.classList.remove('d-none');
+        document.getElementById("wizard-form-apply").disabled = false;
+    };
+
+    /**
+     * _renderDatavizPreview. This method pass a config object to the report.testViz method.
+     * Used by #wizard_refresh button and the auto render method in _onModalOpened
+     */
+    var _renderDatavizPreview = function () {
+        if (_debug) console.debug('Wizard _renderDatavizPreview');
+        let w_result = _modal.querySelector("#wizard-view .dataviz-result");
+        w_result.classList.add("preloader");
+        w_result.innerHTML = "";
+        
+        // use the render model cell wrapper for the dataviz preview
+        let container;
+        if (_model.page_layouts['wcell']) {
+            w_result.insertAdjacentHTML("beforeend", _model.page_layouts['wcell']);
+            container = w_result.querySelector(".components-container");
+        }
+        if (! container) container = w_result;
+        
+        // get dataviz component herited from template and set attributes with properties object
+        let viz = _form2json(true /* sample data included */);
+        _modal.querySelector(".wizard-code code").innerText = JSON.stringify(viz);
+        let html = _model.renderDataviz(viz);
+        w_result.classList.remove("preloader");
+        
+        // render result in wizard modal
+        if (! (html instanceof Node)) { container.innerText = "ERROR: " + html; return; }
+        container.appendChild(html);
+        
+        // draw dataviz with data, type and properties
+//      let viz_data = {}; viz_data[ viz.properties.id ] = _dataviz_data;
+        report.testViz(/*viz_data*/ viz.data, viz.type, viz.properties);
     };
 
     /**
@@ -636,36 +642,30 @@ wizard = (function () {
     };
 
     /**
-     * _renderDatavizPreview. This method pass a config object to the report.testViz method.
-     * Used by #wizard_refresh button and the auto render method in _onModalOpened
+     * _onChangeModel - Linked with the render model selector
+     * TODO: update piklor palettes
+     * @param  {event} evt
      */
-    var _renderDatavizPreview = function () {
-        if (_debug) console.debug('Wizard _renderDatavizPreview');
-        let w_result = _modal.querySelector("#wizard-view .dataviz-result");
-        w_result.classList.add("preloader");
-        w_result.innerHTML = "";
-        
-        // use the render model cell wrapper for the dataviz preview
-        let container;
-        if (_model.page_layouts['wcell']) {
-            w_result.insertAdjacentHTML("beforeend", _model.page_layouts['wcell']);
-            container = w_result.querySelector(".components-container");
-        }
-        if (! container) container = w_result;
-        
-        // get dataviz component herited from template and set attributes with properties object
-        let viz = _form2json(true /* sample data included */);
-        _modal.querySelector(".wizard-code code").innerText = JSON.stringify(viz);
-        let html = _model.renderDataviz(viz);
-        w_result.classList.remove("preloader");
-        
-        // render result in wizard modal
-        if (! (html instanceof Node)) { container.innerText = "ERROR: " + html; return; }
-        container.appendChild(html);
-        
-        // draw dataviz with data, type and properties
-//      let viz_data = {}; viz_data[ viz.properties.id ] = _dataviz_data;
-        report.testViz(/*viz_data*/ viz.data, viz.type, viz.properties);
+    var _onChangeModel = function (evt) {
+        if (_debug) console.debug('Wizard _onChangeModel', evt);
+        models.load(evt.target.value, function(success, data){
+            // apply render model for wizard
+            _initRenderModel(success ? data : null);
+            // update dataviz preview
+            _renderDatavizPreview();
+        });
+    };
+
+    /**
+     * _onChangeDatavizType - This method is linked to #w_dataviz_type select control event change
+     * @param  {event} evt
+     */
+    var _onChangeDatavizType = function (evt) {
+        if (_debug) console.debug('Wizard _onChangeDatavizType', evt);
+        // show fields linked to dataviz type
+        _showFormParameters( evt.target.value );
+        // refresh dataviz renderer
+        _renderDatavizPreview();
     };
 
     /**
