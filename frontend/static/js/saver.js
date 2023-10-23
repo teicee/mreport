@@ -127,6 +127,16 @@ saver = (function () {
             // sinon forcer le type "none" qui permettra d'ignorer ce bloc
             default: this.type = "none";
         }
+        // nettoyage des structures superflues (cols > rows-12 > cols => cols)
+        if (this.type == 'cols') {
+            if (this.node.length != 1) return
+            if (this.node[0].type != 'rows') return;
+            if (this.node[0].node.length != 1) return;
+            if (this.node[0].node[0].type != 'cols') return;
+            let item = this.node[0].node[0];
+            if (_debug) console.debug("Simplification de la structure sur cols :\n", this.node);
+            this.node = item.node;
+        }
     };
 
     JsonComponent.prototype.parseNode = function(node) {
@@ -137,10 +147,9 @@ saver = (function () {
             let code = node.querySelector('code.dataviz-definition');
             try {
                 if (code.textContent.length) this.opts = JSON.parse( code.textContent );
-            } catch (e) {
-                console.error("Configuration du dataviz inutilisable !\n", code, e);
+            } catch (err) {
+                console.error("Configuration du dataviz inutilisable !\n", code, err);
             }
-            if (! this.opts) this.opts = { 'properties': {'id': ref} };
             return;
         }
         // extraction des données d'un element
@@ -335,7 +344,9 @@ saver = (function () {
                 }
             });
             composition.querySelectorAll('.structure-element.titleBloc').forEach((bloc) => {
-                let text = bloc.querySelector('.editable-text').cloneNode(true);
+                let edit = bloc.querySelector('.editable-text');
+                if (! edit) return;
+                let text = edit.cloneNode(true);
                 text.classList.add('bloc-content');
                 let tpl = '<div class="structure-html">';
                 tpl+= '<div class="bloc-layout layout-rows"><div class="layout-cols"><div class="layout-cell col-12">';
