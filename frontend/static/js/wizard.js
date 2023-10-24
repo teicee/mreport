@@ -670,11 +670,11 @@ wizard = (function () {
     };
 
     /**
-     * _compare_definitions
-     * @param  {object} viz1
-     * @param  {object} viz2
+     * _compare_definitions - Retourne vrai si la nouvelle version ne diffère pas de l'ancienne
+     * @param  {object} viz_old
+     * @param  {object} viz_new
      */
-    var _compare_definitions = function (viz1, viz2) {
+    var _compare_definitions = function (viz_old, viz_new) {
         // fonction de tri récursive des propriétés
         const jsonSortReplacer = (key, val) =>
           ((val instanceof Object) && !(val instanceof Array))
@@ -683,19 +683,26 @@ wizard = (function () {
           }, {})
           : val;
         // clonage des objets avec leurs propriétés
-        let def1 = Object.assign({}, viz1);
-        let def2 = Object.assign({}, viz2);
+        let def_old = Object.assign({}, viz_old);
+        let def_new = Object.assign({}, viz_new);
         // retrait des propriétés non déterminantes
-        if ('data' in def1) delete def1.data;
-        if ('data' in def2) delete def2.data;
-        ['model','plugins'].forEach((prop) => {
-            if (prop in def1.properties) delete def1.properties[prop];
-            if (prop in def2.properties) delete def2.properties[prop];
-        });
+        if ('data' in def_old) delete def_old.data;
+        if ('data' in def_new) delete def_new.data;
+        if (false) {
+            // ancienne méthode : quelques propriétés ignorées dans les 2 versions
+            ['model','plugins'].forEach((prop) => {
+                if (prop in def_old.properties) delete def_old.properties[prop];
+                if (prop in def_new.properties) delete def_new.properties[prop];
+            });
+        } else {
+            // nouvelle méthode : les propriétés en trop de l'ancienne version sont ignorées
+            ['model','plugins'].forEach((prop) => { if (prop in def_new.properties) delete def_new.properties[prop]; });
+            for (const prop in def_old.properties) { if (! (prop in def_new.properties)) delete def_old.properties[prop]; }
+        }
         // comparaison des chaines JSON
-        if (_debug) console.debug(JSON.stringify(def1, jsonSortReplacer));
-        if (_debug) console.debug(JSON.stringify(def2, jsonSortReplacer));
-        return (JSON.stringify(def1, jsonSortReplacer) == JSON.stringify(def2, jsonSortReplacer));
+        if (_debug) console.debug(JSON.stringify(def_old, jsonSortReplacer));
+        if (_debug) console.debug(JSON.stringify(def_new, jsonSortReplacer));
+        return (JSON.stringify(def_old, jsonSortReplacer) == JSON.stringify(def_new, jsonSortReplacer));
     };
 
     /**
