@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, jsonify, request
 from flask_restplus import Api, Resource, fields, marshal
-from sqlalchemy import create_engine, bindparam, Integer, String, event, func,desc
+from sqlalchemy import create_engine, bindparam, Integer, String, event, func, desc
+from sqlalchemy import exc as sqlexc
 #from sqlalchemy.schema import PrimaryKeyConstraint
 from sqlalchemy.sql import text
 from flask_sqlalchemy import SQLAlchemy
@@ -99,7 +100,8 @@ class Report(db.Model):
     report = db.Column(db.String(50),primary_key=True)
     title = db.Column(db.String(250),nullable=False)
     description = db.Column(db.String(500),nullable=True)
-    report_composition_rep = db.relationship('Report_composition', backref="report2", cascade="all, delete-orphan" , lazy='dynamic')
+    report_composition_rep = db.relationship('Report_composition', backref="report_data", cascade="all, delete-orphan", lazy='dynamic')
+    report_definition_rep = db.relationship('Report_definition', backref="report_data", cascade="all, delete-orphan", lazy='dynamic')
     __table_args__ = (tableschema)
     def __repr__(self):
         return '<Report {}>'.format(self.report)
@@ -158,7 +160,6 @@ store = api.namespace('store', description='Store de dataviz')
 report = api.namespace('report', description='Reports')
 picto = api.namespace('picto', description='Pictos')
 report_composition = api.namespace('report_composition', description='Composition des rapports')
-report_html = api.namespace('report_html', description='Structure html des rapports')
 level = api.namespace('level', description='Liste des référentiels')
 backup = api.namespace('backup', description='Versionning des Rapports')
 
@@ -330,9 +331,10 @@ report_fields = api.model('Report', {
     'description': fields.String(max_length=500,required=False),
     'copy': fields.Boolean(False,required=False)
 })
+
 @report.route('/<report_id>', doc={'description':'Récupération/Création/Modification/Suppression d\'un rapport'})
 @report.doc(params={'report_id': 'identifiant du rapport'})
-class GetReport(Resource):
+class ManageReport(Resource):
     def get(self,report_id):
         result = db.session.query(Rawdata.dataid.label("dataid"),Dataid.label.label("label")).distinct().join(Report_composition,Rawdata.dataviz == Report_composition.dataviz).join(Dataid,Dataid.dataid == Rawdata.dataid).filter(Report_composition.report == report_id).order_by(desc(Dataid.label)).all()
         '''
@@ -402,9 +404,12 @@ class GetReport(Resource):
         if rep:
             delete_folder = deleteFileSystemStructure(folder)
             if delete_folder == 'success':
-                db.session.delete(rep)
-                db.session.commit()
-                return {"response": "success", "report":report_id}
+                try:
+                    db.session.delete(rep)
+                    db.session.commit()
+                    return {"response": "success", "report":report_id}
+                except sqlexc.SQLAlchemyError as err:
+                    return {"response": str(err)}, 400
             else:
                 return {"response": delete_folder}
         else:
@@ -412,7 +417,7 @@ class GetReport(Resource):
 
 @report.route('/<report_id>/<dataid_id>', doc={'description': 'Récupération des données pour rapport ex: test & 200039022'})
 @report.doc(params={'report_id': 'identifiant du rapport', 'dataid_id': 'id géographique'})
-class GetReport(Resource):
+class GetReportDataviz(Resource):
     def get(self, report_id, dataid_id):
         result = db.session.query(Rawdata).join(Report_composition,Rawdata.dataviz == Report_composition.dataviz).filter(Report_composition.report == report_id).filter(Rawdata.dataid == dataid_id).all()
         '''
@@ -429,7 +434,7 @@ report_composition_fields = api.model('Report_composition', {
     'dataviz': fields.String(max_length=50,required=True)
 })
 
-@report_composition.route('/<report_id>', doc={'description': 'Composition et Supression d\'un rapport'})
+@report_composition.route('/<report_id>', doc={'description': 'Composition et Suppression d\'un rapport'})
 @report_composition.doc(params={'report_id': 'identifiant du rapport'})
 class GetReportComposition(Resource):
     @report.expect([report_composition_fields])
@@ -485,26 +490,6 @@ class GetReportComposition(Resource):
                     db.session.delete(rep_c)
                     db.session.commit()
                 return {"response": "success" , "data": data, "report":report_id}
-
-    @report_html.route('/<report_id>', doc={'description': 'Structure HTML d\'un rapport'})
-    @report_html.doc(params={'report_id': 'identifiant du rapport'})
-    class updateReportStructure(Resource):
-        def post(self,report_id):
-            data = request.get_json()
-            if not data:
-                data = {"response": "ERROR Pas de données associé"}
-                return data, 405
-            else:
-                html = data.get('html')
-                css = data.get('css')
-                composer = data.get('composer')
-                if (html):
-                    up = updateReportHTML("/".join([app.config['MREPORT_REPORTS'], report_id, "report"]), html, css, composer)
-                    return {"response": up}
-                else:
-                    data = {"response": "ERROR mauvais données associés"}
-                    return data, 405
-
 
 @backup.route('/<string:report_id>',doc={'description':'Liste des versions d\'un rapport'})
 @backup.doc(params={'report_id': 'identifiant du rapport'})

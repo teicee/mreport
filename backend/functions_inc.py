@@ -1,6 +1,7 @@
 from sqlalchemy.exc import NoInspectionAvailable
 from sqlalchemy import inspect, func
 import shutil, glob, json, os
+
 ## Use for (select *) from a single table ex : {'datavizs': json.loads(json.dumps([row2dict(r) for r in result]))}
 def row2dict(row,label="null"):
     d = {}
@@ -46,27 +47,14 @@ def createFileSystemStructure(src, dest):
         return 'Directory not copied. Error: %s' % e
 
 def deleteFileSystemStructure(src):
+    if not os.path.exists(src):
+        return 'success'
     try:
         shutil.rmtree(src)
         return 'success'
     except IOError as e:
         return "I/O error({0}): {1}".format(e.errno, e.strerror)
 
-def updateReportHTML(src, html, css, composer=None):
-    try:
-        f1 = open(src + '.html', 'w')
-        f1.write(html)
-        f1.close()
-        f2 = open(src + '.css', 'w')
-        f2.write(css)
-        f2.close()
-        if composer is not None:
-            f3 = open(src + '_composer.html', 'w')
-            f3.write(composer)
-            f3.close()
-        return 'success'
-    except IOError as e:
-        return "I/O error({0}): {1}".format(e.errno, e.strerror)
 def get_count(q):
     count_q = q.statement.with_only_columns([func.count()]).order_by(None)
     count = q.session.execute(count_q).scalar()
@@ -80,3 +68,4 @@ def getPictos():
         (file, ext) = os.path.splitext(filename)
         style.append({"id": "icon-" + folder + "-" + file, "folder": folder, "url": filepath.replace("frontend","")})
     return style
+
